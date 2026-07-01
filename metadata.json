@@ -1,0 +1,6 @@
+{
+  "name": "سمارت إكسبيرت",
+  "description": "نظام الخبرة القضائية العقارية المتكامل - التحديث 3 مع واجهة النظم الخبيرة الفيدرالية المستقلة، المصادقة البيومترية والتحليل الطيفي بخرائط مستقلة",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

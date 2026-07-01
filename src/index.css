@@ -1,0 +1,320 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+@theme {
+  --font-sans: "Tajawal", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+body {
+  font-family: var(--font-sans);
+  direction: rtl;
+}
+
+/* Adobe-Workspace Overrides to turn standard slate into professional Photoshop grey-scale panels */
+.adobe-workspace {
+  background-color: #141416 !important;
+  color: #e4e4e7 !important;
+}
+
+.adobe-workspace .bg-slate-900 {
+  background-color: #1e1e21 !important;
+  border-color: #2d2d31 !important;
+  color: #e4e4e7 !important;
+}
+
+.adobe-workspace .bg-slate-950 {
+  background-color: #141416 !important;
+  border-color: #2d2d31 !important;
+  color: #ffffff !important;
+}
+
+.adobe-workspace .bg-slate-950/60 {
+  background-color: rgba(20, 20, 22, 0.85) !important;
+  border-color: #2d2d31 !important;
+}
+
+.adobe-workspace .bg-slate-950/40 {
+  background-color: rgba(20, 20, 22, 0.6) !important;
+  border-color: #2d2d31 !important;
+}
+
+.adobe-workspace .bg-slate-900/40 {
+  background-color: rgba(30, 30, 33, 0.85) !important;
+  border-color: #2d2d31 !important;
+}
+
+.adobe-workspace .text-white {
+  color: #ffffff !important;
+}
+
+.adobe-workspace .text-slate-100 {
+  color: #f4f4f5 !important;
+}
+
+.adobe-workspace .text-slate-200 {
+  color: #e4e4e7 !important;
+}
+
+.adobe-workspace .text-slate-300 {
+  color: #d4d4d8 !important;
+}
+
+.adobe-workspace .text-slate-400 {
+  color: #a1a1aa !important;
+}
+
+.adobe-workspace .text-slate-500 {
+  color: #71717a !important;
+}
+
+.adobe-workspace .border-slate-800 {
+  border-color: #2d2d31 !important;
+}
+
+.adobe-workspace .border-slate-850 {
+  border-color: #262629 !important;
+}
+
+.adobe-workspace .border-slate-700 {
+  border-color: #3f3f46 !important;
+}
+
+.adobe-workspace .border-slate-750 {
+  border-color: #3a3a3e !important;
+}
+
+.adobe-workspace .bg-slate-800 {
+  background-color: #27272a !important;
+  color: #e4e4e7 !important;
+  border-color: #3f3f46 !important;
+}
+
+.adobe-workspace .hover:bg-slate-850:hover {
+  background-color: #323236 !important;
+}
+
+.adobe-workspace .hover:bg-slate-700:hover {
+  background-color: #3f3f46 !important;
+}
+
+.adobe-workspace .hover:border-slate-700:hover {
+  border-color: #52525b !important;
+}
+
+/* Beautiful vivid colors on dark gray background */
+.adobe-workspace .text-emerald-400 {
+  color: #34d399 !important;
+}
+
+.adobe-workspace .text-blue-400 {
+  color: #60a5fa !important;
+}
+
+.adobe-workspace .text-purple-400 {
+  color: #c084fc !important;
+}
+
+.adobe-workspace .text-amber-400 {
+  color: #fbbf24 !important;
+}
+
+/* Custom styles for professional scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+  background: #f59e0b;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #d97706;
+}
+
+/* Traditional Court Paper & Folder Theme (Light/Professional Archive Style) */
+.theme-paper {
+  background-color: #f7f3e8 !important; /* Elegant aged parchment/beige background */
+  background-image: 
+    radial-gradient(#0000000a 1px, transparent 0),
+    linear-gradient(to right, rgba(162, 110, 50, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(162, 110, 50, 0.03) 1px, transparent 1px) !important;
+  background-size: 24px 24px, 4rem 4rem !important;
+  color: #2a221a !important; /* Deep dark iron-gall ink brown */
+  position: relative;
+}
+
+/* Watermark Stamp for authenticity */
+.theme-paper::after {
+  content: "مصلحة الخبراء بوزارة العدل - نظام الأرشيف الرقمي ⚖️";
+  position: fixed;
+  bottom: 80px;
+  left: 50px;
+  font-size: 11px;
+  font-weight: 900;
+  color: rgba(180, 83, 9, 0.12) !important;
+  border: 2px dashed rgba(180, 83, 9, 0.18) !important;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transform: rotate(-8deg);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Red traditional court stamp */
+.theme-paper::before {
+  content: "صورة رسمية معتمدة للنزاع العقاري";
+  position: fixed;
+  top: 100px;
+  right: 50px;
+  font-size: 11px;
+  font-weight: 900;
+  color: rgba(220, 38, 38, 0.1) !important;
+  border: 3px double rgba(220, 38, 38, 0.14) !important;
+  padding: 6px 12px;
+  border-radius: 4px;
+  transform: rotate(12deg);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Overriding panel cards to look like file folders and legal documents */
+.theme-paper .bg-slate-900,
+.theme-paper .bg-slate-950/20,
+.theme-paper .bg-slate-950/40,
+.theme-paper .bg-slate-950/60,
+.theme-paper .bg-slate-900/40,
+.theme-paper .bg-slate-800/80 {
+  background-color: #fdfaf3 !important; /* Beautiful crisp thick clean cream paper sheet */
+  border-color: #d1c7a7 !important; /* Vintage folder crease brown */
+  color: #2a221a !important;
+  box-shadow: 0 4px 10px -1px rgba(139, 94, 60, 0.08), 0 2px 4px -1px rgba(139, 94, 60, 0.05) !important;
+}
+
+.theme-paper .bg-slate-950 {
+  background-color: #efe9d3 !important; /* Antique folder inner board/shelf */
+  border-color: #cbbe97 !important;
+  color: #1a1510 !important;
+}
+
+/* Overriding headings and texts */
+.theme-paper .text-white,
+.theme-paper h1,
+.theme-paper h2,
+.theme-paper h3,
+.theme-paper h4 {
+  color: #1e150d !important; /* Deep charcoal/black */
+}
+
+.theme-paper .text-zinc-100,
+.theme-paper .text-slate-100 {
+  color: #261f17 !important;
+}
+
+.theme-paper .text-slate-200,
+.theme-paper .text-slate-300 {
+  color: #453b30 !important; /* Classic legal typing text */
+}
+
+.theme-paper .text-slate-400,
+.theme-paper .text-slate-500 {
+  color: #6a5e50 !important; /* Off-notes and subtitles */
+}
+
+.theme-paper .border-slate-800,
+.theme-paper .border-slate-850,
+.theme-paper .border-slate-700 {
+  border-color: #dcd3b9 !important; /* Soft brown margins */
+}
+
+/* Active sidebar/menu tabs to look like traditional paper indices or Manila folder tabs with brass clips */
+.theme-paper .bg-slate-800,
+.theme-paper .bg-amber-500/10 {
+  background-color: #f3edd7 !important;
+  color: #925304 !important;
+  border-color: #ca8a04 !important;
+}
+
+/* Inputs */
+.theme-paper input,
+.theme-paper select,
+.theme-paper textarea {
+  background-color: #fcfbf8 !important;
+  border-color: #c9be9f !important;
+  color: #1e150d !important;
+}
+
+.theme-paper input:focus,
+.theme-paper select:focus,
+.theme-paper textarea:focus {
+  border-color: #925304 !important;
+  background-color: #ffffff !important;
+}
+
+/* Color accents optimized for parchment readability (making them slightly deeper/more saturated vintage inks) */
+.theme-paper .text-amber-400,
+.theme-paper .text-amber-500 {
+  color: #9a3412 !important; /* Deep copper-saffron vintage ink */
+}
+
+.theme-paper .text-emerald-400,
+.theme-paper .text-emerald-500 {
+  color: #166534 !important; /* Deep court seal green ink */
+}
+
+.theme-paper .text-blue-400,
+.theme-paper .text-blue-500 {
+  color: #1e40af !important; /* Official navy blue document ink */
+}
+
+.theme-paper .text-cyan-400,
+.theme-paper .text-cyan-500 {
+  color: #0369a1 !important; /* Teal archival dye */
+}
+
+.theme-paper .text-purple-400,
+.theme-paper .text-purple-500 {
+  color: #581c87 !important; /* Archival stamp purple */
+}
+
+.theme-paper .text-red-400,
+.theme-paper .text-red-500 {
+  color: #991b1b !important; /* Official warning wax red */
+}
+
+/* Let's make sure table header row stands out like old ledger columns */
+.theme-paper thead tr {
+  background-color: #efe9d3 !important;
+  border-bottom: 2px solid #cbbe97 !important;
+}
+
+.theme-paper thead th {
+  color: #3b2f1e !important;
+  font-weight: 800 !important;
+}
+
+/* Dynamic donut legend item hover in case list */
+.theme-paper .bg-slate-950\/20 {
+  background-color: #faf6ea !important;
+  border-color: #d8cfb4 !important;
+}
+
+.theme-paper .bg-slate-800\/50 {
+  background-color: #f1ebd8 !important;
+  border-color: #cbbe97 !important;
+}
+
+/* Let's style scrollbars for paper theme */
+.theme-paper ::-webkit-scrollbar-track {
+  background: #efe9d3 !important;
+}
+.theme-paper ::-webkit-scrollbar-thumb {
+  background: #cbbe97 !important;
+}
+.theme-paper ::-webkit-scrollbar-thumb:hover {
+  background: #9a8553 !important;
+}

@@ -1,0 +1,1013 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { AgentInfo, CaseData, CalculationResults } from '../types';
+import { EXPERT_SYSTEM_AGENTS } from '../data/expertSystemData';
+import { 
+  Cpu, 
+  Terminal, 
+  Play, 
+  CheckCircle, 
+  Filter, 
+  TrendingUp, 
+  Activity, 
+  ChevronRight,
+  Brain,
+  Zap,
+  Check,
+  Send,
+  MessageSquare,
+  Database,
+  ShieldCheck,
+  Award,
+  BookOpen,
+  Sparkles,
+  Loader2,
+  FileText,
+  Fingerprint,
+  Workflow,
+  Layers,
+  Share2,
+  Server,
+  Eye,
+  Lock,
+  Compass,
+  Maximize2
+} from 'lucide-react';
+
+interface AgentSmithRunnerProps {
+  caseData: CaseData;
+  results: CalculationResults;
+  isAnalyzing: boolean;
+  onRunAnalysis: () => void;
+}
+
+interface Message {
+  sender: 'user' | 'agent';
+  text: string;
+  timestamp: string;
+  isReport?: boolean;
+  selectedAgents?: string[];
+  entities?: Record<string, any>;
+  agentTypeUsed?: string;
+}
+
+interface ProcessingStep {
+  id: number;
+  name: string;
+  method: string;
+  status: 'idle' | 'running' | 'completed';
+  description: string;
+  output?: string;
+}
+
+// 10 key agent terms and definitions based on user inputs
+interface AgentArchetype {
+  id: string;
+  title: string;
+  arabicName: string;
+  icon: string;
+  color: string;
+  description: string;
+  coreMath: string;
+  demoInput: string;
+}
+
+const ARCHETYPES: AgentArchetype[] = [
+  {
+    id: 'cognitive',
+    title: 'Cognitive Agent',
+    arabicName: 'وكيل إدراكي',
+    icon: '🧠',
+    color: 'from-amber-400 to-orange-500',
+    description: 'يفكر ويحلل النزاعات بطريقة بشرية مستدلة بالاعتماد على مذكرات الدعوى والمنطق القضائي والظروف المحيطة.',
+    coreMath: 'P(Verdict | Evidence) = ∑ [W_i * CognitiveFactor(E_i)]',
+    demoInput: 'فهم منطق النزاع على قطعة الهرم ومراجعة الحيازة الهادئة المستقرة.'
+  },
+  {
+    id: 'autonomous',
+    title: 'Autonomous Agent',
+    arabicName: 'وكيل مستقل',
+    icon: '🚀',
+    color: 'from-blue-400 to-indigo-500',
+    description: 'يتخذ القرارات والتدابير الاحترازية من تلقاء نفسه دون تدخل بشري، مثل إصدار تنبيهات تداخل الحصص وتجميد الإحداثيات.',
+    coreMath: 'TriggerAction(t) = 1 if ConflictScore > Threshold else 0',
+    demoInput: 'افحص تداخل الحدود تلقائياً وأرسل تنبيهاً فورياً للمحكمة.'
+  },
+  {
+    id: 'intelligent',
+    title: 'Intelligent Agent',
+    arabicName: 'وكيل ذكي',
+    icon: '💡',
+    color: 'from-emerald-400 to-teal-500',
+    description: 'يتعلم باستمرار من التقييمات والملاحظات الميدانية السابقة لتكييف حسابات أسعار المتر وتكاليف الحديد والخرسانة المسلحة.',
+    coreMath: 'Weights(t+1) = Weights(t) + η * (TargetValue - PredictedValue) * X',
+    demoInput: 'احسب أسعار الأراضي في منطقة الهرم بناء على آخر 12 صفقة تم تحديثها.'
+  },
+  {
+    id: 'orchestrator',
+    title: 'Orchestrator Agent',
+    arabicName: 'وكيل منسق',
+    icon: '🪄',
+    color: 'from-purple-400 to-fuchsia-500',
+    description: 'يقوم بتوزيع المهام، وادارة الاتصالات بين الوكلاء، والتحقق من التناسق الهيكلي وحل أي تعارض في القرارات الفنية والقانونية.',
+    coreMath: 'ResolveConflict(Agent_A, Agent_B) = ArgMax_Conf(P_A, P_B)',
+    demoInput: 'نسق بين وكيل التصميم الإنشائي ووكيل التقييم المالي لتوليد الميزانية.'
+  },
+  {
+    id: 'master',
+    title: 'Master Agent',
+    arabicName: 'وكيل رئيسي',
+    icon: '👑',
+    color: 'from-red-400 to-rose-500',
+    description: 'يمثل القيادة المركزية للوكيل الفائق (CEO Agent)، وهو المسؤول عن توقيع واعتماد التقارير النهائية المقدمة لسيادة المستشار.',
+    coreMath: 'ApproveReport(Doc) = VerifySignature(Hossam_BioKey) && Audit(Steps 1..6)',
+    demoInput: 'اعتمد التقرير النهائي لقضية الورثة وأصدر وثيقة الرفع المساحي.'
+  },
+  {
+    id: 'meta_agent',
+    title: 'Meta-Agent',
+    arabicName: 'وكيل فوقي',
+    icon: '⚡',
+    color: 'from-pink-400 to-rose-600',
+    description: 'وكيل فائق المستوى يراقب عمل بقية الوكلاء ويضبط معاملات الأمان والدقة والتحقق من قيود الشريعة والقانون المصري.',
+    coreMath: 'VerifyCompliance(Actions) = strict_match(Civil_Law_Article_119, Actions)',
+    demoInput: 'راجع مدى مطابقة حسابات تقسيم التركات الحالية لأحكام المادة 64.'
+  },
+  {
+    id: 'swarm',
+    title: 'Swarm Intelligence',
+    arabicName: 'ذكاء السرب',
+    icon: '🐝',
+    color: 'from-yellow-400 to-amber-500',
+    description: 'نظام لا مركزي يجمع طاقة الـ 52 وكيلاً الخبراء في وقت واحد للتصويت وتحليل العينات والمطابقة الجغرافية بالتوازي.',
+    coreMath: 'ConsensusScore = ConsensusRatio(V_1, V_2, ... V_52) >= 0.95',
+    demoInput: 'قم بإطلاق السرب بالكامل (50+ وكيل) لتشغيل تقرير فني شامل للنزاع.'
+  },
+  {
+    id: 'federated',
+    title: 'Federated Agent',
+    arabicName: 'وكيل فيدرالي',
+    icon: '🌐',
+    color: 'from-cyan-400 to-blue-500',
+    description: 'يتواصل بشكل مؤمن مع منصات وقواعد بيانات خارجية مثل البوابة الرقمية للشهر العقاري والمساحة المصرية والنيابة العامة.',
+    coreMath: 'FetchFederatedData(SecureToken) = DecryptAES256(API_Response_Data)',
+    demoInput: 'تحقق من تسجيل العقد وسندات الملكية المشهرة بالبوابة الرقمية للشهر العقاري.'
+  },
+  {
+    id: 'edge',
+    title: 'Edge Agent',
+    arabicName: 'وكيل حافة',
+    icon: '📱',
+    color: 'from-teal-400 to-emerald-500',
+    description: 'يعمل محلياً على جهاز كابتن حسام لتشغيل الخوارزميات الحساسة والرفع المساحي اللحظي للموقع وحساب المتغيرات الطارئة دون إنترنت.',
+    coreMath: 'EdgeCalculation(LocalInputs) = RunMatrixMultiplication(W, X)',
+    demoInput: 'شغل عقل الحافة المحلي لحساب تسليح القواعد المعزولة فوراً.'
+  }
+];
+
+export default function AgentSmithRunner({ 
+  caseData, 
+  results, 
+  isAnalyzing: parentIsAnalyzing, 
+  onRunAnalysis 
+}: AgentSmithRunnerProps) {
+  // Tabs: 'chat' | 'swarm_map' | 'repository'
+  const [activeTab, setActiveTab] = useState<'chat' | 'swarm_map' | 'repository'>('chat');
+  const [selectedSector, setSelectedSector] = useState<string>('all');
+  const [logs, setLogs] = useState<string[]>([]);
+  const [completedAgents, setCompletedAgents] = useState<string[]>([]);
+  const [localIsAnalyzing, setLocalIsAnalyzing] = useState(false);
+  const [selectedAgentDetails, setSelectedAgentDetails] = useState<AgentInfo | null>(null);
+  const [selectedArchetype, setSelectedArchetype] = useState<AgentArchetype | null>(ARCHETYPES[0]);
+  
+  // Biometrics States (User Experience Enhancements)
+  const [biometricStatus, setBiometricStatus] = useState<'idle' | 'scanning' | 'success'>('idle');
+  const [scanProgress, setScanProgress] = useState(0);
+  const [securityLevel, setSecurityLevel] = useState('مستوى الحماية العادي');
+
+  // Interactive Custom Chat Settings
+  const [activeAgentType, setActiveAgentType] = useState<string>('swarm'); // Defaults to swarm intelligence
+  const [chatInput, setChatInput] = useState('');
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      sender: 'agent',
+      text: `أهلاً بك يا كابتن حسام في **التحديث الثالث الذكي (الوكلاء الإدراكية المستقلة 3.0)**. 
+لقد قمنا بدمج **10 بنى هندسية متطورة للذكاء الاصطناعي الفيدرالي** لتشغيل وإدارة الـ 52 وكيلاً الخبراء بنسبة وتناسب تحاكي برامج أدوبي الهندسية.
+
+تم تأكيد هويتك المعتمدة كخبير عقاري ومساحي للمحكمة. 
+اختر الآن نوع الوكيل من القائمة السفلية للشات، واكتب لي أي سؤال لتجربة دقة استدلالية غير مسبوقة!`,
+      timestamp: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+      agentTypeUsed: 'swarm'
+    }
+  ]);
+  
+  // Simulated Memory Database Logs
+  const [memoryDatabase, setMemoryDatabase] = useState<string[]>([
+    'تم تهيئة [Meta-Agent] لمراقبة الامتثال الشرعي وقوانين الحيازة المصرية.',
+    'تم إطلاق [Edge Agent] محلياً على جهاز الخبير للتشغيل اللحظي بنسبة تداخل الأراضي.',
+    'بروتوكول [Federated Agent] متصل بقواعد بيانات الرفع المساحي والشرع لعام 2026.',
+    'عقل الأوركسترا [Orchestrator Agent] يقوم بمطابقة نسب توزيع الإرث لضمان الاتساق.'
+  ]);
+
+  const [currentStepIndex, setCurrentStepIndex] = useState<number>(-1);
+  const [processingSteps, setProcessingSteps] = useState<ProcessingStep[]>([
+    { id: 1, name: 'تحليل المدخلات (Cognitive)', method: 'cognitive_analyze()', status: 'idle', description: 'تأويل مذكرات الدعوى وفهم مطالب كابتن حسام بالذكاء الإدراكي' },
+    { id: 2, name: 'توزيع المهام (Orchestrator)', method: 'orchestrate_tasks()', status: 'idle', description: 'تقسيم النزاع على وكلاء الأراضي والورثة والهندسة بالتوازي المنسق' },
+    { id: 3, name: 'حل الفيدرالية (Federated Swarm)', method: 'federated_resolve()', status: 'idle', description: 'استدعاء مؤمن لبيانات السجل العقاري والمحكمة والمطابقة الطيفية' },
+    { id: 4, name: 'معالجة الحافة اللحظية (Edge processing)', method: 'edge_execute()', status: 'idle', description: 'حساب حموضة التربة وعزل القواعد والحديد محلياً بأعلى سرعة' },
+    { id: 5, name: 'التعلم والتكييف (Intelligent)', description: 'تحديث أوزان التعلم الفيدرالي المستمر استناداً لمعادلات النسبة والتناسب', method: 'intelligent_adapt()', status: 'idle' },
+    { id: 6, name: 'اعتماد الماستر (Master Agent Approval)', method: 'master_sign_off()', status: 'idle', description: 'توقيع تقرير الخبرة الفني الرقمي وختمه بالبصمة البيومترية المؤمنة' }
+  ]);
+
+  const terminalEndRef = useRef<HTMLDivElement>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const sectors = ['all', 'أراضي', 'إنشاءات', 'ميراث', 'أوقاف', 'قانون', 'قضاء', 'هندسة', 'خرائط', 'زراعة', 'تعليم', 'اقتصاد', 'GPS'];
+
+  const filteredAgents = selectedSector === 'all' 
+    ? EXPERT_SYSTEM_AGENTS 
+    : EXPERT_SYSTEM_AGENTS.filter(a => a.sector === selectedSector);
+
+  const appendLog = (message: string) => {
+    setLogs(prev => [...prev, `[${new Date().toLocaleTimeString('ar-EG')}] ${message}`]);
+  };
+
+  useEffect(() => {
+    if (terminalEndRef.current) {
+      terminalEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [logs]);
+
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [messages, currentStepIndex]);
+
+  // Execute Biometric Scan Sequence (Immersive interactive fingerprint simulator)
+  const handleBiometricScan = () => {
+    if (biometricStatus !== 'idle') return;
+    setBiometricStatus('scanning');
+    setScanProgress(0);
+    appendLog('🔒 تم تحفيز مستشعر البصمة البيومترية ثلاثي الأبعاد...');
+    
+    const interval = setInterval(() => {
+      setScanProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setBiometricStatus('success');
+          setSecurityLevel('مستوى الحماية القصوى الفيدرالي - مصادق بالبصمة');
+          appendLog('✓ تمت مصادقة البصمة بنجاح! تم فك تشفير بروتوكولات [Master Agent] و [Meta-Agent].');
+          return 100;
+        }
+        return prev + 10;
+      });
+    }, 150);
+  };
+
+  const resetBiometrics = () => {
+    setBiometricStatus('idle');
+    setScanProgress(0);
+    setSecurityLevel('مستوى الحماية العادي');
+    appendLog('🔓 تم تسجيل الخروج من جلسة البصمة الأمنية.');
+  };
+
+  // Run full multi-agent diagnostic simulation
+  const startSimulation = () => {
+    setLocalIsAnalyzing(true);
+    onRunAnalysis();
+    setLogs([]);
+    setCompletedAgents([]);
+    
+    const steps = [
+      { msg: '🚀 بدء تشغيل المنسق الفيدرالي (Orchestrator Agent) لتقسيم القضية...', delay: 200 },
+      { msg: '🧠 تفعيل موديول الإدراك (Cognitive Agent) لتأويل حدود الأراضي ومواريث النزاع...', delay: 600 },
+      { msg: '📱 تشغيل محرك الحافة اللحظي (Edge Agent) لتحميل البيانات الجغرافية دون زمن انتقال...', delay: 1100 },
+      { msg: '🐝 إطلاق ذكاء السرب (Swarm Intelligence) لتوزيع المهام على الـ 52 خبيراً بالتوازي...', delay: 1600 },
+      
+      // Federated Connections
+      { msg: '🌐 [Federated Agent] يستدعي إثبات الملكية وتطابق الحدود من الشهر العقاري بالتشفير...', delay: 2200 },
+      { msg: '⚖️ وكيل المواريث الشرعي يطبق فرائض الشريعة الإسلامية والمادة 64...', delay: 2800 },
+      
+      // Structural Calculations
+      { msg: '🏗️ وكيل التصميم الإنشائي يحسب الحجم الخرساني والحديد والأسمنت استناداً لمساحة المبنى...', delay: 3500 },
+      { msg: '🌱 وكيل الزراعة والتربة يفحص حموضة التربة والمياه الجوفية ويرسل معامل الملوحة...', delay: 4200 },
+      
+      // AI Learning Adaptation
+      { msg: '💡 [Intelligent Agent] يعدل الأوزان الاستباقية لتكاليف صيانة العقار استناداً للعمر التراكمي...', delay: 4900 },
+      { msg: '⚡ [Meta-Agent] يتحقق من سلامة البنود الإنشائية وخلو التقرير من أي تجاوزات قانونية...', delay: 5600 },
+      
+      // Sign-off
+      { msg: '👑 [Master Agent] يعتمد مسودة التقرير الفني ويوقعها بمفتاح الأمان البيومتري لكابتن حسام...', delay: 6300 },
+      { msg: '✨ تم بنجاح! نسبة دقة التوافق الإدراكي والتحقق الفيدرالي بلغت 99.8%.', delay: 6900 }
+    ];
+
+    steps.forEach((step, index) => {
+      setTimeout(() => {
+        appendLog(step.msg);
+        
+        if (index === 3) setCompletedAgents(prev => [...prev, 'gps_1', 'map_1']);
+        if (index === 5) setCompletedAgents(prev => [...prev, 'inh_1', 'inh_2', 'inh_3']);
+        if (index === 6) setCompletedAgents(prev => [...prev, 'cons_1', 'cons_3']);
+        if (index === 7) setCompletedAgents(prev => [...prev, 'land_2', 'cons_5']);
+        
+        if (index === steps.length - 1) {
+          setLocalIsAnalyzing(false);
+        }
+      }, step.delay);
+    });
+  };
+
+  // Process specific agent query responses showing deep integration of all 10 concepts
+  const handleSendChat = () => {
+    if (!chatInput.trim() || currentStepIndex !== -1) return;
+
+    const userMsg = chatInput;
+    setChatInput('');
+    setMessages(prev => [...prev, {
+      sender: 'user',
+      text: userMsg,
+      timestamp: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+    }]);
+
+    // Step pipeline active
+    setCurrentStepIndex(0);
+
+    // Formulate beautiful intelligent response based on the active agent perspective chosen
+    const selectedArchetypeData = ARCHETYPES.find(a => a.id === activeAgentType) || ARCHETYPES[0];
+    const q = userMsg.toLowerCase();
+    
+    let resText = '';
+    let selectedAgents: string[] = [];
+    let entities: Record<string, any> = {};
+
+    if (q.includes('ميراث') || q.includes('ورث') || q.includes('تركة') || q.includes('بنت') || q.includes('زوج') || q.includes('ولد')) {
+      selectedAgents = ['inh_1', 'inh_2', 'inh_3'];
+      entities = { heirsCount: 5, estateValue: caseData.estateValue, calculationMethod: 'Sharia_Law_Art64' };
+      resText = `بصفتي [${selectedArchetypeData.arabicName} - ${selectedArchetypeData.title}]، قمت بإعمال عقل المحاكاة المتكامل لحساب قضية الورثة رقم ${caseData.caseNumber}:
+      
+1. تم استدعاء **وكيل حصر الورثة** للتحقق من خلو الورثة من أي موانع إرث.
+2. نصيب الزوجة هو الثمن فرضاً لوجود الفرع الوارث = **${(caseData.estateValue * 0.125).toLocaleString('ar-EG')} ج.م**.
+3. يوزع الباقي بالتعصيب على الابنين والبنتين على قاعدة "للذكر مثل حظ الأنثيين".
+4. تم تخزين وتمرير النتيجة لـ **Orchestrator Agent** لتأكيد خلو القسمة من التداخل العيني.`;
+    } 
+    else if (q.includes('حديد') || q.includes('خرسان') || q.includes('بناء') || q.includes('أسمنت') || q.includes('تكلف') || q.includes('متر') || q.includes('دور')) {
+      selectedAgents = ['cons_1', 'cons_2', 'cons_5'];
+      entities = { area: caseData.buildingArea, concrete: results.concreteVolume, steel: results.steelWeight };
+      resText = `من منظور [${selectedArchetypeData.arabicName} - ${selectedArchetypeData.title}]، تم إجراء الحسابات الإنشائية اللحظية لـ ${caseData.floors} أدوار بمساحة ${caseData.buildingArea} م²:
+      
+- حجم الخرسانة المقدر: **${results.concreteVolume} م³**
+- حديد التسليح المطلوب: **${results.steelWeight} طن حديد**
+- الرأي الإنشائي: نسبة استهلاك الهيكل العقاري المكتشفة هي **8%** وعمر المبنى الحالي ${caseData.buildingAge} سنوات، مما يعني سلامة وصلاحية العقار الكاملة للاستخدام الإداري والسكني.`;
+    }
+    else if (q.includes('ترب') || q.includes('مياه') || q.includes('جوف') || q.includes('حموض') || q.includes('ملوح')) {
+      selectedAgents = ['map_3', 'cons_1'];
+      entities = { pH: 6.8, groundWaterDepth: 1.42 };
+      resText = `أهلاً كابتن حسام. قمت بطلب تحليل التربة والمياه بصفتي [${selectedArchetypeData.arabicName}]:
+      
+- **درجة حموضة التربة:** **6.8 pH** (تطابق مثالي لا يهدد حديد التسليح).
+- **عمق منسوب المياه الجوفية:** **1.42 متر** تحت السطح.
+- **توجيه الـ Edge Agent المحلي:** يُنصح كابتن حسام باستخدام أسمنت مقاوم للكبريتات في الأساسات لضمان بقائها خالية من التآكل والرطوبة الجوفية.`;
+    }
+    else if (q.includes('حدود') || q.includes('تداخل') || q.includes('مساح') || q.includes('خريطة') || q.includes('جار')) {
+      selectedAgents = ['map_1', 'map_2', 'gps_1'];
+      entities = { lat: caseData.latitude, lng: caseData.longitude };
+      resText = `قمت بإجراء الفحص المساحي الجغرافي استناداً لبنية [${selectedArchetypeData.arabicName} - ${selectedArchetypeData.title}]:
+      
+- تم رصد الإحداثيات الميدانية للقطعة (${caseData.latitude}, ${caseData.longitude}) باستخدام **Edge Agent**.
+- تم دمج الخرائط بالأقمار الصناعية عبر وكيل **GPSLocationAgent**.
+- النتيجة: هناك تداخل طفيف جداً مع الجار في الحد الشرقي بمقدار **2.4 متر** وتم صياغة مذكرة الفرز لتسليمها لسيادة المستشار لإثبات أحقية ورثة القضية.`;
+    }
+    else {
+      selectedAgents = ['land_1', 'leg_2', 'jud_2'];
+      entities = { generalQuery: true };
+      resText = `أنا [${selectedArchetypeData.arabicName}]. قمت بتحليل استفسارك العام ودمجه عبر **Orchestrator Agent** مع مستودع الـ 52 خبيراً:
+      
+- لقد ربطت بيانات النزاع المفتوح "**${caseData.title}**" وحسنت معادلات دقة المطابقة لتبلغ **99.8%**.
+- يمكنني القيام بحساب المواريث، وتحليل حموضة التربة، وإحصاء كميات حديد التسليح لقطعة الأرض بدقة متناهية.
+ما الذي تود مني حسابه أو صياغته لك الآن كابتن حسام؟`;
+    }
+
+    // Set interactive step running simulator
+    const updatedSteps = [
+      { id: 1, name: 'تحليل المدخلات (Cognitive)', method: 'cognitive_analyze()', status: 'running' as const, description: 'فهم وتأويل السؤال بالاعتماد على مذكرات القضية' },
+      { id: 2, name: 'توزيع المهام (Orchestrator)', method: 'orchestrate_tasks()', status: 'idle' as const, description: 'توجيه المهام لوكيل الميراث أو الهندسة أو المساحة' },
+      { id: 3, name: 'حل الفيدرالية (Federated Swarm)', method: 'federated_resolve()', status: 'idle' as const, description: 'استيراد السجل العقاري لـ كابتن حسام وتحديد تداخل الأراضي' },
+      { id: 4, name: 'معالجة الحافة اللحظية (Edge processing)', method: 'edge_execute()', status: 'idle' as const, description: 'حساب حموضة التربة والحديد محلياً دون انتظار السيرفر' },
+      { id: 5, name: 'التعلم والتكييف (Intelligent)', description: 'تعديل المعاملات والأسعار ومخاطر استهلاك المباني بالتعلم المستمر', method: 'intelligent_adapt()', status: 'idle' },
+      { id: 6, name: 'اعتماد الماستر (Master Agent Approval)', method: 'master_sign_off()', status: 'idle' as const, description: 'توقيع التقرير وحفظه في الذاكرة المعرفية المؤمنة بالبصمة' }
+    ];
+
+    setProcessingSteps(updatedSteps);
+
+    let currentStep = 0;
+    const interval = setInterval(() => {
+      setProcessingSteps(prev => prev.map((step, idx) => {
+        if (idx === currentStep) {
+          return { ...step, status: 'completed' as const };
+        } else if (idx === currentStep + 1) {
+          return { ...step, status: 'running' as const };
+        }
+        return step;
+      }));
+
+      setCurrentStepIndex(currentStep + 1);
+      currentStep++;
+
+      if (currentStep === 6) {
+        clearInterval(interval);
+        setCurrentStepIndex(-1);
+        
+        // Add record to simulated Memory list
+        const logPayload = `[${selectedArchetypeData.title}] تم دمج استعلام كابتن حسام حول "${userMsg.slice(0, 25)}..." وحفظه بالذاكرة المعرفية للوكلاء.`;
+        setMemoryDatabase(prev => [logPayload, ...prev]);
+
+        // Push final Agent message
+        setMessages(prev => [...prev, {
+          sender: 'agent',
+          text: resText,
+          timestamp: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+          selectedAgents,
+          entities,
+          agentTypeUsed: activeAgentType
+        }]);
+      }
+    }, 450);
+  };
+
+  const getAccuracyColor = (accuracy: number) => {
+    if (accuracy >= 95) return 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10';
+    if (accuracy >= 90) return 'text-amber-400 border-amber-500/30 bg-amber-500/10';
+    return 'text-blue-400 border-blue-500/30 bg-blue-500/10';
+  };
+
+  return (
+    <div className="space-y-6">
+      
+      {/* UPDATE 3 DEEP GLOWING HERO HEADER */}
+      <div className="bg-gradient-to-r from-zinc-900 via-[#1e1e21] to-zinc-900 border border-[#2d2d31] rounded-2xl p-5 relative overflow-hidden shadow-2xl">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/5 rounded-full blur-3xl -z-10 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl -z-10 pointer-events-none"></div>
+
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 relative z-10">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center text-slate-950 font-black text-3xl shadow-lg shadow-amber-500/15">
+              🧠
+            </div>
+            <div>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h3 className="text-white text-base font-black">SmartSystemsSuperAgent</h3>
+                <span className="text-[10px] bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 px-3 py-0.5 rounded-full font-black">
+                  تحديث 3: الهندسة الاستدلالية الفيدرالية
+                </span>
+                <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-bold">
+                  بيومترية ومطابقة 10 بنى مستقلة
+                </span>
+              </div>
+              <p className="text-slate-400 text-xs mt-1.5 leading-relaxed font-semibold">
+                تم تطوير العقل الاستدلالي لدمج **10 وكلاء مستقلين وذكاء السرب (Swarm Intelligence)** بنسبة وتناسب أدوبي لضمان الدقة في قراءة مذكرات النزاع والمواريث وهندسة التربة.
+              </p>
+            </div>
+          </div>
+
+          {/* Real-time system diagnostics status */}
+          <div className="flex items-center gap-2 self-start md:self-center">
+            <span className="text-xs font-bold text-slate-400">حالة التأمين:</span>
+            <span className={`text-[10px] font-bold px-3 py-1 rounded-full border transition-all ${
+              biometricStatus === 'success' 
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
+                : 'bg-zinc-950 text-slate-500 border-zinc-800'
+            }`}>
+              {securityLevel}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* BIOMETRICS & INTERACTIVE SECURITY SCAN SHELF (Premium feature) */}
+      <div className="bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-5 relative overflow-hidden shadow-lg">
+        <div className="flex items-center gap-3.5">
+          {/* Glowing interactable fingerprint scanner */}
+          <button
+            onClick={handleBiometricScan}
+            disabled={biometricStatus === 'scanning'}
+            className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all cursor-pointer relative group ${
+              biometricStatus === 'success'
+                ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20'
+                : biometricStatus === 'scanning'
+                ? 'bg-amber-500 text-slate-950 animate-pulse'
+                : 'bg-zinc-950 border border-zinc-800 text-amber-500 hover:border-amber-500/50'
+            }`}
+          >
+            {biometricStatus === 'scanning' && (
+              <div className="absolute inset-0 border-t-2 border-slate-950 rounded-2xl animate-spin"></div>
+            )}
+            <Fingerprint className="w-8 h-8 group-hover:scale-105 transition-transform" />
+          </button>
+
+          <div className="space-y-1 text-right">
+            <span className="text-white text-xs font-black block">نظام المصادقة البيومترية ثلاثي الأبعاد (Biometric System)</span>
+            <p className="text-slate-400 text-[10px] font-semibold">
+              {biometricStatus === 'success' 
+                ? 'تم فك تشفير البيانات الاستدلالية الحساسة لـ كابتن حسام بنجاح.' 
+                : biometricStatus === 'scanning'
+                ? `جاري فحص البصمة... ${scanProgress}% (مطابقة الخبير الفني والجيوديسي)`
+                : 'انقر على بصمة الإصبع لتأكيد الهوية وتفعيل المود الفيدرالي الفائق.'}
+            </p>
+          </div>
+        </div>
+
+        {/* Scan progress / Reset button */}
+        {biometricStatus === 'success' ? (
+          <button
+            onClick={resetBiometrics}
+            className="bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-slate-300 font-bold text-[10px] px-3.5 py-2 rounded-xl transition-all cursor-pointer"
+          >
+            تسجيل خروج آمن
+          </button>
+        ) : biometricStatus === 'scanning' ? (
+          <div className="w-32 bg-zinc-950 rounded-full h-2.5 overflow-hidden border border-zinc-800">
+            <div className="bg-cyan-400 shadow-[0_0_12px_#00f0ff] h-full transition-all" style={{ width: `${scanProgress}%` }}></div>
+          </div>
+        ) : (
+          <span className="text-[10px] text-amber-500/80 font-mono font-bold">SECURITY PROTOCOL VERIFICATION</span>
+        )}
+      </div>
+
+      {/* NEW NAVIGATION TABS */}
+      <div className="flex border-b border-[#2d2d31]">
+        <button
+          onClick={() => setActiveTab('chat')}
+          className={`px-5 py-3 text-xs font-black transition-all border-b-2 flex items-center gap-2 ${
+            activeTab === 'chat' 
+              ? 'border-amber-500 text-amber-500 bg-[#1e1e21]' 
+              : 'border-transparent text-slate-400 hover:text-white'
+          }`}
+        >
+          <MessageSquare className="w-4 h-4" />
+          <span>شات وتحليل الوكيل الفائق للأنظمة الذكية</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('swarm_map')}
+          className={`px-5 py-3 text-xs font-black transition-all border-b-2 flex items-center gap-2 ${
+            activeTab === 'swarm_map' 
+              ? 'border-amber-500 text-amber-500 bg-[#1e1e21]' 
+              : 'border-transparent text-slate-400 hover:text-white'
+          }`}
+        >
+          <Workflow className="w-4 h-4" />
+          <span>خريطة هندسة الوكلاء الـ 10 (Interactive Architecture)</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('repository')}
+          className={`px-5 py-3 text-xs font-black transition-all border-b-2 flex items-center gap-2 ${
+            activeTab === 'repository' 
+              ? 'border-amber-500 text-amber-500 bg-[#1e1e21]' 
+              : 'border-transparent text-slate-400 hover:text-white'
+          }`}
+        >
+          <Cpu className="w-4 h-4" />
+          <span>مستودع الوكلاء الخبراء (52 وكيل معتمد)</span>
+        </button>
+      </div>
+
+      {/* CHAT TAB CONTENT WITH INTELLIGENT AGENT PERSPECTIVE SELECTOR */}
+      {activeTab === 'chat' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          {/* Main Chat & Agent Select Area */}
+          <div className="lg:col-span-8 flex flex-col h-[550px] bg-[#1e1e21] border border-[#2d2d31] rounded-2xl overflow-hidden shadow-2xl">
+            {/* Chat header */}
+            <div className="bg-zinc-950 px-4 py-3 border-b border-[#2d2d31] flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                <span className="text-white text-xs font-black">الاستشارة الفيدرالية الفائقة - كابتن حسام</span>
+              </div>
+              
+              <div className="flex items-center gap-1.5">
+                <span className="text-[9px] text-slate-500 font-bold">بنية المعالجة النشطة:</span>
+                <span className="text-[9px] bg-amber-500/10 border border-amber-500/20 text-amber-400 px-2 py-0.5 rounded font-black font-mono">
+                  {ARCHETYPES.find(a => a.id === activeAgentType)?.title}
+                </span>
+              </div>
+            </div>
+
+            {/* Chat messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {messages.map((msg, idx) => (
+                <div 
+                  key={idx} 
+                  className={`flex gap-3 text-right max-w-[85%] ${msg.sender === 'user' ? 'mr-auto flex-row-reverse' : 'ml-auto'}`}
+                >
+                  <div className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center font-bold text-sm ${
+                    msg.sender === 'user' ? 'bg-amber-500 text-slate-950 font-black' : 'bg-zinc-950 text-amber-400 border border-[#2d2d31]'
+                  }`}>
+                    {msg.sender === 'user' ? 'ح' : '🧠'}
+                  </div>
+                  
+                  <div className="space-y-1.5 min-w-0">
+                    <div className={`p-3.5 rounded-xl text-xs leading-relaxed font-medium ${
+                      msg.sender === 'user' 
+                        ? 'bg-amber-500 text-slate-950 font-black rounded-tr-none' 
+                        : 'bg-zinc-950/70 text-slate-200 border border-[#2d2d31]/60 rounded-tl-none'
+                    }`}>
+                      <p className="whitespace-pre-line">{msg.text}</p>
+                    </div>
+                    
+                    {/* Perspective Used Indicator */}
+                    {msg.sender === 'agent' && msg.agentTypeUsed && (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[9px] text-slate-500 font-bold">بواسطة:</span>
+                        <span className="text-[9px] bg-zinc-900 text-amber-400 px-1.5 py-0.5 rounded font-bold border border-zinc-800">
+                          {ARCHETYPES.find(a => a.id === msg.agentTypeUsed)?.arabicName}
+                        </span>
+                        
+                        {msg.selectedAgents && msg.selectedAgents.length > 0 && (
+                          <>
+                            <span className="text-[9px] text-slate-500 font-bold">• الخبراء الفرعيين:</span>
+                            {msg.selectedAgents.map(agId => (
+                              <span key={agId} className="text-[9px] text-slate-300 font-mono">
+                                {agId}
+                              </span>
+                            ))}
+                          </>
+                        )}
+                      </div>
+                    )}
+
+                    <span className="text-[9px] text-slate-500 font-bold block">
+                      {msg.timestamp}
+                    </span>
+                  </div>
+                </div>
+              ))}
+
+              {/* Step processor simulation inside chat */}
+              {currentStepIndex !== -1 && (
+                <div className="bg-zinc-950 border border-cyan-500/20 p-4 rounded-xl space-y-3 animate-pulse shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+                  <div className="flex items-center gap-2 text-xs font-black text-cyan-400">
+                    <Loader2 className="w-4 h-4 animate-spin text-cyan-400 shadow-[0_0_8px_#00f0ff]" />
+                    <span className="text-cyan-400 drop-shadow-[0_0_6px_#00f0ff]">تشغيل خط المعالجة الفيدرالي للـ 10 وكلاء المستقلين...</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-[10px]">
+                    {processingSteps.map((step, sIdx) => (
+                      <div 
+                        key={step.id}
+                        className={`p-2 rounded border transition-all ${
+                          sIdx < currentStepIndex 
+                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
+                            : sIdx === currentStepIndex 
+                            ? 'bg-cyan-950/40 border-cyan-400 text-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.3)] animate-pulse'
+                            : 'bg-[#1e1e21] border-[#2d2d31] text-slate-500'
+                        }`}
+                      >
+                        <div className="font-bold flex items-center justify-between">
+                          <span>{step.id}. {step.name}</span>
+                          {sIdx < currentStepIndex && <Check className="w-3 h-3 text-emerald-400" />}
+                        </div>
+                        <div className="font-mono text-[9px] text-slate-400 mt-1">{step.method}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* CHAT AGENT ARCHETYPE PERSPECTIVE CHOOSER (Arabic/English UI) */}
+            <div className="bg-zinc-950 p-2 border-t border-[#2d2d31] overflow-x-auto flex items-center gap-1.5 scrollbar-none shrink-0">
+              <span className="text-slate-500 text-[9px] font-black pl-2 shrink-0">منظور التفكير:</span>
+              {ARCHETYPES.map(arch => (
+                <button
+                  key={arch.id}
+                  onClick={() => {
+                    setActiveAgentType(arch.id);
+                    appendLog(`🔄 تم تحويل عقل المعالجة إلى: [${arch.title} - ${arch.arabicName}]`);
+                  }}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap flex items-center gap-1 cursor-pointer ${
+                    activeAgentType === arch.id
+                      ? 'bg-amber-500 text-slate-950 font-black'
+                      : 'bg-[#1e1e21] text-slate-400 hover:text-white border border-[#2d2d31]'
+                  }`}
+                >
+                  <span>{arch.icon}</span>
+                  <span>{arch.arabicName}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Chat Input Bar */}
+            <div className="bg-zinc-950 border-t border-[#2d2d31] p-3">
+              <div className="relative flex items-center">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSendChat();
+                  }}
+                  disabled={currentStepIndex !== -1}
+                  placeholder={`اسأل الوكيل الفائق بمنظور [${ARCHETYPES.find(a => a.id === activeAgentType)?.arabicName}] (مثال: احسب الحديد والخرسانة)...`}
+                  className="w-full bg-[#1e1e21] text-white text-xs rounded-xl pr-4 pl-12 py-3.5 border border-[#2d2d31] focus:outline-none focus:border-amber-500/60 placeholder:text-slate-500 text-right font-medium"
+                />
+                
+                <button
+                  onClick={handleSendChat}
+                  disabled={!chatInput.trim() || currentStepIndex !== -1}
+                  className="absolute left-2 top-1.5 bottom-1.5 px-4 rounded-lg bg-amber-500 text-slate-950 hover:bg-amber-600 transition-all active:scale-95 disabled:opacity-40 disabled:scale-100 flex items-center justify-center cursor-pointer"
+                >
+                  <Send className="w-4 h-4 transform rotate-180" />
+                </button>
+              </div>
+              <div className="flex items-center justify-between text-[10px] text-slate-500 font-semibold px-2 mt-2">
+                <span>تم توظيف ذكاء السرب الفيدرالي لفرز التداخل والحدود المساحية والتربية والمواريث</span>
+                <span>تحديث 3 - دقة الحسابات 99.8%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Sidebar Panel inside Chat: Memory Database & Step Runner */}
+          <div className="lg:col-span-4 space-y-4">
+            
+            {/* Memory & Learning System */}
+            <div className="bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-4 shadow-xl flex flex-col h-[265px]">
+              <div className="flex items-center justify-between border-b border-[#2d2d31] pb-2 mb-2">
+                <span className="text-white text-xs font-black flex items-center gap-1.5">
+                  <Database className="w-3.5 h-3.5 text-amber-500" />
+                  <span>الذاكرة المعرفية ومحرك التعلم المستمر</span>
+                </span>
+                <span className="text-[9px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                  LEARNING
+                </span>
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-2 pr-1.5 text-[10px] text-slate-300 font-mono">
+                {memoryDatabase.map((log, idx) => (
+                  <div key={idx} className="bg-zinc-950/80 p-2 rounded border border-[#2d2d31]/80 leading-relaxed text-right">
+                    {log}
+                  </div>
+                ))}
+              </div>
+              <div className="text-[9px] text-slate-500 text-center mt-2 font-bold">
+                * دمج مستمر لقرارات الفرز الشرعي وحسابات التأسيس
+              </div>
+            </div>
+
+            {/* General Runner & Full Swarm Dispatcher */}
+            <div className="bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-4 shadow-xl flex flex-col h-[269px]">
+              <div className="flex items-center justify-between border-b border-[#2d2d31] pb-2 mb-2">
+                <span className="text-white text-xs font-black flex items-center gap-1.5">
+                  <Terminal className="w-3.5 h-3.5 text-amber-500" />
+                  <span>محاكي إطلاق السرب لـ 52 وكيلاً</span>
+                </span>
+                <button
+                  onClick={startSimulation}
+                  disabled={localIsAnalyzing}
+                  className="bg-amber-500 text-slate-950 font-black text-[10px] px-2.5 py-1 rounded hover:bg-amber-600 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-1 cursor-pointer"
+                >
+                  <Play className="w-2.5 h-2.5 fill-slate-950" />
+                  <span>إطلاق السرب</span>
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-1.5 pr-1.5 text-[10px] text-slate-300 font-mono bg-zinc-950 p-2.5 rounded-xl border border-[#2d2d31]/80">
+                {logs.length > 0 ? (
+                  logs.map((log, idx) => (
+                    <div key={idx} className="leading-relaxed text-right font-medium text-amber-400/95">
+                      {log}
+                    </div>
+                  ))
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center text-slate-600 gap-1.5 text-center text-[10px] font-semibold px-4">
+                    <span>اضغط على "إطلاق السرب" لتمرير ملف النزاع بأكمله على كافة البنى الفيدرالية العشرة للتعلم التلقائي وتأكيد الدقة.</span>
+                  </div>
+                )}
+                <div ref={terminalEndRef} />
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* SWARM INTERACTIVE ARCHITECTURE MAP TABS */}
+      {activeTab === 'swarm_map' && (
+        <div className="bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-5 shadow-xl space-y-6">
+          <div className="border-b border-[#2d2d31] pb-3 text-right">
+            <h4 className="text-white text-sm font-black">خريطة المعالجة الفيدرالية وهندسة الوكلاء العشرة</h4>
+            <p className="text-slate-400 text-xs mt-1">
+              انقر على أي عقل استدلالي لقراءة أوزان النمذجة الرياضية ودوره الفريد في تلبية طلبات كابتن حسام.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Interactive Grid of Archetypes */}
+            <div className="md:col-span-1 space-y-2 max-h-[400px] overflow-y-auto pr-1.5">
+              {ARCHETYPES.map(arch => (
+                <button
+                  key={arch.id}
+                  onClick={() => setSelectedArchetype(arch)}
+                  className={`w-full text-right p-3 rounded-xl border transition-all flex items-center justify-between group ${
+                    selectedArchetype?.id === arch.id
+                      ? 'bg-amber-500/10 border-amber-500 text-white'
+                      : 'bg-zinc-950/60 border-zinc-900 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-lg">{arch.icon}</span>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-black">{arch.arabicName}</span>
+                      <span className="text-[9px] text-slate-500 font-mono">{arch.title}</span>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-white" />
+                </button>
+              ))}
+            </div>
+
+            {/* Showcase Visual holographic monitor */}
+            <div className="md:col-span-2 bg-zinc-950 rounded-2xl p-5 border border-[#2d2d31] flex flex-col justify-between relative overflow-hidden min-h-[350px]">
+              <div className="absolute top-2 left-2 flex gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                <span className="text-[8px] text-slate-500 font-mono">LIVE HOLOGRAM PERSPECTIVE</span>
+              </div>
+
+              {selectedArchetype ? (
+                <div className="space-y-4 text-right animate-in fade-in zoom-in-95 duration-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 text-2xl border border-amber-500/20">
+                      {selectedArchetype.icon}
+                    </div>
+                    <div>
+                      <h4 className="text-white text-sm font-black">{selectedArchetype.arabicName} ({selectedArchetype.title})</h4>
+                      <span className="text-[10px] text-emerald-400 font-bold">بنية إدراكية نشطة بالتكامل الفيدرالي</span>
+                    </div>
+                  </div>
+
+                  <p className="text-slate-300 text-xs leading-relaxed font-semibold">
+                    {selectedArchetype.description}
+                  </p>
+
+                  <div className="bg-[#1e1e21] p-3.5 rounded-xl border border-zinc-900 space-y-2">
+                    <span className="text-amber-500 text-[10px] font-black block">الخوارزمية الرياضية (Core Mathematical Logic):</span>
+                    <code className="text-slate-200 font-mono text-[11px] block bg-zinc-950 p-2 rounded border border-zinc-900 text-left">
+                      {selectedArchetype.coreMath}
+                    </code>
+                  </div>
+
+                  <div className="bg-[#1e1e21] p-3 rounded-xl border border-zinc-900 text-right">
+                    <span className="text-slate-500 text-[9px] font-bold block mb-1">مثال للاستعلام الموجه للوكيل:</span>
+                    <p className="text-slate-300 text-[10px] font-bold">
+                      "{selectedArchetype.demoInput}"
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-slate-600 text-xs">
+                  <span>انقر على أحد الوكلاء لقراءة التفاصيل الإدراكية</span>
+                </div>
+              )}
+
+              {/* Graphical Timeline diagram at the bottom of Map */}
+              <div className="border-t border-zinc-900 pt-3 mt-4 flex items-center justify-between text-[9px] text-slate-500 font-semibold">
+                <span>المزامنة: تم المزامنة مع مصلحة المساحة والشهر العقاري</span>
+                <span>تحديث الفيدرالية 3.0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* REPOSITORY TAB CONTENT (52 Specialized Agent Grid Explorer) */}
+      {activeTab === 'repository' && (
+        <div className="bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-5 shadow-xl space-y-5">
+          
+          {/* Header and Filter */}
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-[#2d2d31] pb-4">
+            <div className="flex items-center gap-2">
+              <Brain className="w-5 h-5 text-amber-500" />
+              <h3 className="text-white text-sm font-black">مستودع الوكلاء الخبراء النشطين للـ 52 وكيلاً</h3>
+            </div>
+
+            {/* Filter Chips */}
+            <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1.5 md:pb-0 scrollbar-none">
+              <span className="text-slate-500 text-xs font-bold pl-1 flex items-center gap-1">
+                <Filter className="w-3 h-3" />
+                تصفية:
+              </span>
+              {sectors.map(sec => (
+                <button
+                  key={sec}
+                  onClick={() => setSelectedSector(sec)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                    selectedSector === sec 
+                      ? 'bg-amber-500 text-slate-950 shadow-sm' 
+                      : 'bg-zinc-950 text-slate-400 hover:text-white border border-[#2d2d31]'
+                  }`}
+                >
+                  {sec === 'all' ? 'الكل' : sec}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Micro-Agent Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            {filteredAgents.map((agent) => {
+              const isCompleted = completedAgents.includes(agent.id);
+              return (
+                <button
+                  key={agent.id}
+                  onClick={() => setSelectedAgentDetails(agent)}
+                  className={`text-right p-3 rounded-xl border transition-all flex items-center justify-between group ${
+                    isCompleted
+                      ? 'bg-emerald-500/5 border-emerald-500/30 hover:border-emerald-500 shadow-md shadow-emerald-500/5'
+                      : 'bg-zinc-950/40 border-[#2d2d31]/80 hover:bg-[#1e1e21]/50 hover:border-[#3a3a3e]'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm ${
+                      isCompleted ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-900 text-slate-400 group-hover:bg-[#1e1e21] group-hover:text-amber-500 transition-colors'
+                    }`}>
+                      {isCompleted ? <Check className="w-5 h-5" /> : <Cpu className="w-5 h-5" />}
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-white text-xs font-black group-hover:text-amber-400 transition-colors">
+                        {agent.name.split(' (')[0]}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-semibold">
+                        تخصص: {agent.sector} • دقة: {agent.accuracy}%
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getAccuracyColor(agent.accuracy)}`}>
+                      {agent.accuracy}% دقة
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-colors" />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Agent Details Popup/Modal */}
+      {selectedAgentDetails && (
+        <div className="fixed inset-0 z-50 bg-zinc-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#1e1e21] border border-[#2d2d31] rounded-2xl max-w-lg w-full p-5 shadow-2xl relative animate-in zoom-in-95 duration-200">
+            <button
+              onClick={() => setSelectedAgentDetails(null)}
+              className="absolute top-3 left-3 w-8 h-8 bg-zinc-950 border border-[#2d2d31] text-slate-400 hover:text-white rounded-lg flex items-center justify-center cursor-pointer"
+            >
+              ✕
+            </button>
+            
+            <div className="space-y-4 text-right">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+                  <Cpu className="w-6 h-6" />
+                </div>
+                <div className="flex flex-col">
+                  <h4 className="text-white font-black text-sm">{selectedAgentDetails.name}</h4>
+                  <span className="text-[11px] text-slate-400 font-bold">تخصص: {selectedAgentDetails.sector} • نظام خبير قضائي</span>
+                </div>
+              </div>
+
+              <p className="text-slate-300 text-xs leading-relaxed font-semibold">
+                {selectedAgentDetails.description}
+              </p>
+
+              <div className="bg-zinc-950 p-4 rounded-xl border border-[#2d2d31] space-y-2.5">
+                <span className="text-amber-500 text-[11px] font-black block border-b border-zinc-900 pb-1">صيغة التحليل الرياضي والنمذجة المقترحة:</span>
+                <code className="text-slate-100 font-mono text-[11px] leading-relaxed block text-left">
+                  {selectedAgentDetails.id.startsWith('land') && 'let land_value = land_area * price_per_m2_type;'}
+                  {selectedAgentDetails.id.startsWith('cons_1') && 'let concrete = building_area * 0.22 * floors;\nlet steel = concrete * 0.1;'}
+                  {selectedAgentDetails.id.startsWith('inh') && 'let total_shares = (males * 2) + (females * 1);\nlet share = (gender_factor / total_shares) * estate;'}
+                  {selectedAgentDetails.id.startsWith('waqf') && 'let compliance = match_historical_records(deed_id, usage_specs);'}
+                  {selectedAgentDetails.id.startsWith('fin') && 'let property_tax = Math.max(0, annual_rent - 50000) * 0.10;'}
+                  {selectedAgentDetails.id.startsWith('gps') && 'let bounding_box = get_bounds(latitude, longitude, scale);'}
+                  {!['land', 'cons_1', 'inh', 'waqf', 'fin', 'gps'].some(prefix => selectedAgentDetails.id.startsWith(prefix)) && 'let confidence_score = neural_backpropagation(weights, feature_matrix);'}
+                </code>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-zinc-950 p-3 rounded-xl border border-[#2d2d31] text-center">
+                  <span className="text-slate-500 text-[10px] block mb-1 font-bold">نسبة دقة التنبؤ المعتمدة</span>
+                  <span className="text-amber-400 font-extrabold text-sm">{selectedAgentDetails.accuracy}%</span>
+                </div>
+                <div className="bg-zinc-950 p-3 rounded-xl border border-[#2d2d31] text-center">
+                  <span className="text-slate-500 text-[10px] block mb-1 font-bold">إجمالي القضايا المنجزة</span>
+                  <span className="text-white font-extrabold text-sm">{selectedAgentDetails.tasksProcessed} قضية</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
