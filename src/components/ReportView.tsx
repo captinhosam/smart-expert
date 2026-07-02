@@ -1,4 +1,6 @@
 import React, { useRef, useState } from 'react';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 import { CaseData, CalculationResults } from '../types';
 import { 
   Printer, 
@@ -23,6 +25,96 @@ interface ReportViewProps {
 
 export default function ReportView({ caseData, results, onPrint }: ReportViewProps) {
   const printAreaRef = useRef<HTMLDivElement>(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
+  const handleDownloadPDF = async () => {
+    if (!printAreaRef.current) return;
+    setIsGeneratingPDF(true);
+    try {
+      const element = printAreaRef.current;
+      
+      // Selectively hide interactive action items inside printArea if any exist during snapshot
+      const actions = element.querySelectorAll('[data-pdf-ignore]');
+      actions.forEach(el => (el as HTMLElement).style.display = 'none');
+
+      const canvas = await html2canvas(element, {
+        scale: 2, // High DPI for crystal clear court submission PDFs
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+
+      // Restore action buttons back to view
+      actions.forEach(el => (el as HTMLElement).style.display = '');
+
+      const imgData = canvas.toDataURL('image/png');
+      
+      // Calculate A4 size dimensions in mm
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210; // A4 width
+      const pageHeight = 295; // A4 height
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+        heightLeft -= pageHeight;
+      }
+      
+      pdf.save(`Judicial_Report_Case_${caseData.caseNumber || 'No'}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
+  const fullDossierRef = useRef<HTMLDivElement>(null);
+  const [isGeneratingFullDossier, setIsGeneratingFullDossier] = useState(false);
+
+  const handleDownloadFullDossier = async () => {
+    if (!fullDossierRef.current) return;
+    setIsGeneratingFullDossier(true);
+    try {
+      const element = fullDossierRef.current;
+      const canvas = await html2canvas(element, {
+        scale: 2, // High resolution
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+        heightLeft -= pageHeight;
+      }
+      
+      pdf.save(`Comprehensive_Judicial_Dossier_Case_${caseData.caseNumber || 'No'}.pdf`);
+    } catch (error) {
+      console.error('Error generating comprehensive dossier PDF:', error);
+    } finally {
+      setIsGeneratingFullDossier(false);
+    }
+  };
   
   // Selected report subtype:
   // 'judge': Main report addressed to the Judge
@@ -154,13 +246,49 @@ export default function ReportView({ caseData, results, onPrint }: ReportViewPro
             {activeReportType === 'judgments' && 'الأحكام القضائية النهائية المقترحة (محمد الجندي وماجدة الجيار) الموجهة للمحكمة'}
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap md:flex-nowrap">
           <button 
             onClick={onPrint}
-            className="bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-md shadow-amber-500/10 cursor-pointer"
+            className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-white border border-slate-700 font-extrabold text-xs px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
           >
             <Printer className="w-4 h-4" />
-            <span>طباعة المستند الحالي (PDF)</span>
+            <span>طباعة سريعة (Print)</span>
+          </button>
+          
+          <button 
+            onClick={handleDownloadPDF}
+            disabled={isGeneratingPDF || isGeneratingFullDossier}
+            className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-extrabold text-xs px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-60 disabled:cursor-wait shrink-0"
+          >
+            {isGeneratingPDF ? (
+              <>
+                <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                <span>جاري معالجة الصفحة...</span>
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4 text-amber-500" />
+                <span>تحميل الصفحة الحالية (PDF)</span>
+              </>
+            )}
+          </button>
+
+          <button 
+            onClick={handleDownloadFullDossier}
+            disabled={isGeneratingPDF || isGeneratingFullDossier}
+            className="bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-600 hover:to-amber-500 active:scale-95 text-slate-950 font-black text-xs px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-md shadow-amber-500/10 cursor-pointer disabled:opacity-60 disabled:cursor-wait shrink-0"
+          >
+            {isGeneratingFullDossier ? (
+              <>
+                <span className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></span>
+                <span>تجميع وتحميل الملف الشامل...</span>
+              </>
+            ) : (
+              <>
+                <Award className="w-4 h-4" />
+                <span>تحميل الملف القضائي الشامل المتكامل (PDF)</span>
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -335,6 +463,105 @@ export default function ReportView({ caseData, results, onPrint }: ReportViewPro
                 </div>
               </div>
             )}
+
+            {/* Section 5.5: Analytical Visualizations for Court (التمثيل البياني والتحليلي المعتمد) */}
+            <div className="space-y-3">
+              <h3 className="bg-slate-100 px-3 py-1.5 rounded font-black text-xs border-r-4 border-slate-900">
+                خامساً مكرر: التمثيل البياني والتحليلي المعتمد للمحكمة
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                {/* Financial Values SVG Bar Chart */}
+                <div className="border border-slate-200 rounded-xl p-4 bg-slate-50 flex flex-col items-center justify-between">
+                  <span className="text-[10px] text-slate-600 font-extrabold mb-2 text-center w-full block">المحاكاة المالية: تقييم مكونات الثروة العقارية الإجمالية (ج.م)</span>
+                  <div className="w-full h-32 flex items-end justify-around px-2 pt-4 border-b border-slate-300">
+                    {/* Land value bar */}
+                    <div className="flex flex-col items-center w-12">
+                      <span className="text-[8px] font-bold font-mono text-cyan-700">{(results.landValue / 1000).toLocaleString('ar-EG')}K</span>
+                      <div className="w-full bg-cyan-600 rounded-t transition-all" style={{ height: `${Math.max(15, Math.min(80, (results.landValue / (results.totalPropertyValue || 1)) * 80))}%` }}></div>
+                      <span className="text-[8px] font-black mt-1 text-slate-700">قيمة الأرض</span>
+                    </div>
+                    {/* Building construction cost bar */}
+                    {caseData.hasBuilding && (
+                      <div className="flex flex-col items-center w-12">
+                        <span className="text-[8px] font-bold font-mono text-amber-700">{(results.constructionCost / 1000).toLocaleString('ar-EG')}K</span>
+                        <div className="w-full bg-amber-500 rounded-t transition-all" style={{ height: `${Math.max(15, Math.min(80, (results.constructionCost / (results.totalPropertyValue || 1)) * 80))}%` }}></div>
+                        <span className="text-[8px] font-black mt-1 text-slate-700">تكلفة البناء</span>
+                      </div>
+                    )}
+                    {/* Total Value bar */}
+                    <div className="flex flex-col items-center w-12">
+                      <span className="text-[8px] font-bold font-mono text-emerald-700">{(results.totalPropertyValue / 1000).toLocaleString('ar-EG')}K</span>
+                      <div className="w-full bg-emerald-600 rounded-t transition-all" style={{ height: '85%' }}></div>
+                      <span className="text-[8px] font-black mt-1 text-emerald-800">القيمة الإجمالية</span>
+                    </div>
+                  </div>
+                  <p className="text-[8px] text-slate-500 mt-2 text-center font-semibold">
+                    * القيم مقدرة بالآلاف (K) بناءً على أسعار السوق للمتر المربع لشهر يوليو ٢٠٢٦.
+                  </p>
+                </div>
+
+                {/* Heirs Shares SVG Pie/Donut Chart */}
+                <div className="border border-slate-200 rounded-xl p-4 bg-slate-50 flex flex-col items-center justify-between">
+                  <span className="text-[10px] text-slate-600 font-extrabold mb-2 text-center w-full block">توزيع الحصص والأنصبة الشرعية للورثة مسقطة بيانياً (%)</span>
+                  {caseData.heirs.length > 0 ? (
+                    <div className="flex items-center gap-4 w-full justify-center">
+                      <div className="w-20 h-20 relative flex items-center justify-center shrink-0">
+                        <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                          <circle cx="50" cy="50" r="40" fill="transparent" stroke="#e2e8f0" strokeWidth="6" />
+                          {(() => {
+                            let accumulated = 0;
+                            const colors = ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6', '#06b6d4'];
+                            return results.heirsShares.map((hs, i) => {
+                              const circumference = 251.2;
+                              const strokeDash = `${(hs.sharePercent / 100) * circumference} ${circumference}`;
+                              const strokeDashoffset = -((accumulated / 100) * circumference);
+                              accumulated += hs.sharePercent;
+                              return (
+                                <circle
+                                  key={i}
+                                  cx="50"
+                                  cy="50"
+                                  r="40"
+                                  fill="transparent"
+                                  stroke={colors[i % colors.length]}
+                                  strokeWidth="6"
+                                  strokeDasharray={strokeDash}
+                                  strokeDashoffset={strokeDashoffset}
+                                />
+                              );
+                            });
+                          })()}
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                          <span className="text-[8px] text-slate-400 font-bold leading-none">الإجمالي</span>
+                          <span className="text-[9px] font-black text-slate-800 leading-none mt-0.5">١٠٠%</span>
+                        </div>
+                      </div>
+                      <div className="text-[8px] space-y-1 font-semibold max-h-20 overflow-y-auto pr-1">
+                        {results.heirsShares.map((hs, i) => {
+                          const colors = ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6', '#06b6d4'];
+                          return (
+                            <div key={i} className="flex items-center gap-1.5 justify-end">
+                              <span className="text-slate-700">{hs.name}: {hs.sharePercent.toFixed(1)}%</span>
+                              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: colors[i % colors.length] }}></span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="h-20 flex items-center justify-center text-slate-400 text-[10px] font-bold">
+                      لا يوجد ورثة مسجلين لعرض التوزيع البياني للأنصبة الشرعية.
+                    </div>
+                  )}
+                  <p className="text-[8px] text-slate-500 mt-2 text-center font-semibold">
+                    * توزيع الأنصبة الشرعية معتمد بالكامل وفقاً للأحكام الفقهية وتدقيقات النظام الخبير.
+                  </p>
+                </div>
+
+              </div>
+            </div>
 
             {/* Section 6: Directives */}
             <div className="space-y-3">
@@ -833,7 +1060,7 @@ export default function ReportView({ caseData, results, onPrint }: ReportViewPro
             </div>
 
             {/* Interactive Authorization Action Box */}
-            <div className="bg-slate-900 text-white p-4 rounded-xl flex flex-col md:flex-row items-center justify-between gap-3 shadow-lg">
+            <div data-pdf-ignore="true" className="bg-slate-900 text-white p-4 rounded-xl flex flex-col md:flex-row items-center justify-between gap-3 shadow-lg">
               <div className="text-right space-y-1">
                 <h5 className="font-black text-xs text-amber-400">اعتماد وتوقيع مسودة الحكم القضائي المقترح</h5>
                 <p className="text-[10px] text-slate-400">
@@ -915,6 +1142,299 @@ export default function ReportView({ caseData, results, onPrint }: ReportViewPro
           </div>
         </div>
 
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 🏛️ HIDDEN FULL INTEGRATED DOSSIER FOR EXCELLENT PDF GENERATION 🏛️ */}
+      {/* ========================================================================= */}
+      <div style={{ position: 'absolute', top: '-15000px', left: '-15000px', width: '794px', overflow: 'hidden' }}>
+        <div ref={fullDossierRef} className="bg-white text-slate-950 p-12 space-y-16 font-sans select-none" style={{ direction: 'rtl' }}>
+          
+          {/* ==================== COVER PAGE ==================== */}
+          <div className="border-8 border-double border-slate-900 p-8 flex flex-col justify-between h-[1050px] text-center bg-white relative">
+            
+            {/* Top Header Stamp */}
+            <div className="flex items-start justify-between border-b border-slate-300 pb-4">
+              <div className="text-right space-y-1 text-[10px] font-bold text-slate-800">
+                <div>جمهورية مصر العربية</div>
+                <div>وزارة العدل - مصلحة الخبراء</div>
+                <div>مكتب الخبراء القضائيين المطور</div>
+              </div>
+              <div className="w-10 h-10 border border-slate-900 rounded-full flex items-center justify-center font-bold text-lg">
+                ⚖️
+              </div>
+              <div className="text-left space-y-1 text-[10px] font-mono font-bold text-slate-600">
+                <div>الرقم المرجعي: {caseData.caseNumber}</div>
+                <div>التاريخ: {caseData.date}</div>
+                <div className="text-red-600 font-black text-[9px]">حرز قضائي الكتروني معتمد</div>
+              </div>
+            </div>
+
+            {/* Middle Title */}
+            <div className="my-auto space-y-6">
+              <span className="text-[10px] bg-amber-100 text-amber-800 border border-amber-300 px-4 py-1 rounded-full font-black uppercase tracking-widest inline-block">
+                مستند رسمي • مذكرات قضائية معتمدة
+              </span>
+              <h1 className="text-3xl font-black text-slate-900 leading-tight">
+                الملف القضائي الفني المتكامل
+              </h1>
+              <p className="text-lg font-bold text-slate-700 underline underline-offset-4">
+                دراسة تفصيلية ورفع مساحي وحصر تركات
+              </p>
+              
+              <div className="max-w-md mx-auto border border-slate-200 rounded-xl p-4 bg-slate-50 text-right text-xs space-y-2 mt-6">
+                <div className="flex justify-between border-b pb-1.5 border-slate-200">
+                  <span className="text-slate-500 font-bold">المنصة القضائية المختصة:</span>
+                  <span className="font-extrabold">{caseData.court}</span>
+                </div>
+                <div className="flex justify-between border-b pb-1.5 border-slate-200">
+                  <span className="text-slate-500 font-bold">السيد رئيس الدائرة:</span>
+                  <span className="font-extrabold">{caseData.judge}</span>
+                </div>
+                <div className="flex justify-between border-b pb-1.5 border-slate-200">
+                  <span className="text-slate-500 font-bold">الخبير المنتدب بالدعوى:</span>
+                  <span className="font-extrabold">كابتن حسام</span>
+                </div>
+                <div className="flex justify-between border-b pb-1.5 border-slate-200">
+                  <span className="text-slate-500 font-bold">الخصومة وموضوع النزاع:</span>
+                  <span className="font-extrabold text-red-700">تعديل الأجرة، إخلاء العين، فرز الأنصبة وتداخل الحدود</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Seal / Sign-off Footer */}
+            <div className="border-t border-slate-300 pt-6 flex items-center justify-between">
+              <div className="text-right text-[10px] space-y-1">
+                <div className="font-black text-slate-900">نظام سمارت إكسبيرت القضائي المستقل</div>
+                <div className="text-slate-500">منصة الاستعلام الطيفي والربط المساحي ثنائي وثلاثي الأبعاد</div>
+              </div>
+              
+              {/* Stamp watermark */}
+              <div className="border-4 border-double border-emerald-600 p-2 rounded-full w-24 h-24 flex flex-col items-center justify-center text-center text-emerald-600 font-extrabold text-[8px] leading-tight rotate-12 bg-white/80">
+                <span>مصلحة الخبراء</span>
+                <span>بصمة معتمدة</span>
+                <span>✓ APPROVED</span>
+              </div>
+              
+              <div className="text-left text-[10px] space-y-1">
+                <div className="font-bold text-slate-500">مصلحة الخبراء - وزارة العدل</div>
+                <div className="font-mono text-slate-400">© 2026 MINISTRY OF JUSTICE</div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* ==================== PAGE 1: JUDGE'S COMPREHENSIVE REPORT ==================== */}
+          <div className="space-y-8 pt-8">
+            <div className="border-b-2 border-slate-900 pb-4 text-center">
+              <h2 className="text-xl font-black text-slate-900">الباب الأول: تقرير الخبرة الفنية الموجه لسيادة المستشار</h2>
+              <p className="text-xs text-slate-500 font-bold mt-1">البيانات المساحية، والخرائط الإحداثية، وحساب الأنصبة الشرعية</p>
+            </div>
+
+            {/* General Case Info */}
+            <div className="space-y-3">
+              <h3 className="bg-slate-100 px-3 py-1.5 rounded font-black text-xs border-r-4 border-slate-900">
+                أولاً: تفاصيل النزاع والعقار الأساسية
+              </h3>
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                <div className="border-b pb-1 flex justify-between"><strong className="text-slate-500 font-bold">رقم القضية:</strong> <span className="font-black">{caseData.caseNumber}</span></div>
+                <div className="border-b pb-1 flex justify-between"><strong className="text-slate-500 font-bold">تاريخ المعاينة:</strong> <span className="font-black">{caseData.date}</span></div>
+                <div className="border-b pb-1 flex justify-between col-span-2"><strong className="text-slate-500 font-bold">العنوان التفصيلي:</strong> <span className="font-black text-right">{caseData.location}</span></div>
+                <div className="border-b pb-1 flex justify-between"><strong className="text-slate-500 font-bold">رئيس المحكمة:</strong> <span className="font-black">{caseData.judge}</span></div>
+                <div className="border-b pb-1 flex justify-between"><strong className="text-slate-500 font-bold">المساحة الإجمالية:</strong> <span className="font-black font-mono">{caseData.landArea} م²</span></div>
+                <div className="border-b pb-1 flex justify-between col-span-2"><strong className="text-slate-500 font-bold">إحداثيات الموقع (GPS):</strong> <span className="font-black font-mono">{caseData.latitude.toFixed(6)} N, {caseData.longitude.toFixed(6)} E</span></div>
+              </div>
+            </div>
+
+            {/* Heirs Table */}
+            {caseData.heirs.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="bg-slate-100 px-3 py-1.5 rounded font-black text-xs border-r-4 border-slate-900">
+                  ثانياً: جدول تقسيم الإرث وتجنيب الأنصبة الشرعية
+                </h3>
+                <table className="w-full text-right text-[11px] border-collapse border border-slate-200">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-200 font-bold text-slate-700">
+                      <th className="p-2 border">الوارث</th>
+                      <th className="p-2 border">الجنس والموجب</th>
+                      <th className="p-2 border font-mono">الكسر والنسبة</th>
+                      <th className="p-2 border text-left">قيمة الحصة المقدرة</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-800">
+                    {results.heirsShares.map((hs, idx) => (
+                      <tr key={idx}>
+                        <td className="p-2 border font-bold">{hs.name}</td>
+                        <td className="p-2 border">{hs.gender}</td>
+                        <td className="p-2 border font-mono">{hs.shareFraction} ({hs.sharePercent.toFixed(1)}%)</td>
+                        <td className="p-2 border text-left font-black font-mono text-emerald-800">{hs.shareValue.toLocaleString('ar-EG')} ج.م</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Financial Valuation */}
+            <div className="space-y-3">
+              <h3 className="bg-slate-100 px-3 py-1.5 rounded font-black text-xs border-r-4 border-slate-900">
+                ثالثاً: المقايسة الإنشائية والتقييم المالي للعقار
+              </h3>
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                <div className="border-b pb-1 flex justify-between">
+                  <span className="text-slate-500 font-bold">قيمة الأرض الإجمالية:</span>
+                  <span className="font-black font-mono">{results.landValue.toLocaleString('ar-EG')} ج.م</span>
+                </div>
+                <div className="border-b pb-1 flex justify-between">
+                  <span className="text-slate-500 font-bold">تكلفة الإنشاء الكلية:</span>
+                  <span className="font-black font-mono">{results.constructionCost.toLocaleString('ar-EG')} ج.م</span>
+                </div>
+                <div className="border-b pb-1 flex justify-between col-span-2 bg-emerald-50/50 p-2 rounded">
+                  <span className="text-emerald-900 font-bold">القيمة السوقية الإجمالية للممتلكات:</span>
+                  <span className="font-black font-mono text-emerald-800 text-sm">{results.totalPropertyValue.toLocaleString('ar-EG')} ج.م</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ==================== PAGE 2: SOVEREIGN SECTOR DIRECTIVES ==================== */}
+          <div className="space-y-8 pt-8 border-t border-dashed border-slate-300">
+            <div className="border-b-2 border-slate-900 pb-4 text-center">
+              <h2 className="text-xl font-black text-slate-900">الباب الثاني: تقارير وإخطارات القطاعات السيادية والتنفيذية</h2>
+              <p className="text-xs text-slate-500 font-bold mt-1">التعليمات الفنية المحالة للنيابة العامة وأجهزة الشرطة ووزارة الداخلية</p>
+            </div>
+
+            {/* Prosecution Block */}
+            <div className="space-y-3">
+              <h3 className="bg-red-50 text-red-900 px-3 py-1.5 rounded font-black text-xs border-r-4 border-red-700">
+                أولاً: تقرير النيابة العامة ونيابة التركات وشؤون الأسرة
+              </h3>
+              <div className="text-xs space-y-2 leading-relaxed text-slate-800">
+                <p className="font-bold text-slate-900">موجز الشبهات والمخالفات الفنية المرصودة:</p>
+                <ul className="list-disc list-inside space-y-1.5 pr-2 font-semibold">
+                  {caseData.caseNumber === 'CASE-2026-004' ? (
+                    <>
+                      <li>شغل العين التجارية (محمد الجندي) بدون ترخيص مالي جارٍ وتعديه بالهدم والاضرار بباب وسقف المبنى.</li>
+                      <li>امتناع عمدي متكرر عن سداد القيمة المعدلة للعقد ومحاولة فرض وضع يد عشوائي.</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>رصد تداخل حدودي حرج في الواجهة الشمالية للعقار بواسطة الاستشعار الطيفي للأقمار الصناعية بنسبة 2.4 متر.</li>
+                      <li>بعثرة حيازة التركة ومطالبات الورثة بفرز وتجنيب حصة الأنثى والذكر الشرعية.</li>
+                    </>
+                  )}
+                </ul>
+              </div>
+            </div>
+
+            {/* Police Block */}
+            <div className="space-y-3">
+              <h3 className="bg-blue-50 text-blue-900 px-3 py-1.5 rounded font-black text-xs border-r-4 border-blue-700">
+                ثانياً: إخطار مأمور الضبط وقوة الشرطة المختصة (قلم التنفيذ)
+              </h3>
+              <div className="text-xs space-y-2 leading-relaxed text-slate-800">
+                <p className="font-bold text-slate-900">توجيهات مرافقة الخبير والتمكين الجبري الميداني:</p>
+                <ul className="list-disc list-inside space-y-1.5 pr-2 font-semibold">
+                  <li>ندب قوة أمنية مرافقة لمحضر التنفيذ لتأمين علامات الرفع الطوبوغرافي أو إخلاء المنشآت.</li>
+                  <li>منع الاحتكاك أو أعمال الشغب الميداني بين الخصوم بالقوة الجبرية وضمان سلامة فريق الخبراء المساحي.</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Interior Ministry Block */}
+            <div className="space-y-3">
+              <h3 className="bg-emerald-50 text-emerald-950 px-3 py-1.5 rounded font-black text-xs border-r-4 border-emerald-800">
+                ثالثاً: توجيهات حماية منشآت الأمن وحرم الأراضي (وزارة الداخلية)
+              </h3>
+              <div className="text-xs space-y-1.5 leading-relaxed text-slate-800 font-semibold">
+                <p>تثبيت الإحداثيات الجغرافية في السوابق الرقمية لمنع التلاعب بالمستندات الرسمية، وتأمين حيازة المالكة عليه محمود الوكيل ضد أي محاولة للسيطرة المادية العشوائية.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* ==================== PAGE 3: SCHEDULES, DECISIONS & COURT JUDGMENTS ==================== */}
+          <div className="space-y-8 pt-8 border-t border-dashed border-slate-300">
+            <div className="border-b-2 border-slate-900 pb-4 text-center">
+              <h2 className="text-xl font-black text-slate-900">الباب الثالث: جدول التكاليف وصيغة الأحكام المقترحة للمحكمة</h2>
+              <p className="text-xs text-slate-500 font-bold mt-1">الرسوم المستحقة للخزائن السيادية ومنطوق الحكم التنفيذي النهائي</p>
+            </div>
+
+            {/* Costs Table */}
+            <div className="space-y-3">
+              <h4 className="bg-slate-100 px-3 py-1.5 rounded font-black text-xs border-r-4 border-slate-900">
+                أولاً: جدول الرسوم والالتزامات المالية والضرائب المستحقة
+              </h4>
+              <table className="w-full text-right text-[10px] border-collapse border border-slate-200">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 font-bold text-slate-700">
+                    <th className="p-2 border">نوع الرسم</th>
+                    <th className="p-2 border text-center">القيمة الإجمالية</th>
+                    <th className="p-2 border">الجهة المستلمة والسند القانوني</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-800">
+                  <tr>
+                    <td className="p-2 border font-bold">أمانة الخبير والمعاينة القضائية</td>
+                    <td className="p-2 border text-center font-mono font-bold">{datesAndCosts.expertInspectionFee.toLocaleString('ar-EG')} ج</td>
+                    <td className="p-2 border">خزينة المحكمة الابتدائية</td>
+                  </tr>
+                  <tr>
+                    <td className="p-2 border font-bold">ضريبة التصرفات العقارية المباشرة (2.5%)</td>
+                    <td className="p-2 border text-center font-mono font-bold text-red-600">{datesAndCosts.transferTax.toLocaleString('ar-EG')} ج</td>
+                    <td className="p-2 border">مصلحة الضرائب المصرية - قانون الدخل</td>
+                  </tr>
+                  <tr>
+                    <td className="p-2 border font-bold">رسوم تسجيل وتوثيق الشهر العقاري</td>
+                    <td className="p-2 border text-center font-mono font-bold text-emerald-800">{datesAndCosts.registrationFee.toLocaleString('ar-EG')} ج</td>
+                    <td className="p-2 border">مصلحة الشهر العقاري - تنظيم الملكية</td>
+                  </tr>
+                  <tr className="bg-slate-50 font-black">
+                    <td className="p-2 border">المجموع الكلي الفوري للالتزامات</td>
+                    <td className="p-2 border text-center font-mono text-red-700 text-xs">{datesAndCosts.totalImmediateCosts.toLocaleString('ar-EG')} ج</td>
+                    <td className="p-2 border text-slate-900 font-bold">رسوم رسمية الزامية لنقل الحيازة الشرعية</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Verdict Box */}
+            <div className="bg-slate-900 text-white p-5 rounded-xl border border-red-500/30 space-y-3 text-right">
+              <h4 className="font-black text-xs text-red-400 border-b border-slate-800 pb-2">
+                ⚖️ منطوق الحكم القضائي المقترح وصيغة الطرد والإخلاء الجبري للمخالفين
+              </h4>
+              <div className="text-[10px] leading-relaxed text-slate-300 space-y-2 font-semibold">
+                {caseData.caseNumber === 'CASE-2026-004' ? (
+                  <p>
+                    أولاً: طرد المدعى عليه الأول <strong className="text-white">محمد الجندي</strong> من العين والمنشأة التجارية وكذا إخلاء المدعى عليها الثانية السيدة <strong className="text-white">ماجدة الجيار</strong> من شقتها السكنية بالعقار رقم 27 شارع شبين الكوم بالعمرانية الغربية، وتسليم العينين خاليتين تماماً للمالكة السيدة <strong className="text-emerald-400">عليه محمود الوكيل</strong> بقوة القانون وبقوة الضبط التنفيذي الفوري.
+                  </p>
+                ) : (
+                  <p>
+                    أولاً: تمكين كافة الخصوم والورثة الشرعيين المذكورين بجدول التركات من العقار القضائي كلاً بحسب نصيبه وحصته المحددة بالباب الأول من هذا الملف، وثانياً: الزام حماية الأراضي وهيئة المساحة بتعديل خرائط السجل العقاري وفق إحداثيات الرفع الطبوغرافي الرقمي المعتمد بالبصمة البيومترية.
+                  </p>
+                )}
+                <p className="text-amber-400 font-bold text-[9px]">* نسخة حكم رسمية معجلة التنفيذ والشمول.</p>
+              </div>
+            </div>
+
+            {/* Final Signatures Block */}
+            <div className="grid grid-cols-3 gap-4 pt-6 text-center text-[9px] border-t border-slate-200">
+              <div className="space-y-1">
+                <span className="font-bold text-slate-500 block">أمين سر الجلسة</span>
+                <span className="font-mono text-emerald-600 block font-bold">✓ APPROVED BY CLERK</span>
+              </div>
+              <div className="space-y-1">
+                <span className="font-bold text-slate-500 block">الخبير العقاري والإنشائي</span>
+                <span className="font-black text-slate-900 block">كابتن حسام</span>
+                <span className="font-mono text-emerald-600 block font-bold text-[8px]">✓ VERIFIED BIOMETRIC</span>
+              </div>
+              <div className="space-y-1">
+                <span className="font-bold text-slate-500 block">رئيس الدائرة المستشار</span>
+                <span className="font-mono text-red-600 block font-bold">✓ JUDICIAL SEAL APPROVED</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
   );

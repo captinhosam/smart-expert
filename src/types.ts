@@ -15,6 +15,28 @@ export interface Dispute {
   details: string;
 }
 
+export interface CourtSession {
+  id: string;
+  date: string; // e.g., "2026-07-15"
+  time: string; // e.g., "10:00"
+  type: string; // e.g., "معاينة ميدانية", "نطق بالحكم", "جلسة خبراء", "تقديم مذكرات"
+  notes: string;
+}
+
+export interface FieldReference {
+  id: string;
+  title: string;
+  type: 'legal' | 'engineering' | 'precedent' | 'other';
+  text: string;
+}
+
+export interface FieldPhoto {
+  id: string;
+  url: string;
+  caption: string;
+  date: string;
+}
+
 export interface CaseData {
   caseNumber: string;
   title: string;
@@ -51,6 +73,13 @@ export interface CaseData {
   // GPS & Coordinates
   latitude: number;
   longitude: number;
+
+  // Upcoming Court Sessions & schedule
+  sessions?: CourtSession[];
+
+  // Field Photos & Approved References
+  photos?: FieldPhoto[];
+  references?: FieldReference[];
 }
 
 export interface AgentInfo {

@@ -30,17 +30,17 @@ body {
   color: #ffffff !important;
 }
 
-.adobe-workspace .bg-slate-950/60 {
+.adobe-workspace .bg-slate-950\/60 {
   background-color: rgba(20, 20, 22, 0.85) !important;
   border-color: #2d2d31 !important;
 }
 
-.adobe-workspace .bg-slate-950/40 {
+.adobe-workspace .bg-slate-950\/40 {
   background-color: rgba(20, 20, 22, 0.6) !important;
   border-color: #2d2d31 !important;
 }
 
-.adobe-workspace .bg-slate-900/40 {
+.adobe-workspace .bg-slate-900\/40 {
   background-color: rgba(30, 30, 33, 0.85) !important;
   border-color: #2d2d31 !important;
 }
@@ -184,11 +184,11 @@ body {
 
 /* Overriding panel cards to look like file folders and legal documents */
 .theme-paper .bg-slate-900,
-.theme-paper .bg-slate-950/20,
-.theme-paper .bg-slate-950/40,
-.theme-paper .bg-slate-950/60,
-.theme-paper .bg-slate-900/40,
-.theme-paper .bg-slate-800/80 {
+.theme-paper .bg-slate-950\/20,
+.theme-paper .bg-slate-950\/40,
+.theme-paper .bg-slate-950\/60,
+.theme-paper .bg-slate-900\/40,
+.theme-paper .bg-slate-800\/80 {
   background-color: #fdfaf3 !important; /* Beautiful crisp thick clean cream paper sheet */
   border-color: #d1c7a7 !important; /* Vintage folder crease brown */
   color: #2a221a !important;
@@ -233,7 +233,7 @@ body {
 
 /* Active sidebar/menu tabs to look like traditional paper indices or Manila folder tabs with brass clips */
 .theme-paper .bg-slate-800,
-.theme-paper .bg-amber-500/10 {
+.theme-paper .bg-amber-500\/10 {
   background-color: #f3edd7 !important;
   color: #925304 !important;
   border-color: #ca8a04 !important;
@@ -317,4 +317,33 @@ body {
 }
 .theme-paper ::-webkit-scrollbar-thumb:hover {
   background: #9a8553 !important;
+}
+
+/* ==========================================
+   Neon Glow Hover System 🌟
+   ========================================== */
+.bg-slate-900, .bg-slate-950, .border, button, select, input, .rounded-xl, .rounded-2xl {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.bg-slate-900:hover, 
+.bg-slate-950:hover, 
+button:hover, 
+select:hover, 
+input:focus, 
+.neon-glow:hover {
+  border-color: rgba(34, 211, 238, 0.9) !important; /* Cyan neon glow */
+  box-shadow: 0 0 15px rgba(34, 211, 238, 0.65), inset 0 0 4px rgba(34, 211, 238, 0.2) !important;
+  transform: translateY(-2px);
+}
+
+/* Warm Golden-Amber Neon Glow for Traditional Paper Theme */
+.theme-paper .bg-slate-900:hover, 
+.theme-paper .bg-slate-950:hover, 
+.theme-paper button:hover, 
+.theme-paper select:hover, 
+.theme-paper input:focus {
+  border-color: rgba(217, 119, 6, 0.95) !important; /* Golden-amber neon */
+  box-shadow: 0 0 15px rgba(217, 119, 6, 0.55), inset 0 0 4px rgba(217, 119, 6, 0.15) !important;
+  transform: translateY(-2px);
 }

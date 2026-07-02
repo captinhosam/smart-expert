@@ -1,0 +1,779 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  UploadCloud, 
+  FileText, 
+  Image as ImageIcon, 
+  Map as MapIcon, 
+  Search, 
+  Trash2, 
+  Eye, 
+  Download, 
+  AlertCircle, 
+  Plus, 
+  Check, 
+  SlidersHorizontal,
+  FolderOpen,
+  MapPin,
+  FileCheck,
+  Scale,
+  Maximize2
+} from 'lucide-react';
+import { triggerToast } from '../lib/toast';
+
+interface Attachment {
+  id: string;
+  name: string;
+  size: string;
+  type: 'document' | 'image' | 'map';
+  fileType: 'pdf' | 'word' | 'image' | 'map';
+  date: string;
+  description: string;
+  url?: string;
+  contentPreview?: string;
+  metadata?: { [key: string]: string };
+}
+
+interface DigitalAttachmentsRegisterProps {
+  caseNumber: string;
+}
+
+const INITIAL_ATTACHMENTS: Attachment[] = [
+  {
+    id: 'att-1',
+    name: 'عقد_إيجار_بيت_العمرانية_الرسمي_موقع.pdf',
+    size: '1.8 MB',
+    type: 'document',
+    fileType: 'pdf',
+    date: '2026-06-15',
+    description: 'عقد الإيجار الأساسي الموثق لبيت العمرانية باسم السيدة عليه محمود الوكيل وموقع من محمد الجندي.',
+    contentPreview: `جمهورية مصر العربية - وزارة العدل - مصلحة الشهر العقاري والتوثيق
+إنه في يوم ١٥ يونيو ١٩٩٨، تم الاتفاق والتعاقد بين كلاً من:
+الطرف الأول (المالك المؤجر): السيدة عليه محمود الوكيل، المقيمة بالعمرانية - الجيزة.
+الطرف الثاني (المستأجر): السيد محمد الجندي، المقيم في نفس الدائرة.
+
+موضوع العقد: تأجير العين التجارية (المحل الكائن بالدور الأرضي بالعقار رقم ٢٧ شارع شبين الكوم) بغرض تجاري (تجارة السلع الاستهلاكية الغذائية).
+القيمة الإيجارية: ٢٠٠ جنيه مصري شهرياً، تدفع بانتظام للطرف الأول في الأسبوع الأول من كل شهر.
+
+بند خاص (المادة ١٨): يمتنع على الطرف الثاني بتاتاً التنازل عن العين المؤجرة أو إيجارها من الباطن أو التخلي عنها للغير تحت أي مسمى دون موافقة كتابية صريحة وموثقة بالشهر العقاري من المؤجرة السيدة عليه محمود الوكيل، وإلا اعتبر العقد مفسوخاً تلقائياً دون الحاجة لإنذار.`,
+    metadata: {
+      'جهة التوثيق': 'مأمورية الشهر العقاري بالجيزة',
+      'تاريخ التوثيق': '١٩٩٨/٠٦/١٦',
+      'رقم المحضر': '٤٥٣٢ لسنة ١٩٩٨ توثيق',
+      'حالة السند': 'أصل معتمد ومطابق'
+    }
+  },
+  {
+    id: 'att-2',
+    name: 'مذكرة_دفاع_المستأجرين_بيت_العمرانية.docx',
+    size: '1.2 MB',
+    type: 'document',
+    fileType: 'word',
+    date: '2026-06-25',
+    description: 'مذكرة الدفاع المودعة من محامي ورثة المستأجر محمد شلبي بخصوص شقة النزاع والسطح.',
+    contentPreview: `محكمة الجيزة الابتدائية - الدائرة الثالثة مدني مستأنف عقاري
+مذكرة بدفاع السيد ورثة المرحوم محمد شلبي ضد المدعية السيدة عليه محمود الوكيل
+
+الدفوع القانونية والدفوع الموضوعية الأساسية:
+أولاً: ندفع بامتداد عقد الإيجار السكني قانوناً لصالح الزوجة السيدة ماجدة الجيار استناداً لنص المادة ٢٩ من القانون رقم ٤٩ لسنة ١٩٧٧، لإقامتها المستقرة والهادئة والمستمرة مع زوجها قبل وفاته بالعين السكنية ببيت العمرانية.
+ثانياً: خلو ذمة المستأجرين من أي تكاليف هندسية متعلقة بإزالة الطابق الأخير (السطح المتصدع) لكون التصدع ناشئاً عن عيوب قديمة في التأسيس الإنشائي للمبنى وهلاك الأعمدة الحاملة، مما يجعله مسؤولية المالك الأصلي قانوناً.
+ثالثاً: نلتمس رفض الدعوى لانتفاء شروط فسخ عقد الإيجار وامتداده شرعاً وقانوناً.`,
+    metadata: {
+      'اسم المحامي': 'الأستاذ عبد العزيز الشافعي (محام بالنقض)',
+      'تاريخ تقديم المذكرة': '٢٠٢٦/٠٦/٢٥',
+      'الدائرة المختصة': 'الدائرة الثالثة عقاري مدني الجيزة',
+      'الصفة القضائية': 'وكيل المدعى عليها ماجدة الجيار'
+    }
+  },
+  {
+    id: 'att-3',
+    name: 'صورة_معاينة_السطح_المتصدع.jpg',
+    size: '2.4 MB',
+    type: 'image',
+    fileType: 'image',
+    date: '2026-06-30',
+    description: 'لقطة عالية الدقة تم رصدها ميدانياً توضح شروخ السقف الخرساني وتآكل الحديد تمهيداً للإزالة الجبرية.',
+    url: 'https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?auto=format&fit=crop&w=600&q=80',
+    metadata: {
+      'آلة الرصد': 'كاميرا المعاينة التخصصية لنظم الخبرة',
+      'تاريخ اللقطة': '٣٠ يونيو ٢٠٢٦ م',
+      'الموقع الإنشائي': 'عقار ٢٧ العمرانية - السطح العلوي الخرساني',
+      'التوصية الهندسية': 'إزالة فورية لتفادي الانهيار الكلي'
+    }
+  },
+  {
+    id: 'att-4',
+    name: 'صورة_الواجهة_الخارجية_للعقار_٢٧.jpg',
+    size: '3.1 MB',
+    type: 'image',
+    fileType: 'image',
+    date: '2026-06-30',
+    description: 'صورة الواجهة الخارجية لبيت العمرانية توضح المحل التجاري (محل محمد الجندي) واللافتة المخالفة.',
+    url: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=600&q=80',
+    metadata: {
+      'جهة الرصد': 'اللجنة الهندسية لمعاينة محكمة الجيزة',
+      'رصد المخالفة': 'تركيب لوحة تجارية عشوائية مخلة بالواجهة',
+      'الحالة الفنية': 'الواجهة سليمة إنشائياً باستثناء الدور الخامس'
+    }
+  },
+  {
+    id: 'att-5',
+    name: 'كروكي_الرفع_المساحي_الرقمي.png',
+    size: '4.5 MB',
+    type: 'map',
+    fileType: 'map',
+    date: '2026-07-01',
+    description: 'مخطط كروكي معتمد يوضح حدود عقار العمرانية، مساحته الصافية، وتطابقه مع خط تنظيم الطرق العامة بالجيزة.',
+    url: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=600&q=80',
+    metadata: {
+      'المهندس الراسم': 'م. هشام عادل (خبير الرفع المساحي والخرائط)',
+      'الحد البحري': 'جار بعرض ١٢.٥ متر وممر خاص',
+      'الحد القبلي': 'شارع شبين الكوم الرئيسي بعرض ٢٠ متر',
+      'الحد الشرقي': 'ملك ورثة محمود السلاب',
+      'الحد الغربي': 'شارع جانبي بعرض ٦ أمتار فرعي'
+    }
+  },
+  {
+    id: 'att-6',
+    name: 'خريطة_موقع_العمرانية_نظام_الـGPS.png',
+    size: '2.9 MB',
+    type: 'map',
+    fileType: 'map',
+    date: '2026-07-01',
+    description: 'تحديد الإحداثيات الجغرافية الرقمية على خريطة هيئة المساحة المصرية وتطابق المسح المساحي للعقار.',
+    url: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=600&q=80',
+    metadata: {
+      'دقة الـGPS': 'تحديد مساحي متناهي الدقة (± ٥ سم)',
+      'خط العرض (Lat)': '٢٩.٩٩١٢ شمالاً',
+      'خط الطول (Lng)': '٣١.١٤٢٥ شرقاً',
+      'القطاع المساحي': 'بند جيزة - العمرانية الغربية ٥٤'
+    }
+  }
+];
+
+export default function DigitalAttachmentsRegister({ caseNumber }: DigitalAttachmentsRegisterProps) {
+  const [attachments, setAttachments] = useState<Attachment[]>(() => {
+    const saved = localStorage.getItem(`smart_expert_attachments_${caseNumber}`);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return INITIAL_ATTACHMENTS;
+      }
+    }
+    return INITIAL_ATTACHMENTS;
+  });
+
+  const [activeTab, setActiveTab] = useState<'all' | 'document' | 'image' | 'map'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedAttachment, setSelectedAttachment] = useState<Attachment | null>(INITIAL_ATTACHMENTS[0]);
+  const [dragActive, setDragActive] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
+  const [newFileType, setNewFileType] = useState<'document' | 'image' | 'map'>('document');
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    localStorage.setItem(`smart_expert_attachments_${caseNumber}`, JSON.stringify(attachments));
+  }, [attachments, caseNumber]);
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileUpload(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      handleFileUpload(e.target.files[0]);
+    }
+  };
+
+  const handleFileUpload = (file: File) => {
+    const fileId = `att-${Date.now()}`;
+    const fileExt = file.name.split('.').pop()?.toLowerCase();
+    
+    // Auto detect type based on extension
+    let detectedType: 'document' | 'image' | 'map' = 'document';
+    let fileTypeLabel: 'pdf' | 'word' | 'image' | 'map' = 'pdf';
+
+    if (fileExt === 'pdf') {
+      detectedType = 'document';
+      fileTypeLabel = 'pdf';
+    } else if (fileExt === 'doc' || fileExt === 'docx') {
+      detectedType = 'document';
+      fileTypeLabel = 'word';
+    } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt || '')) {
+      // Prompt/Ask user or fallback to chosen tab
+      detectedType = newFileType; // use current selection
+      fileTypeLabel = newFileType === 'map' ? 'map' : 'image';
+    }
+
+    const sizeStr = file.size > 1024 * 1024 
+      ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+      : `${(file.size / 1024).toFixed(0)} KB`;
+
+    // Initialize progress mockup
+    triggerToast(`جاري رفع ومعالجة الملف "${file.name}"...`, 'info');
+    setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
+    
+    let progressValue = 0;
+    const interval = setInterval(() => {
+      progressValue += 15;
+      if (progressValue >= 100) {
+        clearInterval(interval);
+        progressValue = 100;
+
+        // Add the uploaded file
+        const newAtt: Attachment = {
+          id: fileId,
+          name: file.name,
+          size: sizeStr,
+          type: detectedType,
+          fileType: fileTypeLabel,
+          date: new Date().toISOString().split('T')[0],
+          description: `مرفق مضاف يدوياً تم تحميله وفهرسته تحت تصنيف (${detectedType === 'document' ? 'مستندات' : detectedType === 'image' ? 'صور' : 'خرائط'}).`,
+          contentPreview: detectedType === 'document' 
+            ? `[تفريغ مستند رقمي مضاف]\nاسم الملف: ${file.name}\nتاريخ الإدراج: ${new Date().toLocaleDateString('ar-EG')}\nتمت مطابقة وفحص هذا الملف بنجاح للتأكد من خلوه من الأخطاء البنائية أو الهندسية ومطابقتة لبيت العمرانية.` 
+            : undefined,
+          url: detectedType !== 'document' ? 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=600&q=80' : undefined,
+          metadata: {
+            'نوع الملف': file.type || 'غير معروف',
+            'حجم الملف': sizeStr,
+            'المستخدم المضيف': 'كابتن حسام (الخبير العقاري)',
+            'تطابق الأرشيف': 'تم بنجاح ومطابق للأصل'
+          }
+        };
+
+        setAttachments(prev => [newAtt, ...prev]);
+        setSelectedAttachment(newAtt);
+        setUploadProgress(prev => {
+          const updated = { ...prev };
+          delete updated[fileId];
+          return updated;
+        });
+
+        triggerToast(`نجح التحميل وفهرسة "${file.name}" بنجاح!`, 'success');
+      } else {
+        setUploadProgress(prev => ({ ...prev, [fileId]: progressValue }));
+      }
+    }, 150);
+  };
+
+  const handleDeleteAttachment = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const confirmed = window.confirm('هل أنت متأكد من حذف هذا المرفق نهائياً من سجل القضية؟');
+    if (!confirmed) return;
+
+    setAttachments(prev => {
+      const remaining = prev.filter(att => att.id !== id);
+      const deletedItem = prev.find(att => att.id === id);
+      if (deletedItem) {
+        triggerToast(`تم حذف المرفق "${deletedItem.name}" بنجاح.`, 'warning');
+      }
+      if (selectedAttachment?.id === id) {
+        setSelectedAttachment(remaining.length > 0 ? remaining[0] : null);
+      }
+      return remaining;
+    });
+  };
+
+  // Filtered attachments
+  const filteredAttachments = attachments.filter(att => {
+    const matchesTab = activeTab === 'all' || att.type === activeTab;
+    const matchesSearch = att.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          att.description.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesTab && matchesSearch;
+  });
+
+  // Category counters
+  const counts = {
+    all: attachments.length,
+    document: attachments.filter(a => a.type === 'document').length,
+    image: attachments.filter(a => a.type === 'image').length,
+    map: attachments.filter(a => a.type === 'map').length,
+  };
+
+  return (
+    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-6 text-right">
+      
+      {/* 1. Header & Title Area */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 justify-end sm:justify-start">
+            <span className="text-amber-500 font-bold bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded-full text-[10px] shadow-[0_0_8px_rgba(245,158,11,0.15)]">
+              سجل معتمد ومحمي ✓
+            </span>
+            <h3 className="text-white text-base font-black flex items-center gap-2">
+              <FolderOpen className="w-5 h-5 text-cyan-400" />
+              <span>سجل المرفقات الرقمي الموحد لبيت العمرانية</span>
+            </h3>
+          </div>
+          <p className="text-slate-400 text-xs font-semibold leading-normal">
+            فهرسة تلقائية وأرشفة للخرائط، مذكرات الدفاع، العقود الموثقة وصور المعاينة الميدانية مع نظام المعاينة الفوري المباشر.
+          </p>
+        </div>
+      </div>
+
+      {alertMessage && (
+        <div className="bg-emerald-950/40 border border-emerald-500/30 p-3.5 rounded-xl text-emerald-400 text-xs font-bold flex items-center gap-2 justify-between animate-fadeIn">
+          <span>{alertMessage}</span>
+          <button onClick={() => setAlertMessage(null)} className="text-emerald-500 hover:text-white font-black text-sm">×</button>
+        </div>
+      )}
+
+      {/* 2. Drag & Drop Upload Zone */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+        
+        {/* Attachment Upload Controls */}
+        <div className="md:col-span-12 space-y-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-950 p-3 rounded-2xl border border-slate-850">
+            <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
+              <button 
+                type="button"
+                onClick={() => setNewFileType('map')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  newFileType === 'map' ? 'bg-cyan-500 text-slate-950 font-black shadow-[0_0_8px_rgba(6,182,212,0.3)]' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                🗺️ خرائط
+              </button>
+              <button 
+                type="button"
+                onClick={() => setNewFileType('image')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  newFileType === 'image' ? 'bg-cyan-500 text-slate-950 font-black shadow-[0_0_8px_rgba(6,182,212,0.3)]' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                📸 صور المعاينة
+              </button>
+              <button 
+                type="button"
+                onClick={() => setNewFileType('document')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  newFileType === 'document' ? 'bg-cyan-500 text-slate-950 font-black shadow-[0_0_8px_rgba(6,182,212,0.3)]' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                📄 مستندات (PDF / Word)
+              </button>
+            </div>
+            <span className="text-slate-400 text-xs font-black text-center sm:text-right">
+              حدد تصنيف الملف المرفوع قبل السحب أو النقر للرفع:
+            </span>
+          </div>
+
+          <div 
+            onDragEnter={handleDrag}
+            onDragOver={handleDrag}
+            onDragLeave={handleDrag}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all relative ${
+              dragActive 
+                ? 'border-cyan-400 bg-cyan-400/5 shadow-[0_0_15px_rgba(6,182,212,0.15)]' 
+                : 'border-slate-800 bg-slate-950/40 hover:border-slate-750 hover:bg-slate-900/10'
+            }`}
+          >
+            <input 
+              type="file" 
+              ref={fileInputRef}
+              onChange={handleFileSelect}
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+            />
+            <div className="flex flex-col items-center justify-center space-y-2 pointer-events-none">
+              <UploadCloud className="w-9 h-9 text-cyan-400 shadow-[0_0_8px_#00f0ff] filter drop-shadow-[0_0_5px_#00f0ff] animate-bounce" />
+              <div className="space-y-1">
+                <h4 className="text-white text-xs font-black">اسحب مستندات القضية أو كروكي المساحة وألقها هنا</h4>
+                <p className="text-slate-500 text-[10px] font-bold">
+                  ندعم مستندات الـ PDF وعقود الـ Word والخرائط والصور (أقصى حجم 15 ميجابايت)
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* 3. Filtering & Search Toolbar */}
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 bg-slate-950 p-4 rounded-2xl border border-slate-850">
+        
+        {/* Index Tabs */}
+        <div className="flex items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 flex-wrap overflow-x-auto">
+          <button
+            onClick={() => setActiveTab('all')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
+              activeTab === 'all' ? 'bg-slate-800 text-cyan-400 border border-slate-700' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <span>الكل</span>
+            <span className="text-[10px] bg-slate-950 text-slate-400 px-2 py-0.5 rounded-full font-bold">{counts.all}</span>
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('document')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
+              activeTab === 'document' ? 'bg-slate-800 text-cyan-400 border border-slate-700' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5 text-cyan-400" />
+            <span>مستندات (PDF/Word)</span>
+            <span className="text-[10px] bg-slate-950 text-slate-400 px-2 py-0.5 rounded-full font-bold">{counts.document}</span>
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('image')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
+              activeTab === 'image' ? 'bg-slate-800 text-cyan-400 border border-slate-700' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <ImageIcon className="w-3.5 h-3.5 text-cyan-400" />
+            <span>صور المعاينة</span>
+            <span className="text-[10px] bg-slate-950 text-slate-400 px-2 py-0.5 rounded-full font-bold">{counts.image}</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('map')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
+              activeTab === 'map' ? 'bg-slate-800 text-cyan-400 border border-slate-700' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <MapIcon className="w-3.5 h-3.5 text-cyan-400" />
+            <span>خرائط ومساحات</span>
+            <span className="text-[10px] bg-slate-950 text-slate-400 px-2 py-0.5 rounded-full font-bold">{counts.map}</span>
+          </button>
+        </div>
+
+        {/* Search Input */}
+        <div className="relative flex-1 max-w-sm lg:mr-auto">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="البحث في الملفات والمرفقات الرقمية..."
+            className="w-full bg-slate-900 border border-slate-800 text-white text-xs rounded-xl pr-10 pl-4 py-2.5 focus:outline-none focus:border-cyan-400 text-right font-medium"
+          />
+          <Search className="w-4 h-4 text-slate-500 absolute right-3.5 top-3" />
+        </div>
+
+      </div>
+
+      {/* 4. Layout split: Left Side (Files list), Right Side (Interactive Preview) */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        
+        {/* Attachments List Container (xl:col-span-5) */}
+        <div className="xl:col-span-5 space-y-3">
+          <span className="text-[10px] text-slate-500 font-black block">قائمة المرفقات المفهرسة والمتاحة للعمل:</span>
+          
+          {Object.keys(uploadProgress).map((key) => (
+            <div key={key} className="p-3.5 bg-slate-950 border border-cyan-500/30 rounded-xl space-y-2 text-right animate-pulse">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono font-black text-cyan-400">{uploadProgress[key]}%</span>
+                <span className="text-white text-xs font-bold truncate max-w-[200px]">جاري رفع ومعالجة مستند...</span>
+              </div>
+              <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-150" 
+                  style={{ width: `${uploadProgress[key]}%` }}
+                ></div>
+              </div>
+            </div>
+          ))}
+
+          <div className="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
+            {filteredAttachments.length === 0 ? (
+              <div className="text-center py-10 bg-slate-950 rounded-2xl border border-slate-850 space-y-3">
+                <FolderOpen className="w-10 h-10 text-slate-700 mx-auto" />
+                <p className="text-slate-500 text-xs font-bold">لا توجد ملفات مطابقة لبحثك أو تصنيفك.</p>
+              </div>
+            ) : (
+              filteredAttachments.map((att) => {
+                const isSelected = selectedAttachment?.id === att.id;
+                
+                return (
+                  <div
+                    key={att.id}
+                    onClick={() => setSelectedAttachment(att)}
+                    className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-3 text-right select-none ${
+                      isSelected 
+                        ? 'bg-cyan-500/5 border-cyan-400/40 shadow-lg shadow-cyan-400/5' 
+                        : 'bg-slate-950/70 border-slate-850 hover:bg-slate-950 hover:border-slate-800'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-2.5 max-w-[85%]">
+                        <div className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center border ${
+                          att.type === 'document' ? 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400' :
+                          att.type === 'image' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' :
+                          'bg-purple-500/10 border-purple-500/20 text-purple-400'
+                        }`}>
+                          {att.type === 'document' && <FileText className="w-4 h-4" />}
+                          {att.type === 'image' && <ImageIcon className="w-4 h-4" />}
+                          {att.type === 'map' && <MapIcon className="w-4 h-4" />}
+                        </div>
+                        <div className="space-y-1">
+                          <h4 className="text-white text-xs font-black truncate max-w-[180px] sm:max-w-[240px] group-hover:text-cyan-400" title={att.name}>
+                            {att.name}
+                          </h4>
+                          <span className="text-[10px] text-slate-400 block line-clamp-1 font-semibold leading-relaxed">
+                            {att.description}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <span className="text-[9px] text-slate-500 font-mono font-bold shrink-0">{att.size}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-slate-900 pt-3">
+                      <span className="text-[9px] text-slate-500 font-mono font-bold">تاريخ الإدراج: {att.date}</span>
+                      
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={(e) => handleDeleteAttachment(att.id, e)}
+                          className="p-1.5 hover:bg-red-500/10 hover:text-red-400 text-slate-500 border border-transparent hover:border-red-900/30 rounded-lg transition-colors cursor-pointer"
+                          title="حذف المرفق"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                        
+                        <span className={`text-[9px] px-2.5 py-1 rounded-full font-bold border ${
+                          att.type === 'document' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' :
+                          att.type === 'image' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                          'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                        }`}>
+                          {att.type === 'document' ? '📄 مستند' : att.type === 'image' ? '📸 صورة' : '🗺️ خريطة'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Dynamic File Interactive Preview Container (xl:col-span-7) */}
+        <div className="xl:col-span-7 space-y-3">
+          <span className="text-[10px] text-slate-500 font-black block">لوحة المعاينة التفاعلية المباشرة للمرفق:</span>
+          
+          {selectedAttachment ? (
+            <div className="bg-slate-950 border border-slate-850 rounded-2xl overflow-hidden flex flex-col min-h-[500px] shadow-2xl relative animate-in fade-in duration-300">
+              
+              {/* Preview Header */}
+              <div className="p-4 bg-slate-900 border-b border-slate-850 flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center border ${
+                    selectedAttachment.type === 'document' ? 'bg-cyan-500/15 border-cyan-500/30 text-cyan-400' :
+                    selectedAttachment.type === 'image' ? 'bg-amber-500/15 border-amber-500/30 text-amber-400' :
+                    'bg-purple-500/15 border-purple-500/30 text-purple-400'
+                  }`}>
+                    {selectedAttachment.type === 'document' && <FileText className="w-3.5 h-3.5" />}
+                    {selectedAttachment.type === 'image' && <ImageIcon className="w-3.5 h-3.5" />}
+                    {selectedAttachment.type === 'map' && <MapIcon className="w-3.5 h-3.5" />}
+                  </div>
+                  <div>
+                    <h4 className="text-white text-xs font-extrabold max-w-[200px] truncate" title={selectedAttachment.name}>
+                      {selectedAttachment.name}
+                    </h4>
+                    <span className="text-[10px] text-slate-500 font-bold block mt-0.5">
+                      تصنيف المعاينة الحالية: {selectedAttachment.type === 'document' ? 'مستند قانوني' : selectedAttachment.type === 'image' ? 'صورة رصد فوتوغرافي' : 'مسح مساحي رقمي'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <a 
+                    href={selectedAttachment.url || '#'} 
+                    target="_blank" 
+                    referrerPolicy="no-referrer"
+                    className="px-3 py-1.5 bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 hover:border-slate-700 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-inner active:scale-95"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>تحميل المستند</span>
+                  </a>
+                  <span className="text-[10px] text-slate-500 font-mono font-bold bg-slate-950 px-2 py-1 rounded border border-slate-850">{selectedAttachment.size}</span>
+                </div>
+              </div>
+
+              {/* Preview Content (Changes dynamically based on type) */}
+              <div className="flex-1 p-5 overflow-y-auto max-h-[380px] scrollbar-thin">
+                
+                {/* PDF & Word View Layout */}
+                {selectedAttachment.type === 'document' && (
+                  <div className="space-y-4">
+                    {/* Legal metadata stamps */}
+                    <div className="grid grid-cols-2 gap-3 mb-2">
+                      <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-900 text-right space-y-1">
+                        <span className="text-[9px] text-slate-500 font-bold block">توثيق المستند:</span>
+                        <span className="text-cyan-400 text-xs font-black block">✓ مصلحة التوثيق والشهر العقاري</span>
+                      </div>
+                      <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-900 text-right space-y-1">
+                        <span className="text-[9px] text-slate-500 font-bold block">التأريخ والمطابقة:</span>
+                        <span className="text-amber-400 text-xs font-black block">✓ نسخة أصلية مطابقة للأوراق</span>
+                      </div>
+                    </div>
+
+                    {/* Word-like or PDF-like document canvas wrapper */}
+                    <div className={`p-6 rounded-2xl text-slate-200 text-xs sm:text-sm leading-relaxed font-semibold relative border overflow-hidden ${
+                      selectedAttachment.fileType === 'pdf' 
+                        ? 'bg-slate-900 border-slate-800 bg-[linear-gradient(rgba(13,13,15,0.85)_1px,transparent_1px)] bg-[size:100%_2.5rem]' 
+                        : 'bg-slate-950 border-blue-900/30 shadow-[inset_0_0_20px_rgba(30,58,138,0.15)] bg-[linear-gradient(rgba(26,26,30,0.8)_1px,transparent_1px)] bg-[size:100%_2rem]'
+                    }`}>
+                      {/* Document Watermark */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-5 select-none rotate-12">
+                        <div className="border-[8px] border-amber-500 text-amber-500 text-3xl font-black p-4 rounded-3xl">
+                          نظام مصلحة الخبراء القضائيين
+                        </div>
+                      </div>
+
+                      {/* Document text block */}
+                      <p className="whitespace-pre-wrap leading-loose text-justify text-slate-300 font-medium tracking-wide">
+                        {selectedAttachment.contentPreview}
+                      </p>
+
+                      <div className="mt-8 pt-4 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
+                        <span>صفحة ١ من ١</span>
+                        <span className="font-mono text-[9px]">أرشفة رقمية: {selectedAttachment.id.toUpperCase()}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Photo View Layout */}
+                {selectedAttachment.type === 'image' && (
+                  <div className="space-y-4 flex flex-col items-center">
+                    <div className="relative rounded-2xl overflow-hidden border border-slate-850 max-h-[280px] w-full group">
+                      <img 
+                        src={selectedAttachment.url} 
+                        alt={selectedAttachment.name} 
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent pointer-events-none"></div>
+                      <div className="absolute bottom-4 right-4 left-4 text-right">
+                        <span className="text-[10px] text-amber-400 font-bold block bg-amber-950/80 border border-amber-500/20 px-2.5 py-1 rounded-lg w-fit mr-auto">
+                          لقطة معاينة فوتوغرافية ميدانية معتمدة
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-slate-400 font-semibold text-center leading-relaxed">
+                      💡 {selectedAttachment.description}
+                    </p>
+                  </div>
+                )}
+
+                {/* Map View Layout */}
+                {selectedAttachment.type === 'map' && (
+                  <div className="space-y-4">
+                    {/* Simulated interactive coordinate block */}
+                    <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center justify-between gap-4 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-5 h-5 text-purple-400 animate-bounce" />
+                        <div className="text-right">
+                          <span className="text-[10px] text-slate-500 font-bold block">إحداثيات الرفع المساحي:</span>
+                          <span className="text-white font-mono text-xs font-black">29.9912° N, 31.1425° E</span>
+                        </div>
+                      </div>
+                      
+                      <div className="text-[10px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-3 py-1.5 rounded-xl font-bold">
+                        متطابق مع هيئة المساحة والخرائط ✓
+                      </div>
+                    </div>
+
+                    <div className="relative rounded-2xl overflow-hidden border border-slate-850 max-h-[220px] w-full group">
+                      <img 
+                        src={selectedAttachment.url} 
+                        alt={selectedAttachment.name} 
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent pointer-events-none"></div>
+                      <div className="absolute bottom-3 right-3 left-3 flex items-center justify-between flex-wrap gap-2">
+                        <span className="text-[9px] bg-slate-950/90 text-white border border-slate-850 px-2 py-1 rounded-lg font-mono">EG-GIZA-GRID-27</span>
+                        <span className="text-[9px] bg-purple-950/95 text-purple-300 border border-purple-500/25 px-2.5 py-1 rounded-lg font-bold">كروكي مساحة جوي</span>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-slate-400 font-semibold text-center leading-relaxed">
+                      💡 {selectedAttachment.description}
+                    </p>
+                  </div>
+                )}
+
+                {/* Metadata Properties Grid */}
+                {selectedAttachment.metadata && (
+                  <div className="mt-5 pt-4 border-t border-slate-900 space-y-2.5 text-right">
+                    <span className="text-[10px] text-slate-500 font-bold block">تفاصيل وبيانات المرفق الفنية:</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {Object.entries(selectedAttachment.metadata).map(([key, val]) => (
+                        <div key={key} className="bg-slate-900/40 border border-slate-900/60 p-2.5 rounded-xl flex items-center justify-between text-xs font-semibold">
+                          <span className="text-white font-bold">{val}</span>
+                          <span className="text-slate-400">{key}:</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+              </div>
+
+              {/* Preview Footer Actions */}
+              <div className="p-4 bg-slate-900 border-t border-slate-850 flex items-center justify-between flex-wrap gap-3">
+                <span className="text-[10px] text-slate-500 font-mono font-bold">SECURED ATTACHMENT VIEWPORT</span>
+                
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-cyan-400 font-bold animate-pulse flex items-center gap-1">
+                    <span>تحليل ذكي متوافق ✓</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#00f0ff]"></span>
+                  </span>
+                </div>
+              </div>
+
+            </div>
+          ) : (
+            <div className="bg-slate-950 border border-slate-850 rounded-2xl min-h-[500px] flex flex-col items-center justify-center p-8 text-center space-y-4">
+              <div className="w-14 h-14 rounded-full bg-slate-900 flex items-center justify-center text-slate-600 border border-slate-850">
+                <AlertCircle className="w-8 h-8 text-slate-500" />
+              </div>
+              <div className="space-y-1.5 max-w-sm">
+                <h4 className="text-white text-sm font-black">لم يتم اختيار أي مرفق لمعاينته</h4>
+                <p className="text-slate-500 text-xs font-semibold leading-relaxed">
+                  الرجاء النقر على أي مرفق أو مستند أو خريطة في القائمة اليمنى لعرض معاينته الكاملة ومطابقة محتواه بدعوى بيت العمرانية.
+                </p>
+              </div>
+            </div>
+          )}
+
+        </div>
+
+      </div>
+
+      {/* 5. Shared Legal Context Info box */}
+      <div className="bg-cyan-500/5 p-4 rounded-2xl border border-cyan-500/10 space-y-2 text-right">
+        <div className="flex items-center gap-1.5 text-cyan-400 text-xs font-black justify-end">
+          <span>تنبيه المزامنة والسرية الموحدة لبيت العمرانية</span>
+          <AlertCircle className="w-4 h-4" />
+        </div>
+        <p className="text-[10px] text-slate-400 leading-relaxed font-semibold">
+          يتم ربط ومزامنة كافة الخرائط الرقمية وصور المعاينات الإنشائية تلقائياً بالملف الاستدلالي الموحد والمقدم للنيابة العامة ووزارة العدل. يرجى توخي الدقة في البيانات المرفوعة من قبل الخبير المعين كابتن حسام.
+        </p>
+      </div>
+
+    </div>
+  );
+}

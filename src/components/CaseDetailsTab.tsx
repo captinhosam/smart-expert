@@ -10,7 +10,12 @@ import {
   FileCheck,
   Percent,
   TrendingUp,
-  Landmark
+  Landmark,
+  Calendar,
+  Clock,
+  Plus,
+  Bell,
+  Gavel
 } from 'lucide-react';
 import { calculateAll } from '../utils/calculations';
 
@@ -36,8 +41,56 @@ export default function CaseDetailsTab({ caseData, onUpdateCaseData }: CaseDetai
   const [newHeirRelation, setNewHeirRelation] = useState<Heir['relationship']>('son');
   const [hoveredHeirId, setHoveredHeirId] = useState<string | null>(null);
 
+  // State variables for dynamic court session entry
+  const [sessDate, setSessDate] = useState('2026-07-08');
+  const [sessTime, setSessTime] = useState('10:00');
+  const [sessType, setSessType] = useState('معاينة ميدانية');
+  const [sessNotes, setSessNotes] = useState('');
+
   const results = calculateAll(caseData);
   const heirsShares = results.heirsShares;
+
+  const sessions = caseData.sessions || [];
+
+  // Find the next upcoming session (date >= today: 2026-07-01)
+  const todayStr = "2026-07-01";
+  const upcomingSessions = sessions
+    .filter(s => s.date >= todayStr)
+    .sort((a, b) => a.date.localeCompare(b.date));
+    
+  const nextSession = upcomingSessions[0];
+  let daysUntilNext = -1;
+  if (nextSession) {
+    const todaySec = new Date(todayStr).getTime();
+    const sessSec = new Date(nextSession.date).getTime();
+    const diffTime = sessSec - todaySec;
+    daysUntilNext = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  }
+
+  const handleAddSession = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!sessDate || !sessType.trim()) return;
+
+    const newSession = {
+      id: `sess_${Date.now()}`,
+      date: sessDate,
+      time: sessTime || '09:00',
+      type: sessType.trim(),
+      notes: sessNotes.trim() || 'لا توجد ملاحظات إضافية.'
+    };
+
+    onUpdateCaseData({
+      sessions: [...sessions, newSession]
+    });
+
+    setSessNotes('');
+  };
+
+  const handleRemoveSession = (id: string) => {
+    onUpdateCaseData({
+      sessions: sessions.filter(s => s.id !== id)
+    });
+  };
 
 
   const handleAddHeir = (e: React.FormEvent) => {
@@ -66,6 +119,37 @@ export default function CaseDetailsTab({ caseData, onUpdateCaseData }: CaseDetai
 
   return (
     <div className="space-y-6">
+      
+      {/* 🕰️ NEXT UPCOMING COURT SESSION ALERT BANNER 🕰️ */}
+      {nextSession && (
+        <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-4 transition-all ${
+          daysUntilNext <= 3 
+            ? 'bg-red-500/10 border-red-500/30 text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.07)] animate-pulse' 
+            : daysUntilNext <= 7 
+            ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.07)]' 
+            : 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.07)]'
+        }`}>
+          <div className="flex items-center gap-3 text-right">
+            <div className={`p-2.5 rounded-xl shrink-0 ${
+              daysUntilNext <= 3 ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'
+            }`}>
+              <Bell className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="font-black text-sm text-white">تنبيه بقرب موعد الجلسة القضائية القادمة</h4>
+              <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">
+                الجلسة المعينة بعنوان <span className="font-bold underline text-amber-400">({nextSession.type})</span> مقررة في تاريخ <span className="font-mono font-bold text-white bg-slate-950 px-1.5 py-0.5 rounded">{nextSession.date}</span> في تمام الساعة <span className="font-mono font-bold text-white bg-slate-950 px-1.5 py-0.5 rounded">{nextSession.time}</span>.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col items-center sm:items-end justify-center shrink-0">
+            <span className="text-[10px] uppercase font-mono tracking-widest text-slate-400 font-bold">الوقت المتبقي</span>
+            <span className="text-sm sm:text-base font-black font-mono mt-0.5 bg-slate-950 px-3 py-1 rounded-xl border border-slate-800">
+              {daysUntilNext === 0 ? 'اليوم!' : daysUntilNext === 1 ? 'غداً!' : `خلال ${daysUntilNext} أيام`}
+            </span>
+          </div>
+        </div>
+      )}
       
       {/* 1. Basic Case Profile Form */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
@@ -596,6 +680,153 @@ export default function CaseDetailsTab({ caseData, onUpdateCaseData }: CaseDetai
         ) : (
           <div className="p-6 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl bg-slate-950/10">
             لا يوجد ورثة مسجلين في الشجرة بعد. استخدم النموذج أعلاه للإضافة.
+          </div>
+        )}
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 🕰️ 3. COURT SESSIONS TIMELINE & SCHEDULER 🕰️ */}
+      {/* ========================================================================= */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-800 pb-3 flex-wrap gap-2">
+          <h3 className="text-white text-base font-black flex items-center gap-2">
+            <Gavel className="w-5 h-5 text-amber-500" />
+            <span>جدول الجلسات القضائية والخطط الزمنية للمحاكمة</span>
+          </h3>
+          <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-full font-bold">
+            {sessions.length} جلسات مسجلة
+          </span>
+        </div>
+
+        {/* Add Session Form */}
+        <form onSubmit={handleAddSession} className="bg-slate-950/40 border border-slate-850 p-4 rounded-xl space-y-4 shadow-inner">
+          <h4 className="text-white text-xs font-black flex items-center gap-1.5 border-b border-slate-850 pb-2">
+            <Plus className="w-4 h-4 text-amber-500" />
+            <span>تسجيل جلسة قضائية أو إجراء خبير جديد</span>
+          </h4>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-slate-400 text-[11px] font-bold">تاريخ الجلسة</label>
+              <input 
+                type="date"
+                required
+                value={sessDate}
+                onChange={e => setSessDate(e.target.value)}
+                className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none transition-all"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-slate-400 text-[11px] font-bold">وقت الجلسة</label>
+              <input 
+                type="time"
+                value={sessTime}
+                onChange={e => setSessTime(e.target.value)}
+                className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none transition-all"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-slate-400 text-[11px] font-bold">تصنيف الجلسة / نوع الإجراء</label>
+              <select 
+                value={sessType}
+                onChange={e => setSessType(e.target.value)}
+                className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs font-bold focus:outline-none transition-all"
+              >
+                <option value="معاينة ميدانية">معاينة ميدانية للموقع</option>
+                <option value="جلسة فرز وتجنيب">جلسة فرز وتجنيب الأنصبة</option>
+                <option value="تقديم مذكرات ومستندات">تقديم مذكرات ومستندات</option>
+                <option value="جلسة خبراء وتداول">جلسة خبراء وتداول الأقوال</option>
+                <option value="جلسة حسم ونطق بالحكم">جلسة حسم ونطق بالحكم</option>
+                <option value="جلسة مرافعة شفهية">جلسة مرافعة شفهية</option>
+                <option value="أخرى">أخرى / إجراء مخصص</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-slate-400 text-[11px] font-bold">ملاحظات المحكمة والتعليمات القضائية الفنية الخاصة بالجلسة</label>
+            <textarea 
+              rows={2}
+              placeholder="اكتب توجيهات المستشار رئيس الدائرة أو تعليمات الحضور أو مستهدفات المعاينة الميدانية..."
+              value={sessNotes}
+              onChange={e => setSessNotes(e.target.value)}
+              className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all resize-none"
+            />
+          </div>
+
+          <div className="flex justify-end pt-1">
+            <button 
+              type="submit"
+              className="bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-600 hover:to-amber-500 text-slate-950 font-black text-xs px-5 py-2.5 rounded-xl transition-all flex items-center gap-1.5 shadow-md shadow-amber-500/10 cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>إدراج الجلسة في الجدول الزمني</span>
+            </button>
+          </div>
+        </form>
+
+        {/* Timeline representation */}
+        {sessions.length > 0 ? (
+          <div className="space-y-4 relative before:absolute before:inset-y-0 before:right-3 before:w-0.5 before:bg-slate-800">
+            {sessions
+              .sort((a, b) => a.date.localeCompare(b.date))
+              .map((sess) => {
+                const isUpcoming = sess.date >= todayStr;
+                return (
+                  <div key={sess.id} className="relative pr-8 group">
+                    {/* Circle Indicator on the line */}
+                    <span className={`absolute right-1.5 top-2.5 w-3.5 h-3.5 rounded-full border-2 transform translate-x-1/2 transition-all ${
+                      isUpcoming 
+                        ? 'bg-amber-500 border-slate-900 ring-4 ring-amber-500/20' 
+                        : 'bg-slate-800 border-slate-900'
+                    }`} />
+                    
+                    <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 flex flex-col md:flex-row md:items-start md:justify-between gap-4 hover:border-slate-700 transition-all text-right">
+                      <div className="space-y-1.5 text-right flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-white text-xs font-black">{sess.type}</span>
+                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                            isUpcoming 
+                              ? 'bg-amber-500/15 text-amber-400 border border-amber-500/25' 
+                              : 'bg-slate-800 text-slate-400'
+                          }`}>
+                            {isUpcoming ? 'جلسة قادمة' : 'جلسة سابقة'}
+                          </span>
+                        </div>
+                        <p className="text-slate-400 text-xs leading-relaxed">{sess.notes}</p>
+                      </div>
+                      
+                      <div className="flex items-center justify-between md:flex-col md:items-end shrink-0 gap-3 border-t md:border-t-0 pt-2.5 md:pt-0 border-slate-850">
+                        <div className="text-slate-300 font-mono text-xs font-bold text-right">
+                          <div className="flex items-center gap-1.5 justify-end">
+                            <span>{sess.date}</span>
+                            <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                          </div>
+                          <div className="flex items-center gap-1.5 justify-end mt-0.5 text-[11px] text-slate-400">
+                            <span>{sess.time}</span>
+                            <Clock className="w-3.5 h-3.5 text-slate-500" />
+                          </div>
+                        </div>
+                        
+                        <button 
+                          type="button"
+                          onClick={() => handleRemoveSession(sess.id)}
+                          className="text-red-400 hover:text-red-350 p-1 hover:bg-slate-900 rounded transition-all cursor-pointer"
+                          title="حذف الجلسة"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        ) : (
+          <div className="p-6 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl bg-slate-950/10">
+            لم يتم تسجيل أي جلسات قضائية أو خطط زمنية للمحاكمة حتى الآن.
           </div>
         )}
       </div>

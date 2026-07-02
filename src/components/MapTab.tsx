@@ -278,49 +278,66 @@ export default function MapTab({ caseData, results, onUpdateCoordinates }: MapTa
         </div>
       </div>
 
-      {/* Environmental & Soil Diagnostics (For Agricultural and Land analysis) */}
-      <div className="grid grid-cols-2 gap-2.5">
-        <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl shadow-lg flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 shrink-0">
-            <Droplet className="w-5 h-5" />
+      {/* Rent, Ownership, and New Law Diagnostics */}
+      <div id="legal-and-financial-metrics" className="bg-slate-900 rounded-2xl border border-slate-800 p-4 shadow-xl space-y-3.5">
+        <h3 className="text-white text-sm font-black flex items-center gap-2 border-b border-slate-800 pb-2.5">
+          <Activity className="w-4 h-4 text-amber-500" />
+          <span>المحددات القانونية والمؤشرات الاستثمارية للعقار</span>
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {/* Rent Box (الإيجار) */}
+          <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex flex-col justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 shrink-0">
+                <Compass className="w-4 h-4" />
+              </div>
+              <span className="text-slate-200 text-xs font-black">العائد ونظام الإيجار</span>
+            </div>
+            <div>
+              <span className="text-white text-sm font-black block font-mono">
+                {caseData.annualRent ? `${caseData.annualRent.toLocaleString('ar-EG')} ج / سنوياً` : 'لا يوجد'}
+              </span>
+              <span className="text-emerald-400 text-[10px] font-bold mt-1 block">
+                {caseData.annualRent > 0 ? '✓ عائد معتمد قانون جديد' : '✓ شاغل بالكامل تمليك'}
+              </span>
+            </div>
           </div>
-          <div className="flex flex-col min-w-0">
-            <span className="text-slate-400 text-[10px] font-bold truncate">حموضة التربة (pH)</span>
-            <span className="text-white text-sm font-black mt-0.5 font-mono">6.8 pH</span>
-            <span className="text-emerald-400 text-[9px] font-bold mt-0.5 truncate">✓ خصبة مثالية</span>
-          </div>
-        </div>
 
-        <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl shadow-lg flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 shrink-0">
-            <Globe className="w-5 h-5" />
+          {/* Ownership Box (التمليك) */}
+          <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex flex-col justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 shrink-0">
+                <Layers className="w-4 h-4" />
+              </div>
+              <span className="text-slate-200 text-xs font-black">وضع الملكية والحيازة</span>
+            </div>
+            <div>
+              <span className="text-white text-xs font-black block truncate">
+                {caseData.dispute.type === 'inheritance' ? 'إرث شرعي وحصر تركات' : 'عقد ملكية نهائي مسجل'}
+              </span>
+              <span className="text-blue-400 text-[10px] font-bold mt-1 block">
+                ✓ مسجل مطهّر من الديون
+              </span>
+            </div>
           </div>
-          <div className="flex flex-col min-w-0">
-            <span className="text-slate-400 text-[10px] font-bold truncate">المياه الجوفية</span>
-            <span className="text-white text-sm font-black mt-0.5 font-mono">1.42 م</span>
-            <span className="text-amber-400 text-[9px] font-bold mt-0.5 truncate">⚠ قريب للسطح</span>
-          </div>
-        </div>
 
-        <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl shadow-lg flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 shrink-0">
-            <Layers className="w-5 h-5" />
-          </div>
-          <div className="flex flex-col min-w-0">
-            <span className="text-slate-400 text-[10px] font-bold truncate">مغذيات (NPK)</span>
-            <span className="text-white text-sm font-black mt-0.5 font-mono">74% / 68%</span>
-            <span className="text-emerald-400 text-[9px] font-bold mt-0.5 truncate">✓ غنية ومتزنة</span>
-          </div>
-        </div>
-
-        <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl shadow-lg flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400 shrink-0">
-            <Wind className="w-5 h-5" />
-          </div>
-          <div className="flex flex-col min-w-0">
-            <span className="text-slate-400 text-[10px] font-bold truncate">التلوث البيئي</span>
-            <span className="text-white text-sm font-black mt-0.5 font-mono">0.02%</span>
-            <span className="text-emerald-400 text-[9px] font-bold mt-0.5 truncate">✓ هواء نقي</span>
+          {/* New Law Box (القانون الجديد) */}
+          <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex flex-col justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 shrink-0">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <span className="text-slate-200 text-xs font-black">توافق القانون الجديد</span>
+            </div>
+            <div>
+              <span className="text-white text-[11px] font-black block leading-snug">
+                القانون رقم ١٠ لسنة ٢٠٢٢
+              </span>
+              <span className="text-amber-400 text-[9px] font-bold mt-1 block leading-relaxed">
+                ✓ متوافق مع تعديلات إخلاء العين وقواعد زيادة الأجر
+              </span>
+            </div>
           </div>
         </div>
       </div>
