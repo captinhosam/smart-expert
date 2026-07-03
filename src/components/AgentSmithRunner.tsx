@@ -33,6 +33,8 @@ import {
   Maximize2
 } from 'lucide-react';
 
+import { triggerToast } from '../lib/toast';
+
 interface AgentSmithRunnerProps {
   caseData: CaseData;
   results: CalculationResults;
@@ -164,14 +166,143 @@ const ARCHETYPES: AgentArchetype[] = [
   }
 ];
 
+export interface MindMapNode {
+  id: string;
+  label: string;
+  details?: string;
+}
+
+export interface MindMapBranch {
+  id: string;
+  icon: string;
+  title: string;
+  nodes: MindMapNode[];
+}
+
+export const MIND_MAP_DATA: MindMapBranch[] = [
+  {
+    id: 'b1',
+    icon: '📌',
+    title: 'التصنيف المكاني والقانوني للأرض (حسب الطبيعة)',
+    nodes: [
+      { id: 'n1_1', label: 'الأراضي الزراعية (الأطيان) - داخل الزمام (حدود الرقعة الزراعية)', details: 'خاضعة لقوانين الإصلاح الزراعي ومصلحة الأطيان والضرائب العقارية.' },
+      { id: 'n1_2', label: 'الأراضي الزراعية (الأطيان) - خاضعة لقوانين الإصلاح الزراعي', details: 'تخضع لقيود الحيازة وتوزيع الأراضي المستصلحة والورثة الواضعين لليد.' },
+      { id: 'n1_3', label: 'الأراضي الصحراوية (صحارى) - خارج الزمام (على بعد كيلومترين فأكثر)', details: 'خاضعة لقوانين التخصيص، وتخضع لولاية هيئة التعمير والتنمية الزراعية.' },
+      { id: 'n1_4', label: 'الأراضي الصحراوية (صحارى) - قوانين التخصيص والاستصلاح', details: 'تشتمل على شروط الإنتاجية وعدم تغيير النشاط إلا بموافقة مسبقة.' },
+      { id: 'n1_5', label: 'الأراضي المبنية (العمرانية) - داخل الحيز العمراني للقرى والمدن', details: 'تخضع لقانون البناء الموحد 119 لسنة 2008 وتخطيط هيئة المجتمعات العمرانية.' },
+      { id: 'n1_6', label: 'الأراضي المبنية (العمرانية) - خاضعة لقوانين البناء والتنظيم', details: 'تشترط الحصول على ترخيص بناء والالتزام بخطوط التنظيم المعتمدة.' },
+      { id: 'n1_7', label: 'أراضي الدولة (أملاك عامة وخاصة) - ملكية الدولة (مجلس الوزراء / المحافظات)', details: 'لا يجوز كسب ملكيتها بالتقادم، ويتم تخصيصها للمنفعة العامة.' },
+      { id: 'n1_8', label: 'أراضي الدولة (أملاك عامة وخاصة) - خاضعة لقوانين الطرح والمزادات', details: 'تخضع لقانون التعاقدات الحكومية وإجراءات المزايدات العلنية المقننة.' }
+    ]
+  },
+  {
+    id: 'b2',
+    icon: '⚖️',
+    title: 'الإطار التشريعي والقوانين الحاكمة (النوع الخاص)',
+    nodes: [
+      { id: 'n2_1', label: 'قوانين التملك والبيع - قانون الأراضي الصحراوية (143 لسنة 1981)', details: 'ينظم ملكية الأراضي الصحراوية واستصلاحها ويضع حداً أقصى للملكية.' },
+      { id: 'n2_2', label: 'قوانين التملك والبيع - قانون الإصلاح الزراعي (178 لسنة 1952)', details: 'ينظم تحديد الملكية الزراعية وتوزيعها على الفلاحين وقواعد الحيازة الزراعية.' },
+      { id: 'n2_3', label: 'قوانين التملك والبيع - قانون تنظيم تملك الأجانب (230 لسنة 1996)', details: 'ينظم شروط ومساحات تملك غير المصريين للعقارات والأراضي والشقق.' },
+      { id: 'n2_4', label: 'قوانين التقنين والتصالح - قانون التصالح في مخالفات البناء (17 لسنة 2019)', details: 'يسمح بتقنين أوضاع المباني المخالفة والتصالح عليها مقابل رسوم محددة.' },
+      { id: 'n2_5', label: 'قوانين التقنين والتصالح - قانون تيسير إجراءات التقنين (تثبيت وضع اليد)', details: 'ينظم تقنين واضعي اليد على أراضي الدولة الخاصة للجادين فقط.' },
+      { id: 'n2_6', label: 'قوانين التوثيق والحماية - قانون الشهر العقاري (114 لسنة 1946)', details: 'ينظم تسجيل التصرفات العقارية وإشهارها لضمان استقرار الملكية.' },
+      { id: 'n2_7', label: 'قوانين التوثيق والحماية - قانون المرافعات المدنية (لحسم النزاعات)', details: 'يحدد إجراءات التقاضي وتقديم الدعاوى والطعون أمام المحاكم المختصة.' },
+      { id: 'n2_8', label: 'القوانين التنظيمية العامة - القانون المدني (مصدر التعاقدات الرئيسي)', details: 'ينظم أركان عقد البيع، المسؤولية التقصيرية، والملكية الشائعة وقواعد الجوار.' },
+      { id: 'n2_9', label: 'القوانين التنظيمية العامة - قانون البناء الموحد (119 لسنة 2008)', details: 'ينظم تراخيص الهدم والتشييد والارتفاعات ومخاطر البناء غير المطابقة للكود.' }
+    ]
+  },
+  {
+    id: 'b3',
+    icon: '🏛️',
+    title: 'الجهات والهيئات المعنية (من ينفذ ويدير)',
+    nodes: [
+      { id: 'n3_1', label: 'الجهات المركزية - هيئة المجتمعات العمرانية الجديدة', details: 'تختص بإدارة وتخطيط وطرح الأراضي بالمدن الجديدة (كـ 6 أكتوبر والشيخ زايد).' },
+      { id: 'n3_2', label: 'الجهات المركزية - هيئة التعمير والتنمية الزراعية', details: 'المسؤولة عن إدارة وتنمية وأراضي الاستصلاح الزراعي خارج الزمام.' },
+      { id: 'n3_3', label: 'الجهات المركزية - مصلحة الشهر العقاري والتوثيق', details: 'تختص بتسجيل عقود الملكية وإثبات صحة ونفاذ التصرفات العقارية بجمهورية مصر العربية.' },
+      { id: 'n3_4', label: 'الجهات المحلية (المحليات) - المحافظة (التراخيص والتخطيط المحلي)', details: 'تشرف على لجان التقنين والمجالس التنفيذية للتصالح وتخصيص المنافع العامة.' },
+      { id: 'n3_5', label: 'الجهات المحلية (المحليات) - الوحدة المحلية للقرية أو الحي', details: 'تختص بضبط مخالفات البناء وتتبع التراخيص اليومية ومتابعة خطوط التنظيم.' },
+      { id: 'n3_6', label: 'الجهات الأمنية والاستعلامية - وزارة الداخلية (الموافقات الأمنية)', details: 'مطلوبة لبعض تصرفات تملك الأراضي في المناطق الحدودية وشبه جزيرة سيناء.' },
+      { id: 'n3_7', label: 'الجهات الأمنية والاستعلامية - الهيئة العامة للاستعلامات', details: 'للمراجعة والتحقق الفيدرالي في طلبات تملك الأراضي للهيئات والشركات الاستثمارية.' },
+      { id: 'n3_8', label: 'الجهات القضائية - محاكم الأسرة (للميراث والإرث الشرعي)', details: 'تختص بإصدار إعلامات الوراثة وتحديد نصيب كل وريث وفق قواعد الشريعة.' },
+      { id: 'n3_9', label: 'الجهات القضائية - المحاكم المدنية (لحل النزاعات العقارية)', details: 'تفصل في دعاوى صحة ونفاذ العقود، دعاوى الفرز والتجنيب، ودعاوى غصب الحيازة.' }
+    ]
+  },
+  {
+    id: 'b4',
+    icon: '📝',
+    title: 'دورة حياة الأرض وإجراءات التداول (من البيع للتسجيل)',
+    nodes: [
+      { id: 'n4_1', label: 'مرحلة ما قبل البيع - الحصول على الخريطة المساحية المعتمدة', details: 'لتحديد الأبعاد الصافية والحدود الأربعة للقطعة لمنع حدوث تداخل مستقبلي.' },
+      { id: 'n4_2', label: 'مرحلة ما قبل البيع - الاستعلام عن حالة الأرض وقرارات الحظر والوقف', details: 'للتحقق من عدم وجود رهن للبنوك أو وقوعها تحت الحيازة الموقوفة للأوقاف.' },
+      { id: 'n4_3', label: 'مرحلة التعاقد - إعداد عقد البيع الابتدائي (العرفي) والبنود القانونية', details: 'تثبيت الثمن المتفق عليه وشروط السداد، وتحديد الثمن الإجمالي بدقة.' },
+      { id: 'n4_4', label: 'مرحلة التعاقد - سداد الرسوم والضرائب (ضريبة التصرفات العقارية 2.5%)', details: 'ضريبة مستحقة على البائع بنسبة 2.5% من إجمالي قيمة التصرف العقاري.' },
+      { id: 'n4_5', label: 'مرحلة التقنين والتسجيل - التقدم بطلب تسجيل للشهر العقاري المعتمد', details: 'بداية المعاملة لإشهار العقد الابتدائي ونقل التكليف رسمياً.' },
+      { id: 'n4_6', label: 'مرحلة التقنين والتسجيل - تقديم المستندات (أصول وصور، بطاقات، إقرارات)', details: 'تشمل تقديم كروكي الرفع المساحي الرقمي وعقد الملكية المسلسل التاريخي.' },
+      { id: 'n4_7', label: 'مرحلة التقنين والتسجيل - إجراء التسجيل العيني لنقل الملكية نهائياً', details: 'الحصول على رقم شهر مشهر نهائي، وهو الحماية القانونية المطلقة للملكية.' },
+      { id: 'n4_8', label: 'مرحلة ما بعد البيع - سداد الضريبة العقارية السنوية الدورية', details: 'تدفع لمأمورية الضرائب العقارية المختصة بناء على تقييم القيمة الإيجارية.' },
+      { id: 'n4_9', label: 'مرحلة ما بعد البيع - استخراج رخصة البناء للبدء في التطوير والتشييد', details: 'تقديم رسومات هندسية معتمدة للحصول على ترخيص التشييد من الحي.' }
+    ]
+  },
+  {
+    id: 'b5',
+    icon: '💼',
+    title: 'أنواع التصرفات والمعاملات العقارية (صفقات القطاع)',
+    nodes: [
+      { id: 'n5_1', label: 'بيع وشراء نهائي (نقل كامل للملكية العينية)', details: 'عقد ناقل للملكية بالكامل يشمل تسليم المبيع للمشتري وسداد كامل الثمن.' },
+      { id: 'n5_2', label: 'تنازل عن حق الانتفاع (خاص بالأراضي المخصصة)', details: 'نقل منفعة الأرض دون رقبتها لفترة زمنية محددة وبشروط معينة.' },
+      { id: 'n5_3', label: 'إيجار تمليكي (طويل الأجل مع التزام أحقية التملك)', details: 'إيجار سنوي ينتهي بملكية العقار للمستأجر عند الوفاء بجميع الأقساط.' },
+      { id: 'n5_4', label: 'قسمة المهايأة (تقسيم الأرض العينية بين الشركاء)', details: 'اتفاق الشركاء على اختصاص كل منهم بجزء مفرز يعادل حصته الشائعة.' },
+      { id: 'n5_5', label: 'الوقف والهبة والميراث (الانتقال المجاني للحقوق)', details: 'عقود ومعاملات بدون مقابل مالي ينظمها القانون والشرع الإسلامي.' },
+      { id: 'n5_6', label: 'رهن عقاري (لضمان سداد التزامات وقروض البنوك)', details: 'عقد تبعي يخول الدائن المرتهن حق التقدم على بقية الدائنين في استيفاء حقه.' }
+    ]
+  },
+  {
+    id: 'b6',
+    icon: '⚠️',
+    title: 'التحديات والمخاطر والنزاعات الشائعة (الجانب الدفاعي)',
+    nodes: [
+      { id: 'n6_1', label: 'مخاطر قانونية - تداخل حدود الزمام (زراعي / صحراوي)', details: 'وقوع الأرض على خط الفصل مما يسبب نزاعاً قضائياً حول جهة الولاية الحاكمة.' },
+      { id: 'n6_2', label: 'مخاطر قانونية - وجود نزاعات حادة حول الميراث بين الورثة', details: 'مطالبة أحد الورثة بنقض القسمة العرفية أو الطعن بالصورية المطلقة.' },
+      { id: 'n6_3', label: 'مخاطر إدارية - عدم صلاحية الشهر العقاري لعدم تسلسل الملكية', details: 'عجز المشتري عن ربط سلسل العقود السابقة بعقد مسجل رسمي.' },
+      { id: 'n6_4', label: 'مخاطر إدارية - وجود مخالفات بناء مسجلة تمنع التصالح', details: 'بناء تجاوز قيود الارتفاع الفنية المقررة من قبل الطيران المدني.' },
+      { id: 'n6_5', label: 'مخاطر احتيالية - بيع الأرض لأكثر من مشتري في نفس الوقت', details: 'تزوير عقود عرفية وبيعها لضحايا متعددين بعقود وتواريخ متباينة.' },
+      { id: 'n6_6', label: 'مخاطر احتيالية - بيع أراضي مملوكة للدولة بوضع يد غير مقنن', details: 'النصب ببيع أراض صحراوية غير مسجلة بادعاء استصلاح وهمي.' },
+      { id: 'n6_7', label: 'الحلول - الفحص القانوني الجيوديسي المسبق لكل السندات', details: 'الاستعانة بخرائط الرفع المساحي والنيابة والتحري الفيدرالي لضمان الأمان المالي.' }
+    ]
+  }
+];
+
+export const PRESETS_DATA = [
+  {
+    name: '🌾 تقنين أرض زراعية (وضع يد)',
+    description: 'يختار تلقائياً تصنيف الأطيان، وقوانين التقنين، وهيئة التعمير الزراعي، والخرائط المساحية للتداول والفرز.',
+    nodeIds: ['n1_1', 'n1_2', 'n2_5', 'n3_2', 'n4_1', 'n5_4']
+  },
+  {
+    name: '🏢 شراء عقار سكني داخل الحيز',
+    description: 'يختار تلقائياً أراضي البناء العمراني، قانون البناء الموحد 119، الشهر العقاري والتوثيق، والمحليات لإصدار التراخيص.',
+    nodeIds: ['n1_5', 'n1_6', 'n2_4', 'n2_9', 'n3_3', 'n3_5', 'n4_9']
+  },
+  {
+    name: '🏜️ تسجيل أرض صحراوية بالشهر العقاري',
+    description: 'يختار تلقائياً الأراضي الصحراوية، قانون 143 لسنة 1981، الموافقات الأمنية، وإجراءات الشهر العقاري والتسجيل النهائي.',
+    nodeIds: ['n1_3', 'n1_4', 'n2_1', 'n3_2', 'n3_6', 'n4_6', 'n4_7']
+  },
+  {
+    name: '⚖️ حسم نزاع حدودي وتداخل مع الجار',
+    description: 'يختار تلقائياً قوانين التوثيق والمرافعات، المحاكم المدنية، ومرحلة الحصول على الخريطة المساحية لمعالجة تداخل الزمام.',
+    nodeIds: ['n2_7', 'n2_8', 'n3_9', 'n4_1', 'n4_2', 'n6_1', 'n6_7']
+  }
+];
+
 export default function AgentSmithRunner({ 
   caseData, 
   results, 
   isAnalyzing: parentIsAnalyzing, 
   onRunAnalysis 
 }: AgentSmithRunnerProps) {
-  // Tabs: 'chat' | 'swarm_map' | 'repository'
-  const [activeTab, setActiveTab] = useState<'chat' | 'swarm_map' | 'repository'>('chat');
+  // Tabs: 'chat' | 'swarm_map' | 'repository' | 'mind_map'
+  const [activeTab, setActiveTab] = useState<'chat' | 'swarm_map' | 'repository' | 'mind_map'>('chat');
   const [selectedSector, setSelectedSector] = useState<string>('all');
   const [logs, setLogs] = useState<string[]>([]);
   const [completedAgents, setCompletedAgents] = useState<string[]>([]);
@@ -183,6 +314,11 @@ export default function AgentSmithRunner({
   const [biometricStatus, setBiometricStatus] = useState<'idle' | 'scanning' | 'success'>('idle');
   const [scanProgress, setScanProgress] = useState(0);
   const [securityLevel, setSecurityLevel] = useState('مستوى الحماية العادي');
+
+  // Egypt Land Sector Mind Map States
+  const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
+  const [mindMapSearchQuery, setMindMapSearchQuery] = useState('');
+  const [expandedBranches, setExpandedBranches] = useState<string[]>(['b1', 'b2', 'b3', 'b4', 'b5', 'b6']); // Expand all by default
 
   // Interactive Custom Chat Settings
   const [activeAgentType, setActiveAgentType] = useState<string>('swarm'); // Defaults to swarm intelligence
@@ -440,6 +576,32 @@ export default function AgentSmithRunner({
     return 'text-blue-400 border-blue-500/30 bg-blue-500/10';
   };
 
+  const handleFeedSelectionsToChat = () => {
+    if (selectedNodeIds.length === 0) {
+      triggerToast('رجاء تحديد عنصر واحد على الأقل من الخريطة الذهنية لتغذية الشات!', 'info');
+      return;
+    }
+
+    const selectedNodesInfo: string[] = [];
+    MIND_MAP_DATA.forEach(branch => {
+      branch.nodes.forEach(node => {
+        if (selectedNodeIds.includes(node.id)) {
+          selectedNodesInfo.push(`- **${node.label}**: ${node.details}`);
+        }
+      });
+    });
+
+    const formattedPrompt = `يرجى تحليل النزاع وحله بمزيد من الدقة بالاستناد إلى المحددات والقوانين التالية المأخوذة من الخريطة الذهنية لقطاع الأراضي في مصر:
+
+${selectedNodesInfo.join('\n')}
+
+يرجى تفعيل ذكاء السرب للوكلاء المعتمدين ومطابقتها هندسياً وشرعياً لإصدار التقرير النهائي بدقة عالية.`;
+
+    setChatInput(formattedPrompt);
+    setActiveTab('chat');
+    triggerToast('تم تغذية شات كرو إيجنت بنقاط الخريطة الذهنية بنجاح! يمكنك الآن إرسال السؤال بمزيد من الدقة.', 'success');
+  };
+
   return (
     <div className="space-y-6">
       
@@ -556,6 +718,17 @@ export default function AgentSmithRunner({
         >
           <Workflow className="w-4 h-4" />
           <span>خريطة هندسة الوكلاء الـ 10 (Interactive Architecture)</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('mind_map')}
+          className={`px-5 py-3 text-xs font-black transition-all border-b-2 flex items-center gap-2 ${
+            activeTab === 'mind_map' 
+              ? 'border-amber-500 text-amber-500 bg-[#1e1e21]' 
+              : 'border-transparent text-slate-400 hover:text-white'
+          }`}
+        >
+          <Compass className="w-4 h-4 text-cyan-400" />
+          <span>🗺️ الخريطة الذهنية لقطاع الأراضي في مصر</span>
         </button>
         <button
           onClick={() => setActiveTab('repository')}
@@ -952,6 +1125,266 @@ export default function AgentSmithRunner({
               );
             })}
           </div>
+        </div>
+      )}
+
+      {/* 🗺️ ARABIC LAND SECTOR MIND MAP TAB */}
+      {activeTab === 'mind_map' && (
+        <div className="bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-5 shadow-xl space-y-6 text-right animate-in fade-in duration-300" dir="rtl">
+          
+          {/* Header section */}
+          <div className="border-b border-[#2d2d31] pb-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+              <h4 className="text-white text-base font-black flex items-center gap-2">
+                <span>🗺️ الخريطة الذهنية لقطاع الأراضي في مصر</span>
+                <span className="text-[10px] bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded-full font-bold">
+                  تفاعلية متكاملة لزيادة الدقة
+                </span>
+              </h4>
+              <p className="text-slate-400 text-xs mt-1 font-semibold leading-relaxed">
+                استعرض المستويات والفروع الرئيسية لقطاع الأراضي والتشريعات المعنية. حدد عدة بنود لتلقيمها مباشرة لشات كرو إيجنت بمزيد من الدقة!
+              </p>
+            </div>
+            
+            {/* Action panel displaying selected items count */}
+            <div className="flex items-center gap-3 self-end md:self-center">
+              <button
+                onClick={() => setSelectedNodeIds([])}
+                className="text-slate-400 hover:text-white text-xs px-3 py-1.5 bg-zinc-900 border border-[#2d2d31] rounded-xl transition-all"
+                disabled={selectedNodeIds.length === 0}
+              >
+                إلغاء التحديد بالكامل ({selectedNodeIds.length})
+              </button>
+              <button
+                onClick={handleFeedSelectionsToChat}
+                className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs px-4 py-2 rounded-xl transition-all shadow-lg shadow-amber-500/10 flex items-center gap-2 cursor-pointer active:scale-95"
+              >
+                <span>🚀 تلقيم الاختيارات المحددة إلى الشات</span>
+                <span className="bg-slate-950 text-amber-400 text-[10px] px-1.5 py-0.5 rounded-full font-extrabold">
+                  {selectedNodeIds.length}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* Search bar & Pre-sets Panel */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            
+            {/* Search Input Card */}
+            <div className="lg:col-span-4 bg-zinc-950 p-4 rounded-2xl border border-zinc-900 flex flex-col justify-between space-y-3">
+              <div className="space-y-1.5">
+                <span className="text-slate-400 text-xs font-black block">🔍 بحث ذكي في الخريطة الذهنية:</span>
+                <input
+                  type="text"
+                  placeholder="ابحث عن قانون، هيئة، تحدي، حيز..."
+                  value={mindMapSearchQuery}
+                  onChange={(e) => setMindMapSearchQuery(e.target.value)}
+                  className="w-full bg-[#1e1e21] text-white text-xs rounded-xl px-3 py-2.5 border border-[#2d2d31] focus:outline-none focus:border-cyan-500 placeholder:text-slate-600 text-right font-medium"
+                />
+              </div>
+
+              {/* Guide card */}
+              <div className="bg-[#1e1e21]/40 border border-[#2d2d31] p-3 rounded-xl space-y-2">
+                <span className="text-amber-500 text-[10px] font-black block">💡 كيف تستخدم الخريطة الذهنية؟</span>
+                <p className="text-[10px] text-slate-400 leading-relaxed font-semibold">
+                  اختر البنود التي تهمك في قضيتك (مثل نوع الأرض، القوانين المطبقة، الجهة، أو التحدي) من الفروع الستة التفاعلية المقابلة، ثم اضغط على <strong>"تلقيم الاختيارات"</strong> لتمريرها في عقل الوكلاء الإدراكيين لتقديم إجابة مخصصة وحسابات فائقة الدقة!
+                </p>
+              </div>
+            </div>
+
+            {/* Pre-sets selections Card */}
+            <div className="lg:col-span-8 bg-zinc-950 p-4 rounded-2xl border border-zinc-900 space-y-3">
+              <span className="text-slate-400 text-xs font-black block">⚡ سياقات وحالات شائعة جاهزة (نقرة واحدة للتحديد المتعدد):</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {PRESETS_DATA.map((preset, pIdx) => (
+                  <button
+                    key={pIdx}
+                    onClick={() => {
+                      setSelectedNodeIds(preset.nodeIds);
+                      triggerToast(`تم تطبيق قالب "${preset.name}" وتحديد بنوده تلقائياً!`, 'success');
+                    }}
+                    className="p-3 bg-[#1e1e21] hover:bg-zinc-900 text-right rounded-xl border border-[#2d2d31] hover:border-cyan-500/40 transition-all flex flex-col gap-1 relative group cursor-pointer"
+                  >
+                    <span className="text-white text-xs font-black group-hover:text-cyan-400 transition-colors">{preset.name}</span>
+                    <span className="text-slate-400 text-[10px] leading-relaxed font-semibold">{preset.description}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+          </div>
+
+          {/* Interactive Branches (6 main branches) */}
+          <div className="space-y-4 pt-2">
+            <span className="text-slate-400 text-xs font-black block mb-1">🔘 المستوى الأول: قطاع الأراضي في مصر (نظام متكامل للتملك والتداول والتخطيط)</span>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {MIND_MAP_DATA.map((branch) => {
+                // Filter nodes if search query exists
+                const filteredNodes = branch.nodes.filter(node => 
+                  node.label.includes(mindMapSearchQuery) || 
+                  (node.details && node.details.includes(mindMapSearchQuery))
+                );
+
+                const isExpanded = expandedBranches.includes(branch.id);
+                const selectedCountInBranch = branch.nodes.filter(n => selectedNodeIds.includes(n.id)).length;
+
+                // Toggle branch accordion
+                const toggleBranch = () => {
+                  if (isExpanded) {
+                    setExpandedBranches(expandedBranches.filter(id => id !== branch.id));
+                  } else {
+                    setExpandedBranches([...expandedBranches, branch.id]);
+                  }
+                };
+
+                const selectAllInBranch = (e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  const allBranchIds = branch.nodes.map(n => n.id);
+                  setSelectedNodeIds(prev => {
+                    const filtered = prev.filter(id => !allBranchIds.includes(id));
+                    return [...filtered, ...allBranchIds];
+                  });
+                  triggerToast(`تم تحديد كافة عناصر [${branch.title}]`, 'success');
+                };
+
+                const deselectAllInBranch = (e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  const allBranchIds = branch.nodes.map(n => n.id);
+                  setSelectedNodeIds(prev => prev.filter(id => !allBranchIds.includes(id)));
+                  triggerToast(`تم إلغاء تحديد عناصر [${branch.title}]`, 'info');
+                };
+
+                // Skip branch if search query entered and no matching nodes
+                if (mindMapSearchQuery && filteredNodes.length === 0) return null;
+
+                return (
+                  <div 
+                    key={branch.id} 
+                    className="bg-zinc-950 rounded-2xl border border-[#2d2d31] overflow-hidden hover:border-[#3e3e42] transition-all flex flex-col h-full"
+                  >
+                    {/* Branch Title Row */}
+                    <div 
+                      onClick={toggleBranch}
+                      className="bg-zinc-900/60 p-4 border-b border-[#2d2d31]/80 flex items-center justify-between cursor-pointer hover:bg-zinc-900 transition-all select-none"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">{branch.icon}</span>
+                        <div className="flex flex-col text-right">
+                          <span className="text-xs font-black text-white">{branch.title}</span>
+                          <span className="text-[9px] text-slate-500 font-bold">المستوى الثاني • فرع رئيسي</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                        {selectedCountInBranch > 0 && (
+                          <span className="text-[9px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 px-2 py-0.5 rounded-full font-black animate-pulse">
+                            {selectedCountInBranch} محدد
+                          </span>
+                        )}
+                        <span className="text-slate-600 font-bold text-xs">
+                          {isExpanded ? '▲' : '▼'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Expandable Leaf Nodes View */}
+                    {isExpanded && (
+                      <div className="p-4 flex-1 flex flex-col justify-between space-y-4">
+                        {/* Multi-select toggle helper */}
+                        <div className="flex items-center justify-between border-b border-[#2d2d31]/40 pb-2 text-[10px]">
+                          <span className="text-slate-500 font-bold">المستويات الفرعية (التفاصيل):</span>
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={selectAllInBranch}
+                              className="text-cyan-400 hover:text-cyan-300 font-black cursor-pointer"
+                            >
+                              تحديد الكل
+                            </button>
+                            <span className="text-slate-700">|</span>
+                            <button 
+                              onClick={deselectAllInBranch}
+                              className="text-slate-500 hover:text-slate-400 font-bold cursor-pointer"
+                            >
+                              إلغاء الكل
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Nodes List */}
+                        <div className="space-y-3 flex-1 overflow-y-auto max-h-[250px] pr-1 scrollbar-thin">
+                          {filteredNodes.map((node) => {
+                            const isNodeSelected = selectedNodeIds.includes(node.id);
+                            
+                            const handleNodeToggle = () => {
+                              if (isNodeSelected) {
+                                setSelectedNodeIds(selectedNodeIds.filter(id => id !== node.id));
+                              } else {
+                                setSelectedNodeIds([...selectedNodeIds, node.id]);
+                              }
+                            };
+
+                            return (
+                              <div 
+                                key={node.id}
+                                onClick={handleNodeToggle}
+                                className={`p-2.5 rounded-xl border transition-all cursor-pointer text-right space-y-1 relative group select-none ${
+                                  isNodeSelected 
+                                    ? 'bg-cyan-500/5 border-cyan-500/40 shadow-sm shadow-cyan-500/5' 
+                                    : 'bg-[#1e1e21]/40 border-[#2d2d31]/60 hover:border-slate-800'
+                                }`}
+                              >
+                                <div className="flex items-start gap-2.5">
+                                  {/* Custom Checkbox */}
+                                  <div className={`w-3.5 h-3.5 rounded border mt-0.5 shrink-0 flex items-center justify-center transition-all ${
+                                    isNodeSelected 
+                                      ? 'bg-cyan-500 border-cyan-500 text-slate-950' 
+                                      : 'border-[#2d2d31] group-hover:border-slate-700'
+                                  }`}>
+                                    {isNodeSelected && <Check className="w-2.5 h-2.5 text-slate-950 stroke-[4px]" />}
+                                  </div>
+
+                                  <div className="flex-1 space-y-0.5">
+                                    <span className={`text-[11px] font-black block leading-snug ${
+                                      isNodeSelected ? 'text-cyan-400' : 'text-slate-200'
+                                    }`}>
+                                      {node.label}
+                                    </span>
+                                    {node.details && (
+                                      <p className="text-[10px] text-slate-500 leading-normal font-semibold">
+                                        {node.details}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Glowing feed control footer inside tab */}
+          <div className="bg-gradient-to-r from-zinc-900 to-zinc-950 p-4 rounded-xl border border-[#2d2d31] flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
+            <div className="text-right">
+              <span className="text-white text-xs font-black block">هل انتهيت من تجميع نقاط الخريطة الذهنية؟</span>
+              <p className="text-slate-400 text-[10px] font-bold mt-1">
+                اضغط على الزر لتوجيه الاستعلام وحث عقل السرب الفيدرالي لإنشاء صياغات تخصصية بالغة الدقة.
+              </p>
+            </div>
+            <button
+              onClick={handleFeedSelectionsToChat}
+              className="w-full md:w-auto bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs px-6 py-3 rounded-xl transition-all shadow-xl shadow-amber-500/10 flex items-center justify-center gap-2.5 cursor-pointer active:scale-95"
+            >
+              <span>🚀 تلقيم النقاط المحددة ({selectedNodeIds.length}) لشات كرو إيجنت</span>
+            </button>
+          </div>
+
         </div>
       )}
 

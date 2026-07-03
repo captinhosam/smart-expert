@@ -671,14 +671,14 @@ export default function AreaRegistry({ caseData, theme }: AreaRegistryProps) {
               apartments.map((apt) => (
                 <div 
                   key={apt.id}
-                  className={`p-4 rounded-xl border transition-all space-y-3 ${
+                  className={`p-4 rounded-xl border transition-all duration-300 space-y-3 ${
                     apt.occupancyType === 'old_rent'
-                      ? 'bg-red-950/5 border-red-900/20'
+                      ? 'bg-red-950/5 border-red-900/20 hover:border-red-500/30 hover:shadow-[0_0_15px_rgba(239,68,68,0.15)]'
                       : apt.occupancyType === 'new_law'
-                      ? 'bg-cyan-950/5 border-cyan-900/20'
+                      ? 'bg-cyan-950/5 border-cyan-900/20 hover:border-cyan-500/30 hover:shadow-[0_0_15px_rgba(6,182,212,0.15)]'
                       : apt.occupancyType === 'ownership'
-                      ? 'bg-emerald-950/5 border-emerald-900/20'
-                      : 'bg-purple-950/5 border-purple-900/20'
+                      ? 'bg-emerald-950/5 border-emerald-900/20 hover:border-emerald-500/30 hover:shadow-[0_0_15px_rgba(16,185,129,0.15)]'
+                      : 'bg-purple-950/5 border-purple-900/20 hover:border-purple-500/30 hover:shadow-[0_0_15px_rgba(168,85,247,0.15)]'
                   }`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/40 pb-2">
@@ -1007,10 +1007,10 @@ export default function AreaRegistry({ caseData, theme }: AreaRegistryProps) {
               records.map((rec) => (
                 <div 
                   key={rec.id}
-                  className={`p-3 rounded-xl border transition-all flex items-start justify-between gap-3 ${
+                  className={`p-3 rounded-xl border transition-all duration-300 flex items-start justify-between gap-3 ${
                     rec.isVerified 
-                      ? 'bg-emerald-950/5 border-emerald-900/30' 
-                      : 'bg-amber-950/5 border-amber-900/30'
+                      ? 'bg-emerald-950/5 border-emerald-900/30 hover:border-emerald-500/30 hover:shadow-[0_0_15px_rgba(16,185,129,0.15)]' 
+                      : 'bg-amber-950/5 border-amber-900/30 hover:border-amber-500/30 hover:shadow-[0_0_15px_rgba(245,158,11,0.15)]'
                   }`}
                 >
                   <div className="space-y-1 text-right min-w-0 flex-1">

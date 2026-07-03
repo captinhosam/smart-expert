@@ -16,7 +16,9 @@ import {
   MapPin,
   FileCheck,
   Scale,
-  Maximize2
+  Maximize2,
+  User,
+  UserCheck
 } from 'lucide-react';
 import { triggerToast } from '../lib/toast';
 
@@ -150,6 +152,27 @@ const INITIAL_ATTACHMENTS: Attachment[] = [
   }
 ];
 
+export interface ChecklistItem {
+  id: string;
+  title: string;
+  party: 'seller' | 'buyer';
+  status: 'uploaded' | 'pending' | 'missing';
+  required: boolean;
+}
+
+const DEFAULT_CHECKLIST: ChecklistItem[] = [
+  // Seller
+  { id: 'chk-s1', title: 'بطاقة الرقم القومي للبائع (المالك الأصلي)', party: 'seller', status: 'uploaded', required: true },
+  { id: 'chk-s2', title: 'عقد الملكية الأساسي الموثق / السند المسجل', party: 'seller', status: 'pending', required: true },
+  { id: 'chk-s3', title: 'كشف المكلفة الضريبية وشهادة التصرفات العقارية', party: 'seller', status: 'missing', required: true },
+  { id: 'chk-s4', title: 'التراخيص الإنشائية والرسومات الهندسية المعتمدة', party: 'seller', status: 'uploaded', required: false },
+  // Buyer
+  { id: 'chk-b1', title: 'بطاقة الرقم القومي للمشتري (الطرف الثاني)', party: 'buyer', status: 'uploaded', required: true },
+  { id: 'chk-b2', title: 'عقد البيع الابتدائي الجديد موضوع النزاع', party: 'buyer', status: 'uploaded', required: true },
+  { id: 'chk-b3', title: 'إيصالات السداد البنكي والدفعات المالية الموثقة', party: 'buyer', status: 'pending', required: true },
+  { id: 'chk-b4', title: 'توكيل رسمي خاص بالتعامل والتعاقد (مسجل)', party: 'buyer', status: 'missing', required: false },
+];
+
 export default function DigitalAttachmentsRegister({ caseNumber }: DigitalAttachmentsRegisterProps) {
   const [attachments, setAttachments] = useState<Attachment[]>(() => {
     const saved = localStorage.getItem(`smart_expert_attachments_${caseNumber}`);
@@ -176,6 +199,78 @@ export default function DigitalAttachmentsRegister({ caseNumber }: DigitalAttach
   useEffect(() => {
     localStorage.setItem(`smart_expert_attachments_${caseNumber}`, JSON.stringify(attachments));
   }, [attachments, caseNumber]);
+
+  // --- 🏛️ DIGITAL AUDIT CHECKLIST STATES & HANDLERS ---
+  const [checklist, setChecklist] = useState<ChecklistItem[]>(() => {
+    const saved = localStorage.getItem(`smart_expert_checklist_${caseNumber}`);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return DEFAULT_CHECKLIST;
+      }
+    }
+    return DEFAULT_CHECKLIST;
+  });
+
+  const [isAddingCustomDoc, setIsAddingCustomDoc] = useState(false);
+  const [customDocTitle, setCustomDocTitle] = useState('');
+  const [customDocParty, setCustomDocParty] = useState<'seller' | 'buyer'>('seller');
+  const [customDocRequired, setCustomDocRequired] = useState(true);
+
+  useEffect(() => {
+    localStorage.setItem(`smart_expert_checklist_${caseNumber}`, JSON.stringify(checklist));
+  }, [checklist, caseNumber]);
+
+  const handleToggleStatus = (id: string) => {
+    setChecklist(prev => prev.map(item => {
+      if (item.id === id) {
+        const nextStatusMap: { [key: string]: 'uploaded' | 'pending' | 'missing' } = {
+          'uploaded': 'pending',
+          'pending': 'missing',
+          'missing': 'uploaded'
+        };
+        return { ...item, status: nextStatusMap[item.status] };
+      }
+      return item;
+    }));
+    triggerToast('تم تحديث حالة المستند المحددة بنجاح', 'success');
+  };
+
+  const handleAddCustomDoc = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customDocTitle.trim()) {
+      triggerToast('يرجى إدخال اسم المستند أولاً', 'error');
+      return;
+    }
+    const newItem: ChecklistItem = {
+      id: `chk-custom-${Date.now()}`,
+      title: customDocTitle.trim(),
+      party: customDocParty,
+      status: 'pending',
+      required: customDocRequired
+    };
+    setChecklist(prev => [...prev, newItem]);
+    setCustomDocTitle('');
+    setIsAddingCustomDoc(false);
+    triggerToast('تمت إضافة المستند المخصص لقائمة الفحص بنجاح', 'success');
+  };
+
+  const handleDeleteChecklistItem = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setChecklist(prev => prev.filter(item => item.id !== id));
+    triggerToast('تم حذف بند الفحص بنجاح', 'warning');
+  };
+
+  // Checklist Statistics
+  const sellerDocs = checklist.filter(item => item.party === 'seller');
+  const buyerDocs = checklist.filter(item => item.party === 'buyer');
+
+  const sellerUploaded = sellerDocs.filter(item => item.status === 'uploaded').length;
+  const buyerUploaded = buyerDocs.filter(item => item.status === 'uploaded').length;
+
+  const sellerPercentage = sellerDocs.length > 0 ? Math.round((sellerUploaded / sellerDocs.length) * 100) : 0;
+  const buyerPercentage = buyerDocs.length > 0 ? Math.round((buyerUploaded / buyerDocs.length) * 100) : 0;
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -405,6 +500,268 @@ export default function DigitalAttachmentsRegister({ caseNumber }: DigitalAttach
             </div>
           </div>
         </div>
+
+      </div>
+
+      {/* --- 🏛️ DIGITAL DOCUMENTS AUDIT CHECKLIST SECTION --- */}
+      <div className="bg-slate-950/70 p-5 rounded-2xl border border-slate-850/80 space-y-6">
+        
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-900 pb-4">
+          <div className="space-y-1 text-right">
+            <h4 className="text-white text-sm font-black flex items-center gap-2 justify-end sm:justify-start">
+              <FileCheck className="w-4 h-4 text-emerald-400" />
+              <span>قائمة فحص وتدقيق المستندات الرقمية (البائع والمشتري)</span>
+            </h4>
+            <p className="text-slate-400 text-[11px] font-bold">
+              مراجعة وتوثيق الأوراق والمستندات الثبوتية المقدمة من أطراف النزاع لتأكيد صحة الادعاءات والمطابقة الفنية.
+            </p>
+          </div>
+          
+          <button
+            type="button"
+            onClick={() => setIsAddingCustomDoc(!isAddingCustomDoc)}
+            className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-cyan-400 border border-slate-800 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer self-start sm:self-center"
+          >
+            <Plus className="w-4 h-4" />
+            <span>إضافة بند فحص مخصص</span>
+          </button>
+        </div>
+
+        {/* Add Custom Doc Form (Dynamic) */}
+        {isAddingCustomDoc && (
+          <form onSubmit={handleAddCustomDoc} className="bg-slate-900/90 p-4 rounded-xl border border-slate-800 space-y-4 animate-in slide-in-from-top-2 duration-200">
+            <h5 className="text-white text-xs font-black">إضافة مستند فحص جديد إلى السجل:</h5>
+            
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              {/* Document Name input */}
+              <div className="md:col-span-6 space-y-1 text-right">
+                <label className="text-[10px] text-slate-400 font-bold block">اسم المستند المطلوب:</label>
+                <input
+                  type="text"
+                  placeholder="مثال: كشف مكلفة من الضرائب العقارية..."
+                  value={customDocTitle}
+                  onChange={e => setCustomDocTitle(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 text-white text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-cyan-400 text-right font-medium"
+                />
+              </div>
+
+              {/* Party selection */}
+              <div className="md:col-span-3 space-y-1 text-right">
+                <label className="text-[10px] text-slate-400 font-bold block">الجهة المقدمة للمستند:</label>
+                <select
+                  value={customDocParty}
+                  onChange={e => setCustomDocParty(e.target.value as 'seller' | 'buyer')}
+                  className="w-full bg-slate-950 border border-slate-800 text-white text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-cyan-400 text-right font-semibold"
+                >
+                  <option value="seller">البائع (الطرف الأول)</option>
+                  <option value="buyer">المشتري (الطرف الثاني)</option>
+                </select>
+              </div>
+
+              {/* Required status selection */}
+              <div className="md:col-span-3 space-y-1 text-right">
+                <label className="text-[10px] text-slate-400 font-bold block">الأهمية القانونية للمستند:</label>
+                <select
+                  value={customDocRequired ? 'true' : 'false'}
+                  onChange={e => setCustomDocRequired(e.target.value === 'true')}
+                  className="w-full bg-slate-950 border border-slate-800 text-white text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-cyan-400 text-right font-semibold"
+                >
+                  <option value="true">مطلوب وإلزامي (خلفية حمراء)</option>
+                  <option value="false">اختياري / استرشادى (خلفية رمادية)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 justify-start">
+              <button
+                type="submit"
+                className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-slate-950 rounded-lg text-xs font-black transition-all cursor-pointer"
+              >
+                حفظ المستند بالسجل
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsAddingCustomDoc(false)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-750 text-slate-300 rounded-lg text-xs font-bold transition-all cursor-pointer"
+              >
+                إلغاء
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Double Column Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          {/* 1. Seller Column */}
+          <div className="bg-slate-900/40 border border-slate-900 p-4 rounded-xl space-y-4">
+            
+            {/* Column Header & Progress */}
+            <div className="flex items-center justify-between border-b border-slate-850 pb-3 flex-row-reverse">
+              <div className="flex items-center gap-2">
+                <User className="w-4 h-4 text-amber-500" />
+                <span className="text-white text-xs font-black">مستندات البائع (الطرف الأول)</span>
+              </div>
+              <div className="text-left">
+                <span className="text-[10px] text-slate-400 font-bold font-mono">
+                  {sellerUploaded} / {sellerDocs.length} مستند ({sellerPercentage}%)
+                </span>
+              </div>
+            </div>
+
+            {/* Column Progress Bar */}
+            <div className="w-full h-1.5 bg-slate-950 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-amber-500 to-amber-600 transition-all duration-300"
+                style={{ width: `${sellerPercentage}%` }}
+              ></div>
+            </div>
+
+            {/* Document Checklist Items */}
+            <div className="space-y-2">
+              {sellerDocs.map((item) => (
+                <div 
+                  key={item.id}
+                  onClick={() => handleToggleStatus(item.id)}
+                  className="p-3 bg-slate-950/80 border border-slate-850 hover:border-slate-800 rounded-xl flex items-center justify-between gap-3 text-right cursor-pointer group transition-all select-none"
+                >
+                  <div className="flex items-center gap-2">
+                    {/* Status Pill */}
+                    <span 
+                      className={`text-[9px] px-2.5 py-1 rounded-lg font-black shrink-0 transition-colors ${
+                        item.status === 'uploaded' 
+                          ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20' 
+                          : item.status === 'pending'
+                          ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20'
+                          : 'bg-red-500/15 text-red-400 border border-red-500/20'
+                      }`}
+                    >
+                      {item.status === 'uploaded' && 'تم التقديم ✓'}
+                      {item.status === 'pending' && 'معلق الانتظار ⏳'}
+                      {item.status === 'missing' && 'مفقود / مطلوب ❌'}
+                    </span>
+
+                    {/* Delete Custom button */}
+                    {item.id.startsWith('chk-custom-') && (
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteChecklistItem(item.id, e)}
+                        className="p-1 text-slate-500 hover:text-red-400 rounded transition-colors cursor-pointer"
+                        title="حذف هذا البند"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 text-right">
+                    <span className="text-slate-300 text-xs font-semibold group-hover:text-white transition-colors">
+                      {item.title}
+                    </span>
+                    {item.required ? (
+                      <span className="text-[9px] bg-red-500/10 text-red-400 border border-red-500/20 px-1.5 py-0.5 rounded-md font-bold">
+                        إلزامي
+                      </span>
+                    ) : (
+                      <span className="text-[9px] bg-slate-800 text-slate-400 border border-slate-750 px-1.5 py-0.5 rounded-md font-bold">
+                        استرشادي
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+          </div>
+
+          {/* 2. Buyer Column */}
+          <div className="bg-slate-900/40 border border-slate-900 p-4 rounded-xl space-y-4">
+            
+            {/* Column Header & Progress */}
+            <div className="flex items-center justify-between border-b border-slate-850 pb-3 flex-row-reverse">
+              <div className="flex items-center gap-2">
+                <UserCheck className="w-4 h-4 text-cyan-400" />
+                <span className="text-white text-xs font-black">مستندات المشتري (الطرف الثاني)</span>
+              </div>
+              <div className="text-left">
+                <span className="text-[10px] text-slate-400 font-bold font-mono">
+                  {buyerUploaded} / {buyerDocs.length} مستند ({buyerPercentage}%)
+                </span>
+              </div>
+            </div>
+
+            {/* Column Progress Bar */}
+            <div className="w-full h-1.5 bg-slate-950 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-cyan-500 to-cyan-600 transition-all duration-300"
+                style={{ width: `${buyerPercentage}%` }}
+              ></div>
+            </div>
+
+            {/* Document Checklist Items */}
+            <div className="space-y-2">
+              {buyerDocs.map((item) => (
+                <div 
+                  key={item.id}
+                  onClick={() => handleToggleStatus(item.id)}
+                  className="p-3 bg-slate-950/80 border border-slate-850 hover:border-slate-800 rounded-xl flex items-center justify-between gap-3 text-right cursor-pointer group transition-all select-none"
+                >
+                  <div className="flex items-center gap-2">
+                    {/* Status Pill */}
+                    <span 
+                      className={`text-[9px] px-2.5 py-1 rounded-lg font-black shrink-0 transition-colors ${
+                        item.status === 'uploaded' 
+                          ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20' 
+                          : item.status === 'pending'
+                          ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20'
+                          : 'bg-red-500/15 text-red-400 border border-red-500/20'
+                      }`}
+                    >
+                      {item.status === 'uploaded' && 'تم التقديم ✓'}
+                      {item.status === 'pending' && 'معلق الانتظار ⏳'}
+                      {item.status === 'missing' && 'مفقود / مطلوب ❌'}
+                    </span>
+
+                    {/* Delete Custom button */}
+                    {item.id.startsWith('chk-custom-') && (
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteChecklistItem(item.id, e)}
+                        className="p-1 text-slate-500 hover:text-red-400 rounded transition-colors cursor-pointer"
+                        title="حذف هذا البند"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 text-right">
+                    <span className="text-slate-300 text-xs font-semibold group-hover:text-white transition-colors">
+                      {item.title}
+                    </span>
+                    {item.required ? (
+                      <span className="text-[9px] bg-red-500/10 text-red-400 border border-red-500/20 px-1.5 py-0.5 rounded-md font-bold">
+                        إلزامي
+                      </span>
+                    ) : (
+                      <span className="text-[9px] bg-slate-800 text-slate-400 border border-slate-750 px-1.5 py-0.5 rounded-md font-bold">
+                        استرشادي
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* Info label */}
+        <p className="text-[10px] text-slate-500 font-bold text-center">
+          💡 انقر على أي مستند بالأعلى لتبديل حالته بشكل سريع ودوري بين (تم التقديم ✓، معلق الانتظار ⏳، ومفقود / مطلوب ❌).
+        </p>
 
       </div>
 

@@ -184,7 +184,7 @@ export default function StartPage({ onEnterWorkspace, onLoadSampleAndEnter }: St
   ];
 
   return (
-    <div className={`min-h-screen bg-[#070709] text-slate-100 flex flex-col justify-between items-center p-6 relative overflow-hidden select-none transition-all duration-1000 ${
+    <div className={`min-h-screen bg-[#070709] text-slate-100 flex flex-col justify-between items-center p-6 relative overflow-y-auto overflow-x-hidden select-none transition-all duration-1000 ${
       isEntering ? 'scale-110 opacity-0 blur-md pointer-events-none' : 'scale-100 opacity-100'
     }`}>
       

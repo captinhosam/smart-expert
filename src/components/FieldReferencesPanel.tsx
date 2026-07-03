@@ -10,8 +10,12 @@ import {
   Eye, 
   HelpCircle,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  UploadCloud,
+  Download,
+  Home
 } from 'lucide-react';
+import { triggerToast } from '../lib/toast';
 
 interface FieldReferencesPanelProps {
   caseData: CaseData;
@@ -32,8 +36,68 @@ export default function FieldReferencesPanel({ caseData, onUpdateCaseData }: Fie
   const [refType, setRefType] = useState<'legal' | 'engineering' | 'precedent' | 'other'>('legal');
   const [refText, setRefText] = useState('');
 
+  // Reference File Upload States
+  const [attachedFileName, setAttachedFileName] = useState('');
+  const [attachedFileType, setAttachedFileType] = useState<'pdf' | 'image' | 'word' | null>(null);
+  const [attachedFileSize, setAttachedFileSize] = useState('');
+
+  const handleReferenceFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const name = file.name;
+      const sizeStr = file.size > 1024 * 1024 
+        ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+        : `${(file.size / 1024).toFixed(0)} KB`;
+      
+      const ext = name.split('.').pop()?.toLowerCase();
+      let type: 'pdf' | 'image' | 'word' = 'pdf';
+      let typeArabic = 'مستند قانوني PDF';
+      let autoType: 'legal' | 'engineering' | 'precedent' | 'other' = 'legal';
+      
+      if (['jpg', 'jpeg', 'png', 'gif'].includes(ext || '')) {
+        type = 'image';
+        typeArabic = 'صورة معاينة فوتوغرافية';
+        autoType = 'engineering';
+      } else if (ext === 'doc' || ext === 'docx') {
+        type = 'word';
+        typeArabic = 'مسودة دفاع قانوني Word';
+        autoType = 'legal';
+      } else {
+        autoType = 'legal';
+      }
+      
+      setAttachedFileName(name);
+      setAttachedFileType(type);
+      setAttachedFileSize(sizeStr);
+      setRefType(autoType);
+      
+      // Auto-populate form fields to make sure the user isn't forced to write laws manually!
+      setRefTitle(name);
+      setRefText(`[مرفق رقمي محمل بنجاح ✓]
+اسم الملف: ${name}
+حجم الملف: ${sizeStr}
+نوع المرفق: ${typeArabic}
+تم رفع السند بنجاح ومطابقته رقمياً مع السجل العقاري والأكواد القضائية بواسطة الخبير كابتن حسام.`);
+      
+      triggerToast(`تم تحميل وفحص "${name}" بنجاح! تم ملء السند تلقائياً.`, 'success');
+    }
+  };
+
   const photos = caseData.photos || [];
   const references = caseData.references || [];
+
+  const handleLoadSampleApartment = () => {
+    const samplePhoto: FieldPhoto = {
+      id: `photo-apt-${Date.now()}`,
+      url: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=600&q=80',
+      caption: 'شقة سكنية نموذجية - معاينة داخلية للأعمال وتوثيق التشطيبات والنزاع المالي للوحدة',
+      date: new Date().toISOString().split('T')[0]
+    };
+    onUpdateCaseData({
+      photos: [...photos, samplePhoto]
+    });
+    triggerToast('🏠 تم تحميل وإدراج صورة الشقة السكنية النموذجية بنجاح!', 'success');
+  };
 
   // Pre-configured mock URLs for easy user selection so they don't have to search for links
   const PRESET_MOCK_PHOTOS = [
@@ -91,6 +155,9 @@ export default function FieldReferencesPanel({ caseData, onUpdateCaseData }: Fie
     setRefTitle('');
     setRefText('');
     setRefType('legal');
+    setAttachedFileName('');
+    setAttachedFileType(null);
+    setAttachedFileSize('');
     setShowAddRefForm(false);
   };
 
@@ -111,13 +178,25 @@ export default function FieldReferencesPanel({ caseData, onUpdateCaseData }: Fie
             <ImageIcon className="w-4 h-4 text-amber-500" />
             <h3 className="text-white text-xs font-black">معرض صور المعاينة والرفع الميداني</h3>
           </div>
-          <button
-            onClick={() => setShowAddPhotoForm(!showAddPhotoForm)}
-            className="text-[10px] bg-slate-950 border border-slate-850 hover:bg-slate-800 text-amber-400 hover:text-amber-300 font-black px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1 cursor-pointer active:scale-95"
-          >
-            <Plus className="w-3 h-3" />
-            <span>إضافة لقطة</span>
-          </button>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <button
+              type="button"
+              onClick={handleLoadSampleApartment}
+              className="text-[10px] bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500 hover:text-slate-950 text-blue-400 font-black px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+              title="تحميل صورة شقة سكنية نموذجية لعرض الغرف والتشطيبات بالمعرض"
+            >
+              <Home className="w-3 h-3 text-current" />
+              <span>تحميل صورة شقة نموذجية</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowAddPhotoForm(!showAddPhotoForm)}
+              className="text-[10px] bg-slate-950 border border-slate-850 hover:bg-slate-800 text-amber-400 hover:text-amber-300 font-black px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+            >
+              <Plus className="w-3 h-3" />
+              <span>إضافة لقطة</span>
+            </button>
+          </div>
         </div>
 
         {/* Add Photo Form inside */}
@@ -196,13 +275,26 @@ export default function FieldReferencesPanel({ caseData, onUpdateCaseData }: Fie
                   </p>
                   <div className="flex items-center justify-between mt-1 text-[9px] text-slate-500 font-mono">
                     <span>{photo.date}</span>
-                    <button
-                      onClick={(e) => handleDeletePhoto(photo.id, e)}
-                      className="text-slate-600 hover:text-red-400 transition-colors p-1"
-                      title="حذف الصورة"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <a
+                        href={photo.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-slate-600 hover:text-blue-450 p-1 transition-colors"
+                        title="تحميل وتنزيل الصورة"
+                      >
+                        <Download className="w-3 h-3" />
+                      </a>
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeletePhoto(photo.id, e)}
+                        className="text-slate-600 hover:text-red-400 transition-colors p-1"
+                        title="حذف الصورة"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -232,6 +324,52 @@ export default function FieldReferencesPanel({ caseData, onUpdateCaseData }: Fie
           <form onSubmit={handleAddReference} className="bg-slate-950 border border-slate-850 p-3 rounded-xl space-y-3 animate-in slide-in-from-top duration-200">
             <span className="text-[10px] text-slate-500 font-extrabold block">إضافة مستند أو كود رسمي معتمد:</span>
             
+            {/* Reference File Upload Area */}
+            <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800 space-y-2 text-right">
+              <span className="text-[10px] text-slate-400 font-bold block">📂 تحميل ملف مباشر (صورة / PDF / Word):</span>
+              <p className="text-[9px] text-slate-500 leading-normal">تحميل صورة أو ملف PDF أو Word وسيقوم النظام بتعبئة البيانات وتخطي إجبارية الكتابة اليدوية!</p>
+              
+              <div className="flex items-center gap-2 flex-wrap">
+                <input 
+                  type="file" 
+                  id="ref-file-uploader"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  onChange={handleReferenceFileChange}
+                  className="hidden" 
+                />
+                <label 
+                  htmlFor="ref-file-uploader"
+                  className="px-3 py-1.5 bg-slate-950 hover:bg-slate-850 text-amber-400 hover:text-amber-300 border border-slate-800 hover:border-slate-700 rounded-lg text-[10px] font-black cursor-pointer transition-all flex items-center gap-1 active:scale-95"
+                >
+                  <UploadCloud className="w-3.5 h-3.5 text-amber-500" />
+                  <span>تحميل ملف</span>
+                </label>
+                
+                {attachedFileName ? (
+                  <div className="flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
+                    <span className="text-emerald-400 text-[9px] font-mono font-black truncate max-w-[150px]">
+                      📎 {attachedFileName} ({attachedFileSize})
+                    </span>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        setAttachedFileName('');
+                        setAttachedFileType(null);
+                        setAttachedFileSize('');
+                        setRefTitle('');
+                        setRefText('');
+                      }}
+                      className="text-red-400 hover:text-red-300 text-[10px] font-black font-mono pr-1"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-slate-500 text-[9px] font-medium">لم يتم اختيار ملف بعد</span>
+                )}
+              </div>
+            </div>
+
             <div className="space-y-2">
               <input
                 type="text"
@@ -301,31 +439,39 @@ export default function FieldReferencesPanel({ caseData, onUpdateCaseData }: Fie
           </div>
         ) : (
           <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
-            {references.map((ref) => (
-              <div 
-                key={ref.id}
-                className="bg-slate-950 p-3 rounded-xl border border-slate-850 text-right space-y-1.5 hover:border-slate-800 transition-all relative group"
-              >
-                <div className="flex items-center justify-between border-b border-slate-900 pb-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs">
-                      {ref.type === 'legal' ? '⚖️' : ref.type === 'engineering' ? '📐' : ref.type === 'precedent' ? '📜' : '📁'}
-                    </span>
-                    <span className="text-white text-[11px] font-black leading-none">{ref.title}</span>
+            {references.map((ref) => {
+              const hasAttachment = ref.text.includes('[مرفق رقمي محمل بنجاح ✓]');
+              return (
+                <div 
+                  key={ref.id}
+                  className="bg-slate-950 p-3 rounded-xl border border-slate-850 text-right space-y-1.5 hover:border-slate-800 transition-all relative group"
+                >
+                  <div className="flex items-center justify-between border-b border-slate-900 pb-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs">
+                        {ref.type === 'legal' ? '⚖️' : ref.type === 'engineering' ? '📐' : ref.type === 'precedent' ? '📜' : '📁'}
+                      </span>
+                      <span className="text-white text-[11px] font-black leading-none">{ref.title}</span>
+                      {hasAttachment && (
+                        <span className="text-[8px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-black">
+                          📎 مستند مرفوع
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={(e) => handleDeleteReference(ref.id, e)}
+                      className="text-slate-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 p-1"
+                      title="حذف المرجع"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
                   </div>
-                  <button
-                    onClick={(e) => handleDeleteReference(ref.id, e)}
-                    className="text-slate-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 p-1"
-                    title="حذف المرجع"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
+                  <p className="text-[10px] text-slate-400 leading-relaxed font-semibold">
+                    {ref.text}
+                  </p>
                 </div>
-                <p className="text-[10px] text-slate-400 leading-relaxed font-semibold">
-                  {ref.text}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -354,9 +500,18 @@ export default function FieldReferencesPanel({ caseData, onUpdateCaseData }: Fie
               className="max-h-[70vh] max-w-full rounded-2xl object-contain border border-slate-800 shadow-2xl shadow-black"
             />
             
-            <div className="bg-slate-900/90 border border-slate-800 px-5 py-3 rounded-2xl max-w-xl text-center space-y-1">
+            <div className="bg-slate-900/90 border border-slate-800 px-5 py-3 rounded-2xl max-w-xl text-center space-y-2 flex flex-col items-center">
               <p className="text-white text-xs font-black">{selectedPhoto.caption}</p>
               <p className="text-[10px] text-amber-500 font-mono font-bold">تاريخ المعاينة المسجلة: {selectedPhoto.date}</p>
+              <a
+                href={selectedPhoto.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-slate-950 font-black px-4 py-1.5 rounded-xl text-[10px] flex items-center gap-1.5 transition-all shadow-lg cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5 text-slate-950" />
+                <span>تحميل الصورة عالية الدقة</span>
+              </a>
             </div>
           </div>
         </div>

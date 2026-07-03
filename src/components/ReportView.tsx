@@ -14,7 +14,11 @@ import {
   Calendar,
   DollarSign,
   Shield,
-  Eye
+  Eye,
+  X,
+  Lock,
+  Sliders,
+  QrCode
 } from 'lucide-react';
 
 interface ReportViewProps {
@@ -26,6 +30,15 @@ interface ReportViewProps {
 export default function ReportView({ caseData, results, onPrint }: ReportViewProps) {
   const printAreaRef = useRef<HTMLDivElement>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
+  // 🏛️ Official Watermark and Court Seal States
+  const [isWatermarkModalOpen, setIsWatermarkModalOpen] = useState(false);
+  const [isWatermarkEnabled, setIsWatermarkEnabled] = useState(true);
+  const [watermarkType, setWatermarkType] = useState<'justice' | 'eagle' | 'both'>('justice');
+  const [watermarkOpacity, setWatermarkOpacity] = useState<number>(0.08); // Default 8% opacity
+  const [watermarkColor, setWatermarkColor] = useState<'amber' | 'blue' | 'gray'>('amber');
+  const [includeQRCode, setIncludeQRCode] = useState(true);
+  const [isCertifiedStampVisible, setIsCertifiedStampVisible] = useState(true);
 
   const handleDownloadPDF = async () => {
     if (!printAreaRef.current) return;
@@ -247,6 +260,16 @@ export default function ReportView({ caseData, results, onPrint }: ReportViewPro
           </span>
         </div>
         <div className="flex items-center gap-2 flex-wrap md:flex-nowrap">
+          {/* 🏛️ Official Watermark Export & Preview Button */}
+          <button 
+            onClick={() => setIsWatermarkModalOpen(true)}
+            className="bg-gradient-to-r from-red-700 via-red-600 to-red-600 hover:from-red-800 hover:to-red-700 active:scale-95 text-white font-black text-xs px-3.5 py-2.5 rounded-xl transition-all flex items-center gap-1.5 shadow-md shadow-red-700/15 cursor-pointer shrink-0 border border-red-500/20"
+            id="official-watermark-btn"
+          >
+            <Shield className="w-4 h-4 text-amber-400" />
+            <span>معاينة وتصدير رسمي بالختم المائي ⚖️</span>
+          </button>
+
           <button 
             onClick={onPrint}
             className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-white border border-slate-700 font-extrabold text-xs px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
@@ -294,10 +317,42 @@ export default function ReportView({ caseData, results, onPrint }: ReportViewPro
       </div>
 
       {/* Actual Formatted Judicial Report Sheet */}
-      <div className="bg-white text-slate-950 rounded-2xl p-6 md:p-10 shadow-2xl max-w-4xl mx-auto space-y-8 font-sans border border-slate-200" id="print-area" ref={printAreaRef}>
+      <div className="bg-white text-slate-950 rounded-2xl p-6 md:p-10 shadow-2xl max-w-4xl mx-auto space-y-8 font-sans border border-slate-200 relative overflow-hidden" id="print-area" ref={printAreaRef}>
         
+        {/* 🏛️ Dynamic Court Watermark Seal */}
+        {isWatermarkEnabled && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0 overflow-hidden" style={{ opacity: watermarkOpacity }} data-watermark>
+            {watermarkType === 'justice' || watermarkType === 'both' ? (
+              <div className={`transform rotate-12 scale-125 md:scale-150 flex flex-col items-center justify-center border-[8px] rounded-full p-12 w-[460px] h-[460px] text-center ${
+                watermarkColor === 'amber' ? 'border-amber-700/60 text-amber-800' :
+                watermarkColor === 'blue' ? 'border-blue-700/60 text-blue-800' :
+                'border-slate-500/60 text-slate-700'
+              }`}>
+                <Scale className="w-52 h-52 stroke-[1.5]" />
+                <span className="text-xl font-black mt-3 tracking-widest whitespace-nowrap">مصلحة الخبراء - وزارة العدل</span>
+                <span className="text-sm font-extrabold mt-1">جمهورية مصر العربية</span>
+                <span className="text-[9px] font-mono font-bold mt-1 tracking-wider">EGYPTIAN COURT OFFICIAL SEAL</span>
+              </div>
+            ) : null}
+            {watermarkType === 'eagle' ? (
+              <div className={`transform -rotate-12 scale-125 md:scale-150 flex flex-col items-center justify-center border-double border-[10px] rounded-full p-10 w-[450px] h-[450px] text-center ${
+                watermarkColor === 'amber' ? 'border-amber-600/50 text-amber-700' :
+                watermarkColor === 'blue' ? 'border-blue-600/50 text-blue-700' :
+                'border-slate-400/50 text-slate-600'
+              }`}>
+                <div className="border border-dashed p-4 rounded-full mb-2">
+                  <Shield className="w-36 h-36 stroke-[1.2]" />
+                </div>
+                <span className="text-xl font-extrabold tracking-widest">وزارة العدل • قطاع الخبراء</span>
+                <span className="text-xs font-bold mt-1">الختم البيومتري الإلكتروني الموحد</span>
+                <span className="text-[9px] font-mono mt-1 tracking-wider">OFFICIAL COURT BIOMETRIC SEAL</span>
+              </div>
+            ) : null}
+          </div>
+        )}
+
         {/* State/Government Header */}
-        <div className="flex items-center justify-between border-b-2 border-slate-900 pb-5">
+        <div className="flex items-center justify-between border-b-2 border-slate-900 pb-5 relative z-10">
           <div className="text-right space-y-1">
             <h4 className="font-extrabold text-xs">جمهورية مصر العربية</h4>
             <h4 className="font-extrabold text-xs">وزارة العدل - مصلحة الخبراء</h4>
@@ -1121,7 +1176,7 @@ export default function ReportView({ caseData, results, onPrint }: ReportViewPro
         )}
 
         {/* Conclusion Signature Section (All Reports share this official sign-off footer) */}
-        <div className="pt-6 border-t border-slate-200 flex items-center justify-between text-xs">
+        <div className="pt-6 border-t border-slate-200 flex items-center justify-between text-xs relative z-10">
           <div className="space-y-1">
             <span className="font-bold block">مصلحة خبراء وزارة العدل المصرية</span>
             <span className="text-slate-600 text-[10px] block">تم تصديره ومراجعته إلكترونياً بنظام النظم الفيدرالية المستقلة</span>
@@ -1129,6 +1184,35 @@ export default function ReportView({ caseData, results, onPrint }: ReportViewPro
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>معتمد بالبصمة البيومترية والمطابقة الطيفية للأقمار الصناعية</span>
             </span>
+          </div>
+
+          {/* 🏛️ QR Code & Certified Stamp inside Main Print Sheet */}
+          <div className="flex items-center gap-4">
+            {isWatermarkEnabled && includeQRCode && (
+              <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 p-1 px-1.5 rounded-lg text-right" data-watermark-qr>
+                <div className="w-10 h-10 bg-slate-950 flex items-center justify-center text-white rounded">
+                  <QrCode className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-[8px] text-slate-600 font-bold leading-tight">
+                  <div className="text-slate-900 font-black">منصة التحقق القضائي</div>
+                  <div>ID: {caseData.caseNumber}</div>
+                  <div className="text-emerald-600 font-mono">MOJ-SECURE-QR</div>
+                </div>
+              </div>
+            )}
+
+            {isWatermarkEnabled && isCertifiedStampVisible && (
+              <div className={`border-2 border-double rounded-full w-14 h-14 flex flex-col items-center justify-center p-1 text-center transform -rotate-12 ${
+                watermarkColor === 'amber' ? 'border-amber-600 text-amber-700 bg-amber-500/5' :
+                watermarkColor === 'blue' ? 'border-blue-600 text-blue-700 bg-blue-500/5' :
+                'border-slate-500 text-slate-600 bg-slate-500/5'
+              }`} data-watermark-stamp>
+                <span className="text-[6px] font-black leading-none">خاتم النسر</span>
+                <span className="text-[5px] font-bold leading-none mt-0.5">وزارة العدل</span>
+                <Scale className="w-4 h-4 my-0.5" />
+                <span className="text-[4px] font-mono leading-none">APPROVED</span>
+              </div>
+            )}
           </div>
           
           <div className="text-center space-y-1">
@@ -1436,6 +1520,377 @@ export default function ReportView({ caseData, results, onPrint }: ReportViewPro
 
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* 🏛️ OFFICIAL WATERMARK & COURT SEAL PREVIEW & EXPORT MODAL 🏛️ */}
+      {/* ========================================================================= */}
+      {isWatermarkModalOpen && (
+        <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-300" style={{ direction: 'rtl' }}>
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-6xl shadow-2xl overflow-hidden flex flex-col md:flex-row h-auto md:h-[85vh] max-h-[90vh]">
+            
+            {/* Right Side / Control Panel */}
+            <div className="md:w-1/3 p-6 bg-slate-950 border-l border-slate-800 flex flex-col justify-between overflow-y-auto">
+              <div className="space-y-6">
+                
+                {/* Modal Header */}
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <span className="text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded-full font-black">
+                      منظومة التصديق والختم القضائي
+                    </span>
+                    <h3 className="text-lg font-black text-white flex items-center gap-1.5 mt-2">
+                      <Scale className="w-5 h-5 text-amber-500" />
+                      <span>إعداد وتصدير المستند الرسمي</span>
+                    </h3>
+                  </div>
+                  <button 
+                    onClick={() => setIsWatermarkModalOpen(false)}
+                    className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-all cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="h-px bg-slate-800"></div>
+
+                {/* Configuration Options */}
+                <div className="space-y-5">
+                  <div className="flex items-center gap-2">
+                    <Sliders className="w-4 h-4 text-amber-500" />
+                    <span className="text-xs font-extrabold text-slate-300">خيارات الختم المائي والتحقق</span>
+                  </div>
+
+                  {/* Watermark Toggle */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 flex items-center justify-between cursor-pointer">
+                      <span>تفعيل الختم المائي لشعار المحكمة:</span>
+                      <input 
+                        type="checkbox" 
+                        checked={isWatermarkEnabled}
+                        onChange={(e) => setIsWatermarkEnabled(e.target.checked)}
+                        className="w-4 h-4 rounded text-amber-500 bg-slate-800 border-slate-700 focus:ring-amber-500"
+                      />
+                    </label>
+                  </div>
+
+                  {/* Watermark Type Selector */}
+                  {isWatermarkEnabled && (
+                    <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
+                      <span className="text-[11px] font-bold text-slate-400">تصميم الشعار أو ختم النسر:</span>
+                      <div className="grid grid-cols-3 gap-2">
+                        <button 
+                          onClick={() => setWatermarkType('justice')}
+                          className={`px-2 py-2 rounded-lg border text-[10px] font-black transition-all ${
+                            watermarkType === 'justice' 
+                              ? 'bg-amber-500 border-amber-500 text-slate-950' 
+                              : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
+                          }`}
+                        >
+                          شعار الخبراء ⚖️
+                        </button>
+                        <button 
+                          onClick={() => setWatermarkType('eagle')}
+                          className={`px-2 py-2 rounded-lg border text-[10px] font-black transition-all ${
+                            watermarkType === 'eagle' 
+                              ? 'bg-amber-500 border-amber-500 text-slate-950' 
+                              : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
+                          }`}
+                        >
+                          شعار النسر 🛡️
+                        </button>
+                        <button 
+                          onClick={() => setWatermarkType('both')}
+                          className={`px-2 py-2 rounded-lg border text-[10px] font-black transition-all ${
+                            watermarkType === 'both' 
+                              ? 'bg-amber-500 border-amber-500 text-slate-950' 
+                              : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
+                          }`}
+                        >
+                          الشعارين معاً ⚖️🛡️
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Watermark Color Selector */}
+                  {isWatermarkEnabled && (
+                    <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
+                      <span className="text-[11px] font-bold text-slate-400">لون الحبر المعتمد للختم:</span>
+                      <div className="grid grid-cols-3 gap-2">
+                        <button 
+                          onClick={() => setWatermarkColor('amber')}
+                          className={`px-2 py-2 rounded-lg border text-[10px] font-black transition-all flex items-center justify-center gap-1 ${
+                            watermarkColor === 'amber' 
+                              ? 'bg-amber-500/20 border-amber-500 text-amber-400' 
+                              : 'bg-slate-900 border-slate-800 text-slate-400'
+                          }`}
+                        >
+                          <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                          <span>برونزي ذهبي</span>
+                        </button>
+                        <button 
+                          onClick={() => setWatermarkColor('blue')}
+                          className={`px-2 py-2 rounded-lg border text-[10px] font-black transition-all flex items-center justify-center gap-1 ${
+                            watermarkColor === 'blue' 
+                              ? 'bg-blue-500/20 border-blue-500 text-blue-400' 
+                              : 'bg-slate-900 border-slate-800 text-slate-400'
+                          }`}
+                        >
+                          <span className="w-2 h-2 rounded-full bg-blue-600"></span>
+                          <span>أزرق سيادي</span>
+                        </button>
+                        <button 
+                          onClick={() => setWatermarkColor('gray')}
+                          className={`px-2 py-2 rounded-lg border text-[10px] font-black transition-all flex items-center justify-center gap-1 ${
+                            watermarkColor === 'gray' 
+                              ? 'bg-slate-500/20 border-slate-500 text-slate-300' 
+                              : 'bg-slate-900 border-slate-800 text-slate-400'
+                          }`}
+                        >
+                          <span className="w-2 h-2 rounded-full bg-slate-500"></span>
+                          <span>رمادي كربوني</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Watermark Opacity Slider */}
+                  {isWatermarkEnabled && (
+                    <div className="space-y-1 animate-in slide-in-from-top-2 duration-200">
+                      <div className="flex items-center justify-between text-[11px] font-bold text-slate-400">
+                        <span>درجة شفافية الختم المائي:</span>
+                        <span className="font-mono text-amber-500">{(watermarkOpacity * 100).toFixed(0)}%</span>
+                      </div>
+                      <input 
+                        type="range" 
+                        min="0.03" 
+                        max="0.25" 
+                        step="0.01"
+                        value={watermarkOpacity}
+                        onChange={(e) => setWatermarkOpacity(parseFloat(e.target.value))}
+                        className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                      />
+                    </div>
+                  )}
+
+                  {/* QR Verification Code Toggle */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 flex items-center justify-between cursor-pointer">
+                      <span className="flex items-center gap-1">
+                        <QrCode className="w-3.5 h-3.5 text-slate-500" />
+                        <span>باركود مصفوفة التحقق الرقمي (QR):</span>
+                      </span>
+                      <input 
+                        type="checkbox" 
+                        checked={includeQRCode}
+                        onChange={(e) => setIncludeQRCode(e.target.checked)}
+                        className="w-4 h-4 rounded text-amber-500 bg-slate-800 border-slate-700 focus:ring-amber-500"
+                      />
+                    </label>
+                  </div>
+
+                  {/* Certified Stamp */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 flex items-center justify-between cursor-pointer">
+                      <span className="flex items-center gap-1">
+                        <Award className="w-3.5 h-3.5 text-slate-500" />
+                        <span>ختم النسر معتمد للتوقيع الفوري:</span>
+                      </span>
+                      <input 
+                        type="checkbox" 
+                        checked={isCertifiedStampVisible}
+                        onChange={(e) => setIsCertifiedStampVisible(e.target.checked)}
+                        className="w-4 h-4 rounded text-amber-500 bg-slate-800 border-slate-700 focus:ring-amber-500"
+                      />
+                    </label>
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* Action Buttons */}
+              <div className="mt-8 pt-6 border-t border-slate-800 space-y-3">
+                <div className="bg-slate-900/60 p-3 rounded-2xl border border-slate-800 flex items-start gap-2.5">
+                  <Lock className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-slate-400 leading-relaxed font-bold">
+                    سيتم تشفير وتوليد التقرير القضائي بتنسيق بي دي إف رسمي عالي الجودة مع ختم مائي وشهادة تشفير معتمدة متوافقة مع معايير وزارة العدل.
+                  </p>
+                </div>
+
+                <button 
+                  onClick={handleDownloadPDF}
+                  disabled={isGeneratingPDF}
+                  className="w-full bg-gradient-to-r from-red-600 via-amber-600 to-amber-500 hover:from-red-700 hover:via-amber-700 hover:to-amber-600 text-white font-black text-xs py-3.5 rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-amber-500/10 disabled:opacity-60 disabled:cursor-wait"
+                >
+                  {isGeneratingPDF ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                      <span>جاري تشفير وتوليد ملف PDF...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4" />
+                      <span>حفظ وتصدير PDF المعتمد بالختم</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+            </div>
+
+            {/* Left Side / Live PDF Previewer */}
+            <div className="flex-1 bg-slate-950 p-6 flex flex-col justify-between overflow-hidden">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-extrabold text-slate-400 flex items-center gap-1.5">
+                  <Eye className="w-4 h-4 text-emerald-500 animate-pulse" />
+                  <span>معاينة حية للمستند الرسمي قبل التصدير والطباعة</span>
+                </span>
+                <span className="text-[10px] bg-slate-800 text-slate-300 font-mono px-2 py-0.5 rounded">
+                  A4 FORMAT PREVIEW
+                </span>
+              </div>
+
+              {/* Preview Document Stage */}
+              <div className="flex-1 overflow-y-auto border border-slate-800 rounded-2xl bg-slate-900/40 p-4 flex justify-center items-start relative select-none">
+                
+                {/* Simulated Sheet of Paper */}
+                <div className="bg-white text-slate-950 rounded-lg p-6 shadow-2xl max-w-2xl w-full space-y-6 font-sans border border-slate-200 relative overflow-hidden text-right leading-relaxed text-xs">
+                  
+                  {/* Dynamic Court Watermark Seal in Preview */}
+                  {isWatermarkEnabled && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0 overflow-hidden" style={{ opacity: watermarkOpacity }}>
+                      {watermarkType === 'justice' || watermarkType === 'both' ? (
+                        <div className={`transform rotate-12 scale-110 flex flex-col items-center justify-center border-[6px] rounded-full p-8 w-[350px] h-[350px] text-center ${
+                          watermarkColor === 'amber' ? 'border-amber-700/60 text-amber-800' :
+                          watermarkColor === 'blue' ? 'border-blue-700/60 text-blue-800' :
+                          'border-slate-500/60 text-slate-700'
+                        }`}>
+                          <Scale className="w-36 h-36 stroke-[1.5]" />
+                          <span className="text-lg font-black mt-2 tracking-widest whitespace-nowrap">مصلحة الخبراء - وزارة العدل</span>
+                          <span className="text-xs font-extrabold mt-0.5">جمهورية مصر العربية</span>
+                          <span className="text-[8px] font-mono font-bold mt-0.5 tracking-wider">EGYPTIAN COURT OFFICIAL SEAL</span>
+                        </div>
+                      ) : null}
+                      {watermarkType === 'eagle' ? (
+                        <div className={`transform -rotate-12 scale-110 flex flex-col items-center justify-center border-double border-[8px] rounded-full p-6 w-[340px] h-[340px] text-center ${
+                          watermarkColor === 'amber' ? 'border-amber-600/50 text-amber-700' :
+                          watermarkColor === 'blue' ? 'border-blue-600/50 text-blue-700' :
+                          'border-slate-400/50 text-slate-600'
+                        }`}>
+                          <div className="border border-dashed p-3 rounded-full mb-1">
+                            <Shield className="w-24 h-24 stroke-[1.2]" />
+                          </div>
+                          <span className="text-lg font-extrabold tracking-widest">وزارة العدل • قطاع الخبراء</span>
+                          <span className="text-[10px] font-bold mt-0.5">الختم البيومتري الإلكتروني الموحد</span>
+                          <span className="text-[8px] font-mono mt-0.5 tracking-wider">OFFICIAL COURT BIOMETRIC SEAL</span>
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+
+                  {/* Header */}
+                  <div className="flex items-center justify-between border-b border-slate-900 pb-3 relative z-10">
+                    <div className="space-y-0.5 text-right">
+                      <h4 className="font-extrabold text-[9px]">جمهورية مصر العربية</h4>
+                      <h4 className="font-extrabold text-[9px]">وزارة العدل - مصلحة الخبراء</h4>
+                      <h4 className="text-slate-600 text-[8px] font-semibold">مكتب خبراء وزارة العدل بمحافظة الجيزة</h4>
+                    </div>
+                    <div className="text-center">
+                      <span className="text-base">⚖️</span>
+                      <span className="text-[8px] font-extrabold block">العدل أساس الملك</span>
+                    </div>
+                    <div className="text-left text-[8px] font-mono text-slate-700 space-y-0.5">
+                      <div>المرجع: {caseData.caseNumber}</div>
+                      <div>التاريخ: {caseData.date}</div>
+                      <div className="text-red-600 font-bold font-black">سري ورسمي للغاية</div>
+                    </div>
+                  </div>
+
+                  {/* Report Title */}
+                  <div className="text-center space-y-1 relative z-10">
+                    <h2 className="text-sm font-black underline underline-offset-4 decoration-2 text-slate-900">
+                      تقرير الخبرة العقارية والإنشائية الفني الإجمالي - الختم المائي الرسمي
+                    </h2>
+                    <p className="text-[9px] text-slate-600 font-bold">
+                      مقدم لمعالي القاضي بمحكمة: {caseData.court}
+                    </p>
+                  </div>
+
+                  {/* Brief Preview Content */}
+                  <div className="space-y-3 relative z-10 text-[10px]">
+                    <div className="bg-slate-50 p-2 rounded border border-slate-100 flex items-center justify-between">
+                      <span className="font-extrabold text-slate-800">رقم القضية: {caseData.caseNumber}</span>
+                      <span className="font-extrabold text-slate-800">رئيس الدائرة: {caseData.judge}</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="border border-slate-100 p-2 rounded space-y-1 bg-slate-50/50">
+                        <span className="text-slate-500 font-bold block text-[9px]">مواصفات العقار والمساحة:</span>
+                        <div className="font-extrabold">{caseData.location}</div>
+                        <div className="font-mono text-slate-700">{caseData.landArea} متر مربع</div>
+                      </div>
+                      <div className="border border-slate-100 p-2 rounded space-y-1 bg-slate-50/50">
+                        <span className="text-slate-500 font-bold block text-[9px]">التقييم والرسوم الإجمالية:</span>
+                        <div className="font-black text-emerald-800 font-mono">{results.totalPropertyValue.toLocaleString('ar-EG')} ج.م</div>
+                        <div className="font-bold text-slate-700 text-[9px]">رسوم التسجيل: {results.registrationFee.toLocaleString('ar-EG')} ج.م</div>
+                      </div>
+                    </div>
+
+                    {/* Dynamic QR Code and Sign Stamp inside paper preview */}
+                    <div className="flex items-end justify-between pt-4 mt-4 border-t border-slate-200">
+                      {includeQRCode ? (
+                        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 p-1 rounded-lg">
+                          <div className="w-10 h-10 bg-slate-950 flex items-center justify-center text-white rounded">
+                            <QrCode className="w-8 h-8 text-white stroke-[1.5]" />
+                          </div>
+                          <div className="text-[7px] text-slate-600 font-bold leading-tight">
+                            <div className="text-slate-900 font-black">كود التحقق الرقمي</div>
+                            <div>الرقم: {caseData.caseNumber}</div>
+                            <div className="text-emerald-600 font-mono">MOJ-SECURE-ID</div>
+                          </div>
+                        </div>
+                      ) : <div className="w-10"></div>}
+
+                      {/* Official Signature stamp */}
+                      {isCertifiedStampVisible ? (
+                        <div className={`border-2 border-double rounded-full w-14 h-14 flex flex-col items-center justify-center p-1 text-center transform -rotate-12 ${
+                          watermarkColor === 'amber' ? 'border-amber-600 text-amber-700 bg-amber-500/5' :
+                          watermarkColor === 'blue' ? 'border-blue-600 text-blue-700 bg-blue-500/5' :
+                          'border-slate-500 text-slate-600 bg-slate-500/5'
+                        }`}>
+                          <span className="text-[6px] font-black leading-none">معتمد</span>
+                          <span className="text-[5px] font-bold leading-none mt-0.5">وزارة العدل</span>
+                          <Scale className="w-4 h-4 my-0.5" />
+                          <span className="text-[4px] font-mono leading-none">VERIFIED</span>
+                        </div>
+                      ) : null}
+
+                      <div className="text-left text-[8px] space-y-0.5 font-bold">
+                        <span className="text-slate-500 block">توقيع الخبير القضائي</span>
+                        <span className="text-slate-900 block font-black">كابتن حسام</span>
+                        <span className="text-emerald-600 font-mono block text-[6px]">✓ BIOMETRIC APPROVED</span>
+                      </div>
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* Bottom Instructions Info */}
+              <div className="mt-4 text-[10px] text-slate-500 font-bold flex items-center justify-between">
+                <span>* للتعديل السريع على التقارير، يرجى تغيير التبويب من الشريط الرئيسي بالخلفية.</span>
+                <span>الصفحة ١ من ١</span>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

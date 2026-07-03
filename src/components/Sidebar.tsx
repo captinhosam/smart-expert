@@ -8,12 +8,13 @@ import {
   Settings,
   HelpCircle,
   FolderOpen,
-  MessageSquare
+  MessageSquare,
+  Compass
 } from 'lucide-react';
 
 interface SidebarProps {
-  activeTab: 'dashboard' | 'details' | 'map' | 'agents' | 'report' | 'files';
-  setActiveTab: (tab: 'dashboard' | 'details' | 'map' | 'agents' | 'report' | 'files') => void;
+  activeTab: 'dashboard' | 'details' | 'map' | 'agents' | 'report' | 'files' | 'mindmap';
+  setActiveTab: (tab: 'dashboard' | 'details' | 'map' | 'agents' | 'report' | 'files' | 'mindmap') => void;
   caseTitle: string;
   caseNumber: string;
 }
@@ -23,6 +24,7 @@ export default function Sidebar({ activeTab, setActiveTab, caseTitle, caseNumber
     { id: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard, desc: 'ملخص المؤشرات ومراحل تقدم الخبرة' },
     { id: 'details', label: 'بيانات العقار والخصوم', icon: FolderOpen, desc: 'الرفع المساحي، التشطيبات، والورثة' },
     { id: 'files', label: 'الشات والملفات والصوت', icon: MessageSquare, desc: 'المركز القضائي الموحد للمحادثة والاتصال' },
+    { id: 'mindmap', label: 'الخريطة الذهنية للأراضي', icon: Compass, desc: 'القوانين الحاكمة، والجهات المنفذة' },
     { id: 'map', label: 'نظم الخرائط و GPS', icon: Map, desc: 'الإحداثيات الجغرافية والمسح الطيفي' },
     { id: 'agents', label: 'محاكاة 50+ وكيل خبير', icon: Cpu, desc: 'العقل الاستدلالي ومستودع الوكلاء' },
     { id: 'report', label: 'التقرير القضائي المعتمد', icon: FileText, desc: 'التقرير النهائي الجاهز للطباعة والتقديم' }

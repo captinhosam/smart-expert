@@ -74,6 +74,9 @@ export interface CaseData {
   latitude: number;
   longitude: number;
 
+  complianceScore?: number; // matching score with official documents (0-100)
+  scannedArea?: number; // GPS scanned area
+
   // Upcoming Court Sessions & schedule
   sessions?: CourtSession[];
 

@@ -13,7 +13,9 @@ import ReportView from './components/ReportView';
 import StartPage from './components/StartPage';
 import FieldReferencesPanel from './components/FieldReferencesPanel';
 import ValuationTrends from './components/ValuationTrends';
+import ComplianceTrends from './components/ComplianceTrends';
 import AreaRegistry from './components/AreaRegistry';
+import MindMapTab from './components/MindMapTab';
 import { triggerToast } from './lib/toast';
 
 import { 
@@ -34,7 +36,8 @@ import {
   Trash2,
   Copy,
   PlusCircle,
-  FileCheck
+  FileCheck,
+  Clock
 } from 'lucide-react';
 
 export default function App() {
@@ -82,7 +85,7 @@ export default function App() {
     return SAMPLE_CASES[0];
   });
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'details' | 'map' | 'agents' | 'report' | 'files'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'details' | 'map' | 'agents' | 'report' | 'files' | 'mindmap'>('dashboard');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
@@ -157,11 +160,28 @@ export default function App() {
     triggerToast('⚖️ تم تحديث البيانات وتعديل نتائج التقييم فورياً!', 'success');
   };
 
-  const handleUpdateCoordinates = (lat: number, lng: number, locationName: string) => {
+  const handleUpdateCoordinates = (
+    lat: number, 
+    lng: number, 
+    locationName: string, 
+    scannedArea?: number, 
+    complianceScore?: number
+  ) => {
+    // Determine scanned area and compliance score
+    const finalScannedArea = scannedArea !== undefined 
+      ? scannedArea 
+      : Math.round(350 + (Math.abs(Math.sin(lat * 800) * Math.cos(lng * 800)) * 280));
+    const finalComplianceScore = complianceScore !== undefined 
+      ? complianceScore 
+      : Math.max(65, Math.min(100, Math.round(100 - Math.abs(lat - 29.9912) * 1200)));
+
     handleUpdateCaseData({
       latitude: lat,
       longitude: lng,
-      location: locationName
+      location: locationName,
+      landArea: finalScannedArea,
+      scannedArea: finalScannedArea,
+      complianceScore: finalComplianceScore
     });
   };
 
@@ -299,15 +319,16 @@ export default function App() {
 
   return (
     <div className={`min-h-screen p-3 sm:p-5 md:p-6 lg:p-8 font-sans select-none antialiased relative overflow-x-hidden transition-all duration-300 ${
-      theme === 'paper' ? 'theme-paper' : 'bg-[#0d0d0f] text-zinc-100'
+      theme === 'paper' ? 'theme-paper' : 'bg-gradient-to-br from-[#05050a] via-[#090918] to-[#0f112c] text-zinc-100'
     }`}>
       {/* 3D-like Glowing Interactive Ambience Grid Background */}
       {theme === 'dark' && (
         <>
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#1b1b1f_1px,transparent_1px),linear-gradient(to_bottom,#1b1b1f_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none -z-10"></div>
-          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-amber-500/5 blur-[120px] pointer-events-none -z-10 animate-pulse"></div>
-          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-500/5 blur-[120px] pointer-events-none -z-10 animate-pulse"></div>
-          <div className="absolute top-[40%] right-[20%] w-[350px] h-[350px] rounded-full bg-blue-500/5 blur-[100px] pointer-events-none -z-10"></div>
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#151525_1px,transparent_1px),linear-gradient(to_bottom,#151525_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none -z-10"></div>
+          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-amber-500/12 blur-[120px] pointer-events-none -z-10 animate-pulse"></div>
+          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-500/12 blur-[120px] pointer-events-none -z-10 animate-pulse"></div>
+          <div className="absolute top-[30%] right-[20%] w-[450px] h-[450px] rounded-full bg-blue-600/15 blur-[120px] pointer-events-none -z-10 animate-pulse"></div>
+          <div className="absolute bottom-[20%] left-[10%] w-[400px] h-[400px] rounded-full bg-indigo-500/12 blur-[110px] pointer-events-none -z-10"></div>
         </>
       )}
 
@@ -410,7 +431,7 @@ export default function App() {
         </div>
 
         {/* MIDDLE Column: Main Dynamic Content Area (الشاشة الوسطى) */}
-        <main className={`${activeTab === 'files' ? 'lg:col-span-9' : 'lg:col-span-6'} space-y-6 order-2 lg:order-none`}>
+        <main className={`${(activeTab === 'files' || activeTab === 'mindmap') ? 'lg:col-span-9' : 'lg:col-span-6'} space-y-6 order-2 lg:order-none`}>
           
           {activeTab === 'dashboard' && (
             <div className="space-y-6 animate-in fade-in duration-200">
@@ -474,6 +495,9 @@ export default function App() {
 
               {/* Recharts dynamic D3 real estate valuation trend */}
               <ValuationTrends results={results} theme={theme} />
+
+              {/* Compliance score trends compared against industry standards */}
+              <ComplianceTrends caseData={caseData} theme={theme} />
 
               {/* Custom Area Record & verification registry */}
               <AreaRegistry caseData={caseData} theme={theme} />
@@ -565,6 +589,23 @@ export default function App() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {casesArchive.map((sc) => {
                     const isActive = caseData.caseNumber === sc.caseNumber;
+                    
+                    // Calculate next session details for this archived case
+                    const scSessions = sc.sessions || [];
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    const upcomingSessions = scSessions.filter(s => s.date >= todayStr);
+                    const nextSession = upcomingSessions.length > 0 
+                      ? upcomingSessions.sort((a, b) => a.date.localeCompare(b.date))[0]
+                      : null;
+                      
+                    let daysUntilNext = 9999;
+                    if (nextSession) {
+                      const today = new Date(todayStr);
+                      const sessDateObj = new Date(nextSession.date);
+                      const diffTime = sessDateObj.getTime() - today.getTime();
+                      daysUntilNext = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    }
+
                     return (
                       <div
                         key={sc.caseNumber}
@@ -603,6 +644,29 @@ export default function App() {
                               sc.dispute.type === 'boundary' ? 'تداخل حدود عقارية' : 'تقييم عقاري وتثبيت ملكية'
                             }</span>
                           </div>
+
+                          {/* 🕰️ Next session countdown alert display */}
+                          {nextSession ? (
+                            <div className={`mt-2 p-1.5 px-2 rounded-lg border flex items-center justify-between text-[9px] font-black ${
+                              daysUntilNext <= 3 
+                                ? 'bg-red-500/10 border-red-500/20 text-red-400 animate-pulse' 
+                                : daysUntilNext <= 7 
+                                ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' 
+                                : 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400'
+                            }`}>
+                              <span className="flex items-center gap-1 truncate max-w-[150px] sm:max-w-none">
+                                <Clock className="w-3 h-3 text-amber-500 shrink-0" />
+                                <span className="truncate">جلسة ({nextSession.type}): {nextSession.date}</span>
+                              </span>
+                              <span className="bg-slate-950 px-1 py-0.5 rounded font-mono shrink-0">
+                                {daysUntilNext === 0 ? 'اليوم!' : daysUntilNext === 1 ? 'غداً!' : `خلال ${daysUntilNext} يوم`}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="mt-2 p-1 px-2 rounded bg-slate-950/20 border border-slate-850/30 text-[9px] text-slate-500 font-bold flex items-center gap-1 justify-center">
+                              <span>لم تحدد جلسات قادمة</span>
+                            </div>
+                          )}
                         </div>
 
                         {/* Action buttons inside each case item */}
@@ -714,10 +778,16 @@ export default function App() {
             </div>
           )}
 
+          {activeTab === 'mindmap' && (
+            <div className="animate-in fade-in duration-200">
+              <MindMapTab />
+            </div>
+          )}
+
         </main>
 
-        {/* LEFT Column: Maps and Images (شمال الشاشة) - Hidden on files tab as they are fully integrated there */}
-        {activeTab !== 'files' && (
+        {/* LEFT Column: Maps and Images (شمال الشاشة) - Hidden on files and mindmap tab as they are fully integrated or need full width there */}
+        {activeTab !== 'files' && activeTab !== 'mindmap' && (
           <div className="lg:col-span-3 space-y-6 order-3 lg:order-none">
             <MapTab 
               caseData={caseData} 

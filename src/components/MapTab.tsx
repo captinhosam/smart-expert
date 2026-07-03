@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CaseData, CalculationResults } from '../types';
 import { SAMPLE_LOCATIONS } from '../data/expertSystemData';
+import { triggerToast } from '../lib/toast';
 import { 
   MapPin, 
   Satellite, 
@@ -17,7 +18,13 @@ import {
 interface MapTabProps {
   caseData: CaseData;
   results: CalculationResults;
-  onUpdateCoordinates: (lat: number, lng: number, locationName: string) => void;
+  onUpdateCoordinates: (
+    lat: number, 
+    lng: number, 
+    locationName: string, 
+    scannedArea?: number, 
+    complianceScore?: number
+  ) => void;
 }
 
 export default function MapTab({ caseData, results, onUpdateCoordinates }: MapTabProps) {
@@ -43,6 +50,52 @@ export default function MapTab({ caseData, results, onUpdateCoordinates }: MapTa
   const triggerSatelliteScan = () => {
     setIsScanning(true);
     setScanProgress(0);
+    triggerToast('📡 تم إطلاق قمر صناعي عسكري لمسح طبوغرافية الأرض وحدود المساحة الحالية...', 'info');
+  };
+
+  // Coordinates Mapping System to map Giza GPS viewport into 500x400 SVG box
+  const mapCenterLat = 29.9912;
+  const mapCenterLng = 31.1425;
+  const latSpan = 0.0200; // total vertical range
+  const lngSpan = 0.0250; // total horizontal range
+
+  const getPinCoords = (lat: number, lng: number) => {
+    const dLat = lat - mapCenterLat;
+    const dLng = lng - mapCenterLng;
+    
+    // Scale percentages from center (0.5) to viewBox coordinates
+    const x = 250 + (dLng / lngSpan) * 500;
+    const y = 200 - (dLat / latSpan) * 400;
+    
+    // Safety clamp to keep the pin visual nicely inside the card grid
+    return {
+      x: Math.max(35, Math.min(465, x)),
+      y: Math.max(55, Math.min(345, y))
+    };
+  };
+
+  const pinCoords = getPinCoords(caseData.latitude, caseData.longitude);
+
+  const handleMapClick = (e: React.MouseEvent<SVGSVGElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+    
+    // Normalize coordinates back to 500x400 SVG scale
+    const svgX = (clickX / rect.width) * 500;
+    const svgY = (clickY / rect.height) * 400;
+    
+    // Convert SVG coordinates back to GPS lat/lng
+    const clickLng = mapCenterLng + ((svgX - 250) / 500) * lngSpan;
+    const clickLat = mapCenterLat - ((svgY - 200) / 400) * latSpan;
+    
+    // Calculate simulated results based on coordinates
+    const dist = Math.sqrt(Math.pow(clickLat - mapCenterLat, 2) + Math.pow(clickLng - mapCenterLng, 2));
+    const scannedArea = Math.round(340 + Math.abs(Math.sin(clickLat * 1200) * Math.cos(clickLng * 1200)) * 240);
+    const complianceScore = Math.max(65, Math.min(100, Math.round(100 - dist * 1300)));
+    
+    onUpdateCoordinates(clickLat, clickLng, caseData.location, scannedArea, complianceScore);
+    triggerToast(`📍 تم إسقاط إحداثيات الدبوس بنجاح! المساحة الجديدة: ${scannedArea} م² | المطابقة: ${complianceScore}%`, 'success');
   };
 
   // Approximate bounds calculations
@@ -56,7 +109,7 @@ export default function MapTab({ caseData, results, onUpdateCoordinates }: MapTa
       <div className="flex flex-col gap-5">
         
         {/* Interactive Simulated Map Canvas */}
-        <div className="bg-slate-950 rounded-2xl border border-slate-800 p-4 relative overflow-hidden flex flex-col justify-between shadow-2xl h-[320px]">
+        <div className="bg-slate-950 rounded-2xl border border-slate-800 p-4 relative overflow-hidden flex flex-col justify-between shadow-2xl h-[320px] transition-all duration-300 hover:border-amber-500/20 hover:shadow-[0_0_20px_rgba(245,158,11,0.1)]">
           
           {/* Map Header with Controls */}
           <div className="flex items-center justify-between z-10 bg-slate-900/80 backdrop-blur border border-slate-800 p-2.5 rounded-xl">
@@ -92,7 +145,11 @@ export default function MapTab({ caseData, results, onUpdateCoordinates }: MapTa
             <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:30px_30px] opacity-25"></div>
             
             {/* Map Visuals depending on selected layer */}
-            <svg className="w-full h-full" viewBox="0 0 500 400">
+            <svg 
+              className="w-full h-full select-none cursor-crosshair" 
+              viewBox="0 0 500 400"
+              onClick={handleMapClick}
+            >
               {/* Nile River representation */}
               <path 
                 d="M 230 0 Q 260 100 240 200 T 260 400" 
@@ -133,8 +190,8 @@ export default function MapTab({ caseData, results, onUpdateCoordinates }: MapTa
                 </g>
               ) : null}
 
-              {/* Highlight Target Property Bounds */}
-              <g transform="translate(240, 180)">
+              {/* Highlight Target Property Bounds at exact click pin coords */}
+              <g transform={`translate(${pinCoords.x}, ${pinCoords.y})`}>
                 {/* Simulated Property Polygon */}
                 <polygon 
                   points="-25,-25 35,-15 25,35 -35,15" 
@@ -165,7 +222,7 @@ export default function MapTab({ caseData, results, onUpdateCoordinates }: MapTa
               </g>
 
               {/* Plot Coordinates Labels */}
-              <text x="210" y="235" fill="#10b981" fontSize="10" fontWeight="bold" fontFamily="monospace">
+              <text x={Math.max(10, pinCoords.x - 70)} y={Math.max(25, pinCoords.y + 40)} fill="#10b981" fontSize="10" fontWeight="black" fontFamily="monospace">
                 {caseData.latitude.toFixed(4)}° N, {caseData.longitude.toFixed(4)}° E
               </text>
             </svg>
@@ -196,7 +253,7 @@ export default function MapTab({ caseData, results, onUpdateCoordinates }: MapTa
               </span>
               <span className="bg-slate-950 px-2.5 py-1.5 rounded border border-slate-800 text-[11px] text-emerald-400 font-bold flex items-center gap-1">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>الحدود الجغرافية مضبوطة</span>
+                <span>انقر على الخريطة لإسقاط الدبوس وتحديث المساحة فوراً</span>
               </span>
             </div>
             
@@ -208,6 +265,64 @@ export default function MapTab({ caseData, results, onUpdateCoordinates }: MapTa
               <Satellite className="w-3.5 h-3.5" />
               <span>بدء مسح طيفي للتربة والمساحة</span>
             </button>
+          </div>
+        </div>
+
+        {/* Dynamic Area & Document Compliance Dashboard with Neon Glow Effects */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl relative overflow-hidden group hover:border-amber-500/30 hover:shadow-[0_0_20px_rgba(245,158,11,0.15)] transition-all duration-300">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition-all duration-500"></div>
+          
+          <h3 className="text-white text-xs font-black flex items-center gap-2 border-b border-slate-800 pb-2.5 mb-3.5">
+            <Activity className="w-4 h-4 text-amber-500 animate-pulse" />
+            <span>لوحة التدقيق المساحي والتحقق من المطابقة القانونية للعين</span>
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            {/* Scanned Area Card */}
+            <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-850 flex flex-col justify-between hover:border-amber-500/30 hover:shadow-[0_0_15px_rgba(245,158,11,0.08)] transition-all duration-300">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400 text-[11px] font-bold">المساحة المقيسة بالأقمار (GPS Area)</span>
+                <span className="text-[9px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-bold">حساب فوري</span>
+              </div>
+              <div className="mt-2.5 flex items-baseline gap-1.5 justify-end">
+                <span className="text-white text-2xl font-mono font-black">{(caseData.landArea || caseData.scannedArea || 450).toLocaleString('ar-EG')}</span>
+                <span className="text-slate-500 text-xs font-bold">متر مربع</span>
+              </div>
+              <p className="text-[10px] text-slate-500 font-semibold mt-1.5 text-left font-mono">
+                Lat: {caseData.latitude.toFixed(5)} | Lng: {caseData.longitude.toFixed(5)}
+              </p>
+            </div>
+
+            {/* Compliance Score Card */}
+            <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-850 flex flex-col justify-between hover:border-cyan-500/30 hover:shadow-[0_0_15px_rgba(34,211,238,0.08)] transition-all duration-300">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400 text-[11px] font-bold">درجة المطابقة مع الأوراق الرسمية والمستندات</span>
+                <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${
+                  (caseData.complianceScore || 94) >= 85 
+                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                    : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                }`}>
+                  {(caseData.complianceScore || 94) >= 85 ? 'مطابقة عالية' : 'مطابقة متوسطة (فروقات طفيفة)'}
+                </span>
+              </div>
+              
+              <div className="mt-2.5 flex items-center justify-between gap-3">
+                {/* Simple glowing percentage bar */}
+                <div className="flex-1 bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
+                  <div 
+                    className="h-full bg-gradient-to-r from-amber-500 to-cyan-400 transition-all duration-500" 
+                    style={{ width: `${caseData.complianceScore || 94}%` }}
+                  ></div>
+                </div>
+                <span className="text-cyan-400 text-2xl font-mono font-black shrink-0">{(caseData.complianceScore || 94)}%</span>
+              </div>
+              
+              <p className="text-[10px] text-slate-400 font-semibold mt-1.5">
+                ✓ مقارنة حية تلقائية مع السجلات العقارية وعقود الملكية المسجلة
+              </p>
+            </div>
+
           </div>
         </div>
 

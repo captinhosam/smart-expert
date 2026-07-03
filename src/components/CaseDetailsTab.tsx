@@ -15,9 +15,13 @@ import {
   Clock,
   Plus,
   Bell,
-  Gavel
+  Gavel,
+  Camera,
+  FileText
 } from 'lucide-react';
 import { calculateAll } from '../utils/calculations';
+import FieldCameraTab from './FieldCameraTab';
+import DocumentsGuidePanel from './DocumentsGuidePanel';
 
 const CHART_COLORS = [
   '#f59e0b', // amber-500
@@ -30,12 +34,38 @@ const CHART_COLORS = [
   '#eab308', // yellow-500
 ];
 
+const getIslamicRuleDesc = (relationship: string, hasChildren: boolean) => {
+  switch (relationship) {
+    case 'wife':
+      return hasChildren 
+        ? 'تستحق الثمن (12.5%) فرضاً لوجود الفرع الوارث (الأولاد). وفي حال عدمهم تستحق الربع.'
+        : 'تستحق الربع (25%) فرضاً لعدم وجود فرع وارث للمتوفى.';
+    case 'husband':
+      return hasChildren
+        ? 'يستحق الربع (25%) فرضاً لوجود الفرع الوارث (الأولاد). وفي حال عدمهم يستحق النصف.'
+        : 'يستحق النصف (50%) فرضاً لعدم وجود فرع وارث للمتوفى.';
+    case 'father':
+      return 'يستحق السدس (16.67%) فرضاً لوجود الفرع الوارث المذكر (الابن)، أو فرضاً وعصوبة عند عدم المذكر.';
+    case 'mother':
+      return hasChildren
+        ? 'تستحق السدس (16.67%) فرضاً لوجود فرع وارث (الأولاد) أو تعدد من الإخوة.'
+        : 'تستحق الثلث (33.33%) فرضاً لعدم وجود فرع وارث أو جمع من الإخوة.';
+    case 'son':
+      return 'يرث بالتعصيب كونه عصبة بالنفس، يأخذ الباقي بعد الفروض، ويكون نصيبه ضعف نصيب البنت.';
+    case 'daughter':
+      return 'ترث بالتعصيب بالغير مع الابن (للذكر مثل حظ الأنثيين)، أو بالفرض (النصف للمنفردة، الثلثين للجمع) عند عدم الابن.';
+    default:
+      return 'ميراث شرعي تقديري حسب الحالة والقرابة الشرعية.';
+  }
+};
+
 interface CaseDetailsTabProps {
   caseData: CaseData;
   onUpdateCaseData: (data: Partial<CaseData>) => void;
 }
 
 export default function CaseDetailsTab({ caseData, onUpdateCaseData }: CaseDetailsTabProps) {
+  const [subTab, setSubTab] = useState<'profile' | 'camera' | 'documents'>('profile');
   const [newHeirName, setNewHeirName] = useState('');
   const [newHeirGender, setNewHeirGender] = useState<'male' | 'female'>('male');
   const [newHeirRelation, setNewHeirRelation] = useState<Heir['relationship']>('son');
@@ -120,8 +150,48 @@ export default function CaseDetailsTab({ caseData, onUpdateCaseData }: CaseDetai
   return (
     <div className="space-y-6">
       
-      {/* 🕰️ NEXT UPCOMING COURT SESSION ALERT BANNER 🕰️ */}
-      {nextSession && (
+      {/* 📸 SUB-TAB SYSTEM FOR CASE DETAILS 📸 */}
+      <div className="flex bg-slate-950/80 p-1.5 rounded-xl border border-slate-800 gap-1" id="case-details-subtabs">
+        <button
+          type="button"
+          onClick={() => setSubTab('profile')}
+          className={`flex-1 py-2 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${subTab === 'profile' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-900'}`}
+        >
+          <span>📋 ملف النزاع والبيانات والورثة</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setSubTab('documents')}
+          className={`flex-1 py-2 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${subTab === 'documents' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-900'}`}
+        >
+          <FileText className={`w-4 h-4 ${subTab === 'documents' ? 'text-slate-950' : 'text-slate-400'}`} />
+          <span>📄 المستندات المطلوبة والدليل الإجرائي</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setSubTab('camera')}
+          className={`flex-1 py-2 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${subTab === 'camera' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-900'}`}
+        >
+          <Camera className={`w-4 h-4 ${subTab === 'camera' ? 'text-slate-950' : 'text-slate-400'}`} />
+          <span>📸 الصور الميدانية والتلفيات</span>
+        </button>
+      </div>
+
+      {subTab === 'camera' ? (
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <FieldCameraTab 
+            caseData={caseData} 
+            onUpdateCaseData={onUpdateCaseData} 
+          />
+        </div>
+      ) : subTab === 'documents' ? (
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <DocumentsGuidePanel />
+        </div>
+      ) : (
+        <>
+          {/* 🕰️ NEXT UPCOMING COURT SESSION ALERT BANNER 🕰️ */}
+          {nextSession && (
         <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-4 transition-all ${
           daysUntilNext <= 3 
             ? 'bg-red-500/10 border-red-500/30 text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.07)] animate-pulse' 
@@ -676,6 +746,86 @@ export default function CaseDetailsTab({ caseData, onUpdateCaseData }: CaseDetai
               </div>
             </div>
 
+            {/* 📋 Heirs Analytical Comparison Table (جدول مقارنات وتحليل الورثة الشرعي) 📋 */}
+            <div className="lg:col-span-12 border border-slate-800 bg-slate-950/40 rounded-xl p-4 space-y-3 mt-4">
+              <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+                <Percent className="w-4 h-4 text-amber-500" />
+                <h4 className="text-white text-xs font-black">جدول المقارنة الشرعية والتحليل المالي للورثة</h4>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-right border-collapse min-w-[650px]">
+                  <thead>
+                    <tr className="bg-slate-950 border-b border-slate-800 text-slate-400 text-[10px] font-extrabold uppercase">
+                      <th className="p-2.5">الوارث</th>
+                      <th className="p-2.5">القرابة بالجذر</th>
+                      <th className="p-2.5">جهة الاستحقاق</th>
+                      <th className="p-2.5">الكسر الشرعي</th>
+                      <th className="p-2.5">النسبة المئوية</th>
+                      <th className="p-2.5">النصيب المالي التقديري</th>
+                      <th className="p-2.5">المستند الشرعي والضابط الفقهي المطبق</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/50 text-[11px] text-slate-300 font-medium">
+                    {heirsShares.map((share, idx) => {
+                      const color = CHART_COLORS[idx % CHART_COLORS.length];
+                      const mainHeir = caseData.heirs.find(h => h.id === share.id);
+                      const relationship = mainHeir?.relationship || 'son';
+                      
+                      const hasSons = caseData.heirs.some(h => h.relationship === 'son');
+                      const hasDaughters = caseData.heirs.some(h => h.relationship === 'daughter');
+                      const hasChildren = hasSons || hasDaughters;
+                      
+                      const ruleDesc = getIslamicRuleDesc(relationship, hasChildren);
+                      
+                      return (
+                        <tr key={share.id} className="hover:bg-slate-800/10 transition-colors">
+                          <td className="p-2.5 font-bold text-white">
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: color }} />
+                              <span>{share.name}</span>
+                            </div>
+                          </td>
+                          <td className="p-2.5">
+                            <span className="text-slate-400 font-bold">
+                              {relationship === 'son' && 'ابن مباشر'}
+                              {relationship === 'daughter' && 'ابنة مباشرة'}
+                              {relationship === 'wife' && 'زوجة المتوفى'}
+                              {relationship === 'husband' && 'زوج المتوفاة'}
+                              {relationship === 'father' && 'أب مباشر'}
+                              {relationship === 'mother' && 'أم مباشرة'}
+                            </span>
+                          </td>
+                          <td className="p-2.5">
+                            <span className={`px-2 py-0.5 rounded text-[9px] font-black ${
+                              relationship === 'son' || relationship === 'daughter'
+                                ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                            }`}>
+                              {relationship === 'son' || relationship === 'daughter' ? 'تعصيب (عصبة)' : 'فرض شرعي'}
+                            </span>
+                          </td>
+                          <td className="p-2.5 font-mono font-bold text-cyan-400 text-xs">
+                            {share.shareFraction}
+                          </td>
+                          <td className="p-2.5 font-mono font-black text-amber-400">
+                            {share.sharePercent.toFixed(1)}%
+                          </td>
+                          <td className="p-2.5 font-mono font-bold text-emerald-400 text-xs">
+                            {share.shareValue > 0 
+                              ? `${Math.round(share.shareValue).toLocaleString('ar-EG')} ج` 
+                              : `(توزيع نسبي)`}
+                          </td>
+                          <td className="p-2.5 text-slate-400 text-[10px] leading-relaxed max-w-sm whitespace-normal" title={ruleDesc}>
+                            {ruleDesc}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
         ) : (
           <div className="p-6 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl bg-slate-950/10">
@@ -830,6 +980,8 @@ export default function CaseDetailsTab({ caseData, onUpdateCaseData }: CaseDetai
           </div>
         )}
       </div>
-    </div>
+    </>
+  )}
+</div>
   );
 }
