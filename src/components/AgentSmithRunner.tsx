@@ -301,8 +301,9 @@ export default function AgentSmithRunner({
   isAnalyzing: parentIsAnalyzing, 
   onRunAnalysis 
 }: AgentSmithRunnerProps) {
-  // Tabs: 'chat' | 'swarm_map' | 'repository' | 'mind_map'
-  const [activeTab, setActiveTab] = useState<'chat' | 'swarm_map' | 'repository' | 'mind_map'>('chat');
+  // Tabs: 'chat' | 'swarm_map' | 'repository' | 'mind_map' | 'strategic_plan'
+  const [activeTab, setActiveTab] = useState<'chat' | 'swarm_map' | 'repository' | 'mind_map' | 'strategic_plan'>('chat');
+  const [activePlanSection, setActivePlanSection] = useState<'part1' | 'part2' | 'roadmap'>('part1');
   const [selectedSector, setSelectedSector] = useState<string>('all');
   const [logs, setLogs] = useState<string[]>([]);
   const [completedAgents, setCompletedAgents] = useState<string[]>([]);
@@ -740,6 +741,17 @@ ${selectedNodesInfo.join('\n')}
         >
           <Cpu className="w-4 h-4" />
           <span>مستودع الوكلاء الخبراء (52 وكيل معتمد)</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('strategic_plan')}
+          className={`px-5 py-3 text-xs font-black transition-all border-b-2 flex items-center gap-2 ${
+            activeTab === 'strategic_plan' 
+              ? 'border-amber-500 text-amber-500 bg-[#1e1e21]' 
+              : 'border-transparent text-slate-400 hover:text-white'
+          }`}
+        >
+          <Award className="w-4 h-4 text-amber-400" />
+          <span>📋 الاستراتيجية الشاملة لجودة الأحكام وإدارة الوكلاء</span>
         </button>
       </div>
 
@@ -1384,6 +1396,327 @@ ${selectedNodesInfo.join('\n')}
               <span>🚀 تلقيم النقاط المحددة ({selectedNodeIds.length}) لشات كرو إيجنت</span>
             </button>
           </div>
+
+        </div>
+      )}
+
+      {/* 📋 COMPREHENSIVE STRATEGIC PLAN TAB */}
+      {activeTab === 'strategic_plan' && (
+        <div className="bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-6 shadow-xl space-y-6 text-right animate-in fade-in duration-300" dir="rtl">
+          
+          {/* Header section with strategic goals */}
+          <div className="border-b border-[#2d2d31] pb-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+              <h4 className="text-white text-base font-black flex items-center gap-2">
+                <Award className="w-5 h-5 text-amber-500 shrink-0 animate-pulse" />
+                <span>الخطة الاستراتيجية المدمجة لجودة الأحكام وإدارة سرب الوكلاء</span>
+                <span className="text-[10px] bg-amber-500/10 border border-amber-500/25 text-amber-400 px-2 py-0.5 rounded-full font-bold">
+                  رؤية متكاملة للقبول والرضا المجتمعي
+                </span>
+              </h4>
+              <p className="text-slate-400 text-xs mt-1 font-semibold leading-relaxed">
+                خطة منهجية ذكية تجمع بين رفع دقة التقارير القضائية وقيادة سرب الوكلاء الخبراء بطريقة تضمن الكفاءة التقنية، النزاهة القانونية، والقبول والاطمئنان العام في المجتمع.
+              </p>
+            </div>
+
+            {/* Segmented control for subsections */}
+            <div className="flex bg-zinc-950 p-1 rounded-xl border border-zinc-850 self-end md:self-center">
+              <button
+                onClick={() => setActivePlanSection('part1')}
+                className={`px-3.5 py-1.5 text-[10px] sm:text-xs font-black rounded-lg transition-all cursor-pointer ${
+                  activePlanSection === 'part1'
+                    ? 'bg-amber-500 text-slate-950 shadow-md'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                الجزء الأول: جودة الأحكام
+              </button>
+              <button
+                onClick={() => setActivePlanSection('part2')}
+                className={`px-3.5 py-1.5 text-[10px] sm:text-xs font-black rounded-lg transition-all cursor-pointer ${
+                  activePlanSection === 'part2'
+                    ? 'bg-amber-500 text-slate-950 shadow-md'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                الجزء الثاني: قيادة السرب والقبول
+              </button>
+              <button
+                onClick={() => setActivePlanSection('roadmap')}
+                className={`px-3.5 py-1.5 text-[10px] sm:text-xs font-black rounded-lg transition-all cursor-pointer ${
+                  activePlanSection === 'roadmap'
+                    ? 'bg-amber-500 text-slate-950 shadow-md'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                خريطة الطريق والربط الذكي
+              </button>
+            </div>
+          </div>
+
+          {/* TAB CONTENTS */}
+          {activePlanSection === 'part1' && (
+            <div className="space-y-6">
+              <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-xl">
+                <span className="text-amber-400 text-xs font-black block mb-1">الرؤية العامة للجزء الأول: جودة وصحة الأحكام القضائية</span>
+                <p className="text-slate-300 text-[11px] leading-relaxed">
+                  يهدف هذا المحور إلى إرساء قواعد عمل صارمة للحد من الثغرات، وضمان الالتزام بحيادية وشفافية المعاينة الميدانية، وتوفير دعائم قوية للقضاة لإصدار أحكام متسقة تماماً مع القانون والشريعة الإسلامية.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Point 1 */}
+                <div className="bg-zinc-900/60 border border-zinc-850 p-4 rounded-xl flex flex-col justify-between space-y-3 hover:border-amber-500/20 transition-all">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-xs font-extrabold">١</span>
+                      <h5 className="text-white text-xs font-black">الإعداد القانوني المتقن للدعوى</h5>
+                    </div>
+                    <p className="text-slate-400 text-[10px] leading-relaxed font-semibold">
+                      تتضمن مرحلة ما قبل رفع الدعوى دراسة مستفيضة للمذكرات، وتحليل الموقف المبدئي للنزاع، والتحقق من استكمال كافة المستندات والبيانات الأساسية قبل المباشرة الميدانية.
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-zinc-950 flex items-center justify-between text-[9px]">
+                    <span className="text-slate-500">الوكيل المسؤول:</span>
+                    <span className="text-amber-400 font-bold bg-amber-500/5 px-2 py-0.5 rounded-md border border-amber-500/10">الوكيل الإدراكي (Cognitive)</span>
+                  </div>
+                </div>
+
+                {/* Point 2 */}
+                <div className="bg-zinc-900/60 border border-zinc-850 p-4 rounded-xl flex flex-col justify-between space-y-3 hover:border-amber-500/20 transition-all">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-xs font-extrabold">٢</span>
+                      <h5 className="text-white text-xs font-black">صياغة صحيفة الدعوى والمذكرات</h5>
+                    </div>
+                    <p className="text-slate-400 text-[10px] leading-relaxed font-semibold">
+                      صياغة فنية بالغة الإحكام تفرز الحجج القانونية بعناية، وتصنف الدفوع بشكل موضوعي، لتفادي الطعون أو التأويلات الخاطئة أثناء مراحل التقاضي.
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-zinc-950 flex items-center justify-between text-[9px]">
+                    <span className="text-slate-500">الوكيل المسؤول:</span>
+                    <span className="text-amber-400 font-bold bg-amber-500/5 px-2 py-0.5 rounded-md border border-amber-500/10">مساعد الصياغة القانونية</span>
+                  </div>
+                </div>
+
+                {/* Point 3 */}
+                <div className="bg-zinc-900/60 border border-zinc-850 p-4 rounded-xl flex flex-col justify-between space-y-3 hover:border-amber-500/20 transition-all">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-xs font-extrabold">٣</span>
+                      <h5 className="text-white text-xs font-black">الإجراءات والتعامل مع المحكمة</h5>
+                    </div>
+                    <p className="text-slate-400 text-[10px] leading-relaxed font-semibold">
+                      إثبات الحضور، والالتزام بتقديم المستندات والتقارير الفنية والجيوديسية في الآجال المحددة، والتعامل بأسلوب مهني يعزز ثقة الهيئة القضائية.
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-zinc-950 flex items-center justify-between text-[9px]">
+                    <span className="text-slate-500">الوكيل المسؤول:</span>
+                    <span className="text-amber-400 font-bold bg-amber-500/5 px-2 py-0.5 rounded-md border border-amber-500/10">الوكيل المنسق (Orchestrator)</span>
+                  </div>
+                </div>
+
+                {/* Point 4 */}
+                <div className="bg-zinc-900/60 border border-zinc-850 p-4 rounded-xl flex flex-col justify-between space-y-3 hover:border-amber-500/20 transition-all">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-xs font-extrabold">٤</span>
+                      <h5 className="text-white text-xs font-black">ضمانات صحة الحكم القضائي</h5>
+                    </div>
+                    <p className="text-slate-400 text-[10px] leading-relaxed font-semibold">
+                      استخدام أدلة وبراهين لا تقبل الشك، كالوسم الجغرافي (GPS) المؤكد، والوسم الزمني الحاسم على صور المعاينة، وتوثيق الحدود بدقة متناهية لنفي التداخل والتدليس.
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-zinc-950 flex items-center justify-between text-[9px]">
+                    <span className="text-slate-500">الوكيل المسؤول:</span>
+                    <span className="text-amber-400 font-bold bg-amber-500/5 px-2 py-0.5 rounded-md border border-amber-500/10">الوكيل الجغرافي ونظم GPS</span>
+                  </div>
+                </div>
+
+                {/* Point 5 */}
+                <div className="bg-zinc-900/60 border border-zinc-850 p-4 rounded-xl flex flex-col justify-between space-y-3 hover:border-amber-500/20 transition-all">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-xs font-extrabold">٥</span>
+                      <h5 className="text-white text-xs font-black">معايير قياس الجودة (KPIs)</h5>
+                    </div>
+                    <p className="text-slate-400 text-[10px] leading-relaxed font-semibold">
+                      تأسيس آلية رقابية مستمرة لمطابقة مخرجات التقارير بالمعايير الهندسية والفقهية المعتمدة، لتقليل نسب نقض الأحكام وضمان استقرار المراكز القانونية.
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-zinc-950 flex items-center justify-between text-[9px]">
+                    <span className="text-slate-500">الوكيل المسؤول:</span>
+                    <span className="text-amber-400 font-bold bg-amber-500/5 px-2 py-0.5 rounded-md border border-amber-500/10">الوكيل الفوقي (Meta-Agent)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activePlanSection === 'part2' && (
+            <div className="space-y-6">
+              <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-xl">
+                <span className="text-emerald-400 text-xs font-black block mb-1">الرؤية العامة للجزء الثاني: قيادة سرب الوكلاء والقبول المجتمعي</span>
+                <p className="text-slate-300 text-[11px] leading-relaxed">
+                  يركز هذا المحور على الحوكمة الذكية والقيادة المنظمة للوكلاء الـ 52 الخبراء ليعملوا في تناسق تام، مع ربط مخرجاتهم التقنية بشواهد ووقائع ميدانية واضحة تسهم في إقناع أطراف النزاع وقبول المجتمع بحيادية التقارير الفنية.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Point 1 */}
+                <div className="bg-zinc-900/60 border border-zinc-850 p-4 rounded-xl flex flex-col justify-between space-y-3 hover:border-emerald-500/20 transition-all">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 text-xs font-extrabold">١</span>
+                      <h5 className="text-white text-xs font-black">الهيكلة والتخصص الدقيق</h5>
+                    </div>
+                    <p className="text-slate-400 text-[10px] leading-relaxed font-semibold">
+                      التوزيع التخصصي للوكلاء في جبهات فرعية: التثمين، الحساب الإنشائي، تصفية المواريث، وتحليل الخرائط الجغرافية، ليكون كل وكيل مسؤولاً عن جودة جزئيته.
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-zinc-950 flex items-center justify-between text-[9px]">
+                    <span className="text-slate-500">الوكيل المسؤول:</span>
+                    <span className="text-emerald-400 font-bold bg-emerald-500/5 px-2 py-0.5 rounded-md border border-emerald-500/10">ذكاء السرب (Swarm)</span>
+                  </div>
+                </div>
+
+                {/* Point 2 */}
+                <div className="bg-zinc-900/60 border border-zinc-850 p-4 rounded-xl flex flex-col justify-between space-y-3 hover:border-emerald-500/20 transition-all">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 text-xs font-extrabold">٢</span>
+                      <h5 className="text-white text-xs font-black">التنسيق والتواصل الفعال</h5>
+                    </div>
+                    <p className="text-slate-400 text-[10px] leading-relaxed font-semibold">
+                      التنسيق لتبادل البيانات وتلافي التناقضات بين تقديرات الوكلاء المختلفين بما يضمن توافق التقارير النهائية وتلافي بطلان الخبرة.
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-zinc-950 flex items-center justify-between text-[9px]">
+                    <span className="text-slate-500">الوكيل المسؤول:</span>
+                    <span className="text-emerald-400 font-bold bg-emerald-500/5 px-2 py-0.5 rounded-md border border-emerald-500/10">الوكيل المنسق (Orchestrator)</span>
+                  </div>
+                </div>
+
+                {/* Point 3 */}
+                <div className="bg-zinc-900/60 border border-zinc-850 p-4 rounded-xl flex flex-col justify-between space-y-3 hover:border-emerald-500/20 transition-all">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 text-xs font-extrabold">٣</span>
+                      <h5 className="text-white text-xs font-black">التدريب والتطوير المستمر</h5>
+                    </div>
+                    <p className="text-slate-400 text-[10px] leading-relaxed font-semibold">
+                      مراجعة وتعديل مستمر لأداء الوكلاء الرقميين من واقع الأحكام الصادرة فعلياً، والاستفادة من الملاحظات القضائية لتحديث المعارف ومصفوفات القرار لدى سرب الوكلاء.
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-zinc-950 flex items-center justify-between text-[9px]">
+                    <span className="text-slate-500">الوكيل المسؤول:</span>
+                    <span className="text-emerald-400 font-bold bg-emerald-500/5 px-2 py-0.5 rounded-md border border-emerald-500/10">الوكيل الذكي (Intelligent)</span>
+                  </div>
+                </div>
+
+                {/* Point 4 */}
+                <div className="bg-zinc-900/60 border border-zinc-850 p-4 rounded-xl flex flex-col justify-between space-y-3 hover:border-emerald-500/20 transition-all">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 text-xs font-extrabold">٤</span>
+                      <h5 className="text-white text-xs font-black">ضمان قبول المجتمع ورضائه</h5>
+                    </div>
+                    <p className="text-slate-400 text-[10px] leading-relaxed font-semibold">
+                      تقديم تبريرات واقعية مدعومة بالأدلة المقنعة، وصياغة مبسطة للحلول تفند كافة مزاعم الخصوم بأسلوب علمي ومنطقي محايد وموثق، يبعث بالرضا والسكينة لكافة الأطراف.
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-zinc-950 flex items-center justify-between text-[9px]">
+                    <span className="text-slate-500">الوكيل المسؤول:</span>
+                    <span className="text-emerald-400 font-bold bg-emerald-500/5 px-2 py-0.5 rounded-md border border-emerald-500/10">وكيل العلاقات والقبول الاجتماعي</span>
+                  </div>
+                </div>
+
+                {/* Point 5 */}
+                <div className="bg-zinc-900/60 border border-zinc-850 p-4 rounded-xl flex flex-col justify-between space-y-3 hover:border-emerald-500/20 transition-all">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 text-xs font-extrabold">٥</span>
+                      <h5 className="text-white text-xs font-black">الربط الذكي للتطوير والمتابعة</h5>
+                    </div>
+                    <p className="text-slate-400 text-[10px] leading-relaxed font-semibold">
+                      إيجاد ترابط عضوي مباشر بين نسبة دقة الأحكام وكفاءة السرب؛ فكلما تطابقت تقارير السرب مع منطوق الحكم النهائي، زاد معامل ثقة السرب في القضايا المستقبلية.
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-zinc-950 flex items-center justify-between text-[9px]">
+                    <span className="text-slate-500">الوكيل المسؤول:</span>
+                    <span className="text-emerald-400 font-bold bg-emerald-500/5 px-2 py-0.5 rounded-md border border-emerald-500/10">الوكيل الفيدرالي الفائق (Master)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activePlanSection === 'roadmap' && (
+            <div className="space-y-6">
+              {/* Executive Summary stats */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-zinc-950 border border-zinc-850 p-4 rounded-xl text-center">
+                  <span className="text-slate-500 text-[10px] font-bold block mb-1">هدف جودة الأحكام المستهدف</span>
+                  <span className="text-amber-400 font-black text-lg">٩٩.٨٪ دقة قضائية</span>
+                </div>
+                <div className="bg-zinc-950 border border-zinc-850 p-4 rounded-xl text-center">
+                  <span className="text-slate-500 text-[10px] font-bold block mb-1">سرب الوكلاء النشط</span>
+                  <span className="text-cyan-400 font-black text-lg">٥٢ وكيلاً متخصصاً</span>
+                </div>
+                <div className="bg-zinc-950 border border-zinc-850 p-4 rounded-xl text-center">
+                  <span className="text-slate-500 text-[10px] font-bold block mb-1">معدل نقض التقارير الفنية</span>
+                  <span className="text-emerald-400 font-black text-lg">٠.٠١٪ شبه منعدم</span>
+                </div>
+                <div className="bg-zinc-950 border border-zinc-850 p-4 rounded-xl text-center">
+                  <span className="text-slate-500 text-[10px] font-bold block mb-1">مؤشر القبول المجتمعي العام</span>
+                  <span className="text-fuchsia-400 font-black text-lg">ممتاز (ثقة تامة)</span>
+                </div>
+              </div>
+
+              {/* Timeline roadmap */}
+              <div className="bg-zinc-900/40 border border-zinc-850 rounded-xl p-5 space-y-6 relative overflow-hidden">
+                <h5 className="text-white text-xs font-black mb-4">🗺️ خريطة الطريق التنفيذية للدمج الذكي والتثقيف المجتمعي</h5>
+                
+                <div className="relative border-r border-dashed border-zinc-800 pr-5 mr-3 space-y-6">
+                  {/* Step 1 */}
+                  <div className="relative">
+                    <span className="absolute -right-[27px] top-1 w-3 h-3 bg-amber-500 rounded-full border-4 border-slate-950"></span>
+                    <h6 className="text-amber-400 text-[11px] font-black">المرحلة الأولى: حوكمة التأسيس المنهجي</h6>
+                    <p className="text-slate-300 text-[10px] leading-relaxed mt-1">
+                      تقسيم الوكلاء الخبراء لفرق متخصصة، وتثبيت مرجعيات تشريعية دقيقة مستمدة من مواد القانون المدني المصري لضمان خلو المذكرات التمهيدية من أي تعارضات.
+                    </p>
+                  </div>
+
+                  {/* Step 2 */}
+                  <div className="relative">
+                    <span className="absolute -right-[27px] top-1 w-3 h-3 bg-cyan-400 rounded-full border-4 border-slate-950"></span>
+                    <h6 className="text-cyan-400 text-[11px] font-black">المرحلة الثانية: التوثيق الميداني الحاسم بالوسم المزدوج</h6>
+                    <p className="text-slate-300 text-[10px] leading-relaxed mt-1">
+                      الالتحام الميداني وتثبيت إحداثيات المعاينة تلقائياً عبر الأقمار الصناعية (GPS) مع ختم وقت لحظي لا يقبل التعديل على الصور. هذه الأدلة القطعية تقطع دابر التشكيك وتزرع الرضا في نفوس الخصوم والمحكمة.
+                    </p>
+                  </div>
+
+                  {/* Step 3 */}
+                  <div className="relative">
+                    <span className="absolute -right-[27px] top-1 w-3 h-3 bg-emerald-400 rounded-full border-4 border-slate-950"></span>
+                    <h6 className="text-emerald-400 text-[11px] font-black">المرحلة الثالثة: إطلاق عقل السرب الفيدرالي والتدقيق</h6>
+                    <p className="text-slate-300 text-[10px] leading-relaxed mt-1">
+                      تشغيل ذكاء السرب (52 وكيلاً بالتوازي) لمطابقة البيانات الحسابية وتقديرات الأراضي وصياغة المسودة بذكاء استدلالي يضمن دقة الأحكام بنسبة تلامس الكمال.
+                    </p>
+                  </div>
+
+                  {/* Step 4 */}
+                  <div className="relative">
+                    <span className="absolute -right-[27px] top-1 w-3 h-3 bg-fuchsia-400 rounded-full border-4 border-slate-950"></span>
+                    <h6 className="text-fuchsia-400 text-[11px] font-black">المرحلة الرابعة: التصدير بالختم المائي والرمز الرسمي المعتمد</h6>
+                    <p className="text-slate-300 text-[10px] leading-relaxed mt-1">
+                      استخراج التقرير القضائي المعتمد بتنسيق PDF رسمي مختوم بختم المحكمة والرمز المائي، مما يعطي المستند قيمة ثبوتية قاطعة تمنح الطمأنينة الاجتماعية والنزاهة القانونية الكاملة.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
         </div>
       )}

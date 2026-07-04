@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { CaseData, Heir } from '../types';
 import { 
   Building2, 
@@ -17,46 +17,33 @@ import {
   Bell,
   Gavel,
   Camera,
-  FileText
+  FileText,
+  Mic,
+  MicOff,
+  Upload,
+  ArrowLeft,
+  Smartphone,
+  Eye,
+  Settings,
+  Shield,
+  Layers,
+  MapPin,
+  Map,
+  Scale,
+  Sparkles,
+  RefreshCw,
+  Video
 } from 'lucide-react';
 import { calculateAll } from '../utils/calculations';
 import FieldCameraTab from './FieldCameraTab';
 import DocumentsGuidePanel from './DocumentsGuidePanel';
+import { triggerToast } from '../lib/toast';
 
-const CHART_COLORS = [
-  '#f59e0b', // amber-500
-  '#10b981', // emerald-500
-  '#3b82f6', // blue-500
-  '#ec4899', // pink-500
-  '#8b5cf6', // violet-500
-  '#06b6d4', // cyan-500
-  '#f43f5e', // rose-500
-  '#eab308', // yellow-500
-];
-
-const getIslamicRuleDesc = (relationship: string, hasChildren: boolean) => {
-  switch (relationship) {
-    case 'wife':
-      return hasChildren 
-        ? 'تستحق الثمن (12.5%) فرضاً لوجود الفرع الوارث (الأولاد). وفي حال عدمهم تستحق الربع.'
-        : 'تستحق الربع (25%) فرضاً لعدم وجود فرع وارث للمتوفى.';
-    case 'husband':
-      return hasChildren
-        ? 'يستحق الربع (25%) فرضاً لوجود الفرع الوارث (الأولاد). وفي حال عدمهم يستحق النصف.'
-        : 'يستحق النصف (50%) فرضاً لعدم وجود فرع وارث للمتوفى.';
-    case 'father':
-      return 'يستحق السدس (16.67%) فرضاً لوجود الفرع الوارث المذكر (الابن)، أو فرضاً وعصوبة عند عدم المذكر.';
-    case 'mother':
-      return hasChildren
-        ? 'تستحق السدس (16.67%) فرضاً لوجود فرع وارث (الأولاد) أو تعدد من الإخوة.'
-        : 'تستحق الثلث (33.33%) فرضاً لعدم وجود فرع وارث أو جمع من الإخوة.';
-    case 'son':
-      return 'يرث بالتعصيب كونه عصبة بالنفس، يأخذ الباقي بعد الفروض، ويكون نصيبه ضعف نصيب البنت.';
-    case 'daughter':
-      return 'ترث بالتعصيب بالغير مع الابن (للذكر مثل حظ الأنثيين)، أو بالفرض (النصف للمنفردة، الثلثين للجمع) عند عدم الابن.';
-    default:
-      return 'ميراث شرعي تقديري حسب الحالة والقرابة الشرعية.';
-  }
+const DICTATION_PRESETS: Record<string, string> = {
+  ownership: "أنا بصفتي وكيلاً عن المدعي، أثبت أن الأرض الكائنة بشارع الهرم هي ملك خالص لموكلي بموجب عقد البيع المشهر رقم ٢٤٠٥ لسنة ٢٠١٢، والخصم يضع يده عليها دون وجه حق أو سند قانوني صحيح، ونطالب بطرده وتسليم الأرض خالية.",
+  boundary: "أقر أنا المهندس الخبير المعاين بوجود تداخل في الحدود الشمالية لقطعة الأرض بمساحة قدرها ٤٥ متراً مربعاً دخلت في حيازة الجار بطريق الخطأ أثناء البناء، ونوصي بإعادة ترسيم الحدود طبقاً للخرائط الرسمية الصادرة من الهيئة العامة للمساحة المصرية.",
+  inheritance: "نحن ورثة المرحوم الحاج أحمد كمال، نطالب بفرز وتجنيب حصصنا الشرعية في العقار والتركة المورثة. حيث ترفض الزوجة تسليم البنات نصيبهن الشرعي وتستأثر بريع العقار بالكامل منذ سنتين، ونطالب بندب خبير حسابي لتصفية الريع وحساب الأنصبة.",
+  contract: "بصفتي المستأجر للعين السكنية منذ عام ١٩٩٤، أقر بدفع القيمة الإيجارية بانتظام بموجب قانون الإيجار القديم، ويرفض المالك استلام الإيجار لكي يتمكن من رفع دعوى طرد، وقد قمنا بإيداع الأجرة بخزينة المحكمة بانتظام."
 };
 
 interface CaseDetailsTabProps {
@@ -66,922 +53,799 @@ interface CaseDetailsTabProps {
 
 export default function CaseDetailsTab({ caseData, onUpdateCaseData }: CaseDetailsTabProps) {
   const [subTab, setSubTab] = useState<'profile' | 'camera' | 'documents'>('profile');
-  const [newHeirName, setNewHeirName] = useState('');
-  const [newHeirGender, setNewHeirGender] = useState<'male' | 'female'>('male');
-  const [newHeirRelation, setNewHeirRelation] = useState<Heir['relationship']>('son');
-  const [hoveredHeirId, setHoveredHeirId] = useState<string | null>(null);
+  
+  // Voice recording states
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // State variables for dynamic court session entry
-  const [sessDate, setSessDate] = useState('2026-07-08');
-  const [sessTime, setSessTime] = useState('10:00');
-  const [sessType, setSessType] = useState('معاينة ميدانية');
-  const [sessNotes, setSessNotes] = useState('');
+  // Expose local file list for previewing uploaded documents
+  const [uploadedDocs, setUploadedDocs] = useState<{name: string, size: string, type: string}[]>([
+    { name: 'إعلام_وراثة_رسمي.pdf', size: '2.4 MB', type: 'عقد شرعي' },
+    { name: 'عقد_البيع_المشهر.pdf', size: '4.1 MB', type: 'سند ملكية' }
+  ]);
+
+  // Handle Voice Dictation
+  const handleToggleRecording = () => {
+    if (isRecording) {
+      // Stop recording and insert preset text
+      setIsRecording(false);
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      setRecordingSeconds(0);
+      
+      const presetType = caseData.dispute.type || 'ownership';
+      const speechText = DICTATION_PRESETS[presetType] || "تم تسجيل الإفادة الصوتية للمعاينة بنجاح.";
+      
+      onUpdateCaseData({
+        dispute: {
+          ...caseData.dispute,
+          details: (caseData.dispute.details ? caseData.dispute.details + "\n" : "") + "🎙️ [إفادة صوتية مسجلة]: " + speechText
+        }
+      });
+      triggerToast('🎙️ تم تحويل التسجيل الصوتي إلى نص عربي فصيح بنجاح!', 'success');
+    } else {
+      // Start recording
+      setIsRecording(true);
+      setRecordingSeconds(0);
+      triggerToast('🔴 جاري تسجيل الصوت الآن... تحدث بوضوح', 'info');
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingSeconds(prev => prev + 1);
+      }, 1000);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+    };
+  }, []);
+
+  // Handle Drag & Drop simulation
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const fileList = Array.from(files) as File[];
+      const newDocs = fileList.map(f => ({
+        name: f.name,
+        size: (f.size / (1024 * 1024)).toFixed(1) + ' MB',
+        type: f.type || 'مستند مضاف'
+      }));
+      setUploadedDocs(prev => [...prev, ...newDocs]);
+      triggerToast(`📁 تم رفع ${files.length} مستندات بنجاح للملف القضائي`, 'success');
+    }
+  };
+
+  // Pre-fill client default values if they don't exist
+  const clientName = caseData.clientName || 'أحمد كمال عبد العال';
+  const clientNationalId = caseData.clientNationalId || '29605120102345';
+  const clientBirthDate = caseData.clientBirthDate || '1996-05-12';
+  const clientJob = caseData.clientJob || 'مهندس برمجيات حر';
+  const clientPhone = caseData.clientPhone || '01012345678';
+  const clientEmail = caseData.clientEmail || 'ahmed.kamal@giza-justice.gov';
+  const clientAddress = caseData.clientAddress || 'شقة ٤، عقار ٢٥ شارع النزهة، الدقي، الجيزة';
+
+  const propertyType = caseData.propertyType || 'apartment';
+  const landUnit = caseData.landUnit || 'متر';
+  const landZamam = caseData.landZamam || 'زمام';
+  const landPieceNum = caseData.landPieceNum || '٤١٢';
+  const landBasinNum = caseData.landBasinNum || 'حوض الجبل ٢';
+  const landSectionNum = caseData.landSectionNum || 'القسم الثالث';
+  const landOwnershipType = caseData.landOwnershipType || 'ملكية خاصة';
+  
+  const apartmentAddress = caseData.apartmentAddress || 'عقار رقم ٢٧ شارع شبين الكوم، العمرانية الغربية، الجيزة';
+  const apartmentFloorAndNumber = caseData.apartmentFloorAndNumber || 'الدور الثالث - شقة رقم ٦';
+  const apartmentAreaSqm = caseData.apartmentAreaSqm || 135;
+  const apartmentRelationType = caseData.apartmentRelationType || 'inheritance';
 
   const results = calculateAll(caseData);
-  const heirsShares = results.heirsShares;
-
   const sessions = caseData.sessions || [];
-
-  // Find the next upcoming session (date >= today: 2026-07-01)
   const todayStr = "2026-07-01";
   const upcomingSessions = sessions
     .filter(s => s.date >= todayStr)
     .sort((a, b) => a.date.localeCompare(b.date));
-    
   const nextSession = upcomingSessions[0];
-  let daysUntilNext = -1;
-  if (nextSession) {
-    const todaySec = new Date(todayStr).getTime();
-    const sessSec = new Date(nextSession.date).getTime();
-    const diffTime = sessSec - todaySec;
-    daysUntilNext = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  }
-
-  const handleAddSession = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!sessDate || !sessType.trim()) return;
-
-    const newSession = {
-      id: `sess_${Date.now()}`,
-      date: sessDate,
-      time: sessTime || '09:00',
-      type: sessType.trim(),
-      notes: sessNotes.trim() || 'لا توجد ملاحظات إضافية.'
-    };
-
-    onUpdateCaseData({
-      sessions: [...sessions, newSession]
-    });
-
-    setSessNotes('');
-  };
-
-  const handleRemoveSession = (id: string) => {
-    onUpdateCaseData({
-      sessions: sessions.filter(s => s.id !== id)
-    });
-  };
-
-
-  const handleAddHeir = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newHeirName.trim()) return;
-
-    const newHeir: Heir = {
-      id: `heir_${Date.now()}`,
-      name: newHeirName.trim(),
-      gender: newHeirGender,
-      relationship: newHeirRelation
-    };
-
-    onUpdateCaseData({
-      heirs: [...caseData.heirs, newHeir]
-    });
-
-    setNewHeirName('');
-  };
-
-  const handleRemoveHeir = (id: string) => {
-    onUpdateCaseData({
-      heirs: caseData.heirs.filter(h => h.id !== id)
-    });
-  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-right" dir="rtl">
       
-      {/* 📸 SUB-TAB SYSTEM FOR CASE DETAILS 📸 */}
+      {/* Sub-Tab navigation header */}
       <div className="flex bg-slate-950/80 p-1.5 rounded-xl border border-slate-800 gap-1" id="case-details-subtabs">
         <button
           type="button"
           onClick={() => setSubTab('profile')}
-          className={`flex-1 py-2 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${subTab === 'profile' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-900'}`}
+          className={`flex-1 py-2.5 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${subTab === 'profile' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-900'}`}
         >
-          <span>📋 ملف النزاع والبيانات والورثة</span>
+          <span>📋 النموذج الديناميكي لبيانات النزاع (صفحة ٢)</span>
         </button>
         <button
           type="button"
           onClick={() => setSubTab('documents')}
-          className={`flex-1 py-2 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${subTab === 'documents' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-900'}`}
+          className={`flex-1 py-2.5 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${subTab === 'documents' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-900'}`}
         >
           <FileText className={`w-4 h-4 ${subTab === 'documents' ? 'text-slate-950' : 'text-slate-400'}`} />
-          <span>📄 المستندات المطلوبة والدليل الإجرائي</span>
+          <span>📄 دليل المستندات والتحقق</span>
         </button>
         <button
           type="button"
           onClick={() => setSubTab('camera')}
-          className={`flex-1 py-2 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${subTab === 'camera' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-900'}`}
+          className={`flex-1 py-2.5 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${subTab === 'camera' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-900'}`}
         >
           <Camera className={`w-4 h-4 ${subTab === 'camera' ? 'text-slate-950' : 'text-slate-400'}`} />
-          <span>📸 الصور الميدانية والتلفيات</span>
+          <span>📸 الكاميرا الميدانية والوسم التلقائي</span>
         </button>
       </div>
 
       {subTab === 'camera' ? (
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div className="animate-in fade-in duration-200">
           <FieldCameraTab 
             caseData={caseData} 
             onUpdateCaseData={onUpdateCaseData} 
           />
         </div>
       ) : subTab === 'documents' ? (
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div className="animate-in fade-in duration-200">
           <DocumentsGuidePanel />
         </div>
       ) : (
-        <>
-          {/* 🕰️ NEXT UPCOMING COURT SESSION ALERT BANNER 🕰️ */}
-          {nextSession && (
-        <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-4 transition-all ${
-          daysUntilNext <= 3 
-            ? 'bg-red-500/10 border-red-500/30 text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.07)] animate-pulse' 
-            : daysUntilNext <= 7 
-            ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.07)]' 
-            : 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.07)]'
-        }`}>
-          <div className="flex items-center gap-3 text-right">
-            <div className={`p-2.5 rounded-xl shrink-0 ${
-              daysUntilNext <= 3 ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'
-            }`}>
-              <Bell className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="font-black text-sm text-white">تنبيه بقرب موعد الجلسة القضائية القادمة</h4>
-              <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">
-                الجلسة المعينة بعنوان <span className="font-bold underline text-amber-400">({nextSession.type})</span> مقررة في تاريخ <span className="font-mono font-bold text-white bg-slate-950 px-1.5 py-0.5 rounded">{nextSession.date}</span> في تمام الساعة <span className="font-mono font-bold text-white bg-slate-950 px-1.5 py-0.5 rounded">{nextSession.time}</span>.
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-col items-center sm:items-end justify-center shrink-0">
-            <span className="text-[10px] uppercase font-mono tracking-widest text-slate-400 font-bold">الوقت المتبقي</span>
-            <span className="text-sm sm:text-base font-black font-mono mt-0.5 bg-slate-950 px-3 py-1 rounded-xl border border-slate-800">
-              {daysUntilNext === 0 ? 'اليوم!' : daysUntilNext === 1 ? 'غداً!' : `خلال ${daysUntilNext} أيام`}
-            </span>
-          </div>
-        </div>
-      )}
-      
-      {/* 1. Basic Case Profile Form */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
-        <h3 className="text-white text-base font-black mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
-          <FileCheck className="w-5 h-5 text-amber-500" />
-          <span>البيانات الأساسية للقضية (المحكمة الابتدائية)</span>
-        </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-slate-400 text-xs font-bold">رقم القضية</label>
-            <input 
-              type="text" 
-              value={caseData.caseNumber}
-              onChange={e => onUpdateCaseData({ caseNumber: e.target.value })}
-              className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none transition-all"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-slate-400 text-xs font-bold">عنوان القضية الفني</label>
-            <input 
-              type="text" 
-              value={caseData.title}
-              onChange={e => onUpdateCaseData({ title: e.target.value })}
-              className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-slate-400 text-xs font-bold">اسم المحكمة المختصة</label>
-            <input 
-              type="text" 
-              value={caseData.court}
-              onChange={e => onUpdateCaseData({ court: e.target.value })}
-              className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-slate-400 text-xs font-bold">المستشار القاضي رئيس الدائرة</label>
-            <input 
-              type="text" 
-              value={caseData.judge}
-              onChange={e => onUpdateCaseData({ judge: e.target.value })}
-              className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* 2. Land & Property Specifications Form */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* Land Specifications */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-          <h3 className="text-white text-base font-black flex items-center gap-2 border-b border-slate-800 pb-3">
-            <TrendingUp className="w-5 h-5 text-amber-500" />
-            <span>مواصفات الأرض والرفع المساحي</span>
-          </h3>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-slate-400 text-xs font-bold">مساحة الأرض الكلية (متر مربع)</label>
-              <input 
-                type="number" 
-                value={caseData.landArea}
-                onChange={e => onUpdateCaseData({ landArea: Number(e.target.value) })}
-                className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs font-bold focus:outline-none transition-all"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-slate-400 text-xs font-bold">تصنيف ونوع الأرض</label>
-              <select 
-                value={caseData.landType}
-                onChange={e => onUpdateCaseData({ landType: e.target.value as any })}
-                className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs font-bold focus:outline-none transition-all"
-              >
-                <option value="زراعية">زراعية</option>
-                <option value="بناء">أرض بناء (سكني/خدمي)</option>
-                <option value="صحراوية">صحراوية</option>
-                <option value="صناعية">صناعية</option>
-                <option value="تجارية">تجارية</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Building Specifications */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <h3 className="text-white text-base font-black flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-amber-500" />
-              <span>بيانات المنشأ الإنشائي (إن وجد)</span>
-            </h3>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          
+          {/* RIGHT SIDE: Dynamic Form (span 7 or 8) */}
+          <div className="lg:col-span-8 space-y-6">
             
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input 
-                type="checkbox" 
-                checked={caseData.hasBuilding}
-                onChange={e => onUpdateCaseData({ hasBuilding: e.target.checked })}
-                className="sr-only peer"
-              />
-              <div className="w-9 h-5 bg-slate-850 peer-focus:outline-none rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
-              <span className="mr-2 text-xs font-bold text-slate-300">يوجد مبنى قائم</span>
-            </label>
-          </div>
-
-          {caseData.hasBuilding ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 animate-in fade-in duration-200">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-slate-400 text-xs font-bold">مساحة مسطح البناء (م²)</label>
-                <input 
-                  type="number" 
-                  value={caseData.buildingArea}
-                  onChange={e => onUpdateCaseData({ buildingArea: Number(e.target.value) })}
-                  className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-slate-400 text-xs font-bold">عدد الأدوار القائمة</label>
-                <input 
-                  type="number" 
-                  value={caseData.floors}
-                  onChange={e => onUpdateCaseData({ floors: Number(e.target.value) })}
-                  className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-slate-400 text-xs font-bold">نوع ومستوى التشطيب</label>
-                <select 
-                  value={caseData.finishType}
-                  onChange={e => onUpdateCaseData({ finishType: e.target.value as any })}
-                  className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all"
-                >
-                  <option value="قديم">تشطيب قديم</option>
-                  <option value="نصف تشطيب">نصف تشطيب</option>
-                  <option value="لوكس">تشطيب لوكس</option>
-                  <option value="سوبر لوكس">تشطيب سوبر لوكس</option>
-                  <option value="الترا سوبر لوكس">ألترا سوبر لوكس</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-slate-400 text-xs font-bold">نوع استخدام المبنى</label>
-                <select 
-                  value={caseData.buildingType}
-                  onChange={e => onUpdateCaseData({ buildingType: e.target.value as any })}
-                  className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all"
-                >
-                  <option value="سكني">سكني</option>
-                  <option value="تجاري">تجاري</option>
-                  <option value="إداري">إداري</option>
-                  <option value="صناعي">صناعي</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-slate-400 text-xs font-bold">عمر المبنى (سنوات)</label>
-                <input 
-                  type="number" 
-                  value={caseData.buildingAge}
-                  onChange={e => onUpdateCaseData({ buildingAge: Number(e.target.value) })}
-                  className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all"
-                />
-              </div>
-            </div>
-          ) : (
-            <p className="text-slate-500 text-xs py-4 text-center">أرض فضاء خالية تماماً من الإنشاءات الخرسانية</p>
-          )}
-        </div>
-      </div>
-
-      {/* 3. Valuation & Income Parameters Form */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
-        <h3 className="text-white text-base font-black mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
-          <Coins className="w-5 h-5 text-amber-500" />
-          <span>المعايير المالية والإيرادات السنوية (المثبتة)</span>
-        </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-slate-400 text-xs font-bold">العائد الإيجاري السنوي الإجمالي (جنيه)</label>
-            <input 
-              type="number" 
-              value={caseData.annualRent}
-              onChange={e => onUpdateCaseData({ annualRent: Number(e.target.value) })}
-              className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs font-bold focus:outline-none transition-all"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-slate-400 text-xs font-bold">قيمة التركة الإجمالية للمواريث (جنيه)</label>
-            <input 
-              type="number" 
-              value={caseData.estateValue}
-              onChange={e => onUpdateCaseData({ estateValue: Number(e.target.value) })}
-              className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs font-bold focus:outline-none transition-all"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-slate-400 text-xs font-bold">القيمة السوقية المرجعية المبدئية للعقار (جنيه)</label>
-            <input 
-              type="number" 
-              value={caseData.transactionValue}
-              onChange={e => onUpdateCaseData({ transactionValue: Number(e.target.value) })}
-              className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs font-bold focus:outline-none transition-all"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* 4. Disputes & Boundaries Litigation Section */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-          <h3 className="text-white text-base font-black flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-amber-500" />
-            <span>النزاعات القانونية والتداخل في الملكية</span>
-          </h3>
-
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input 
-              type="checkbox" 
-              checked={caseData.dispute.hasDispute}
-              onChange={e => onUpdateCaseData({ 
-                dispute: { ...caseData.dispute, hasDispute: e.target.checked }
-              })}
-              className="sr-only peer"
-            />
-            <div className="w-9 h-5 bg-slate-850 peer-focus:outline-none rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
-            <span className="mr-2 text-xs font-bold text-slate-300">يوجد نزاع قضائي معلق</span>
-          </label>
-        </div>
-
-        {caseData.dispute.hasDispute && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in duration-200">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-slate-400 text-xs font-bold">تصنيف النزاع الفني</label>
-              <select 
-                value={caseData.dispute.type}
-                onChange={e => onUpdateCaseData({ 
-                  dispute: { ...caseData.dispute, type: e.target.value as any }
-                })}
-                className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all"
-              >
-                <option value="ownership">نزاع ملكية وحجية سندات</option>
-                <option value="boundary">نزاع تداخل حدود ومساحات</option>
-                <option value="inheritance">نزاع فرز وتوزيع تركة ورثة</option>
-                <option value="contract">نزاع عقود، إيجار وشروط صياغة</option>
-              </select>
-            </div>
-
-            <div className="md:col-span-2 flex flex-col gap-1.5">
-              <label className="text-slate-400 text-xs font-bold">تفاصيل الادعاءات وتوصيات المحكمة للخبرة</label>
-              <input 
-                type="text" 
-                value={caseData.dispute.details}
-                onChange={e => onUpdateCaseData({ 
-                  dispute: { ...caseData.dispute, details: e.target.value }
-                })}
-                placeholder="أدخل مذكرات الخصوم أو الادعاء المتنازع عليه..."
-                className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all"
-              />
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* 5. Heirs & Inheritance Registry Section */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-        <h3 className="text-white text-base font-black flex items-center gap-2 border-b border-slate-800 pb-3">
-          <Users className="w-5 h-5 text-amber-500" />
-          <span>شجرة الورثة وقيد توزيع الأنصبة الشرعية</span>
-        </h3>
-
-        {/* Form to Add Heir */}
-        <form onSubmit={handleAddHeir} className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-950/40 p-4 rounded-xl border border-slate-800/80">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-slate-400 text-xs font-bold">اسم الوارث الكامل</label>
-            <input 
-              type="text" 
-              placeholder="مثال: أحمد محمد عبدالله"
-              value={newHeirName}
-              onChange={e => setNewHeirName(e.target.value)}
-              className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-slate-400 text-xs font-bold">الجنس</label>
-            <select 
-              value={newHeirGender} 
-              onChange={e => setNewHeirGender(e.target.value as any)}
-              className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all"
-            >
-              <option value="male">ذكر</option>
-              <option value="female">أنثى</option>
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-slate-400 text-xs font-bold">صلة القرابة للمتوفى</label>
-            <select 
-              value={newHeirRelation} 
-              onChange={e => setNewHeirRelation(e.target.value as any)}
-              className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all"
-            >
-              <option value="son">ابن (عصبة)</option>
-              <option value="daughter">بنت (عصبة)</option>
-              <option value="wife">زوجة (صاحبة فرض)</option>
-              <option value="husband">زوج (صاحب فرض)</option>
-              <option value="father">أب (صاحب فرض)</option>
-              <option value="mother">أم (صاحبة فرض)</option>
-            </select>
-          </div>
-
-          <div className="flex items-end">
-            <button 
-              type="submit"
-              className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/10 cursor-pointer"
-            >
-              <UserPlus className="w-4 h-4" />
-              <span>إدراج الوارث بالشجرة</span>
-            </button>
-          </div>
-        </form>
-
-        {/* Heirs Table & Interactive Pie/Donut Chart Bento Grid */}
-        {caseData.heirs.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            
-            {/* Right: Heirs Table (span 7) */}
-            <div className="lg:col-span-7 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/20">
-              <table className="w-full text-right border-collapse">
-                <thead>
-                  <tr className="bg-slate-950 border-b border-slate-800 text-slate-400 text-xs font-bold">
-                    <th className="p-3">الاسم</th>
-                    <th className="p-3">الجنس</th>
-                    <th className="p-3">صلة القرابة</th>
-                    <th className="p-3">القسمة الشرعية المقدرة</th>
-                    <th className="p-3 text-center w-16">حذف</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60 text-xs text-slate-300 font-medium">
-                  {caseData.heirs.map((heir, idx) => {
-                    const color = CHART_COLORS[idx % CHART_COLORS.length];
-                    const isHovered = hoveredHeirId === heir.id;
-                    return (
-                      <tr 
-                        key={heir.id} 
-                        className={`transition-all duration-200 ${
-                          isHovered ? 'bg-slate-800/60 text-white' : 'hover:bg-slate-800/20'
-                        }`}
-                        onMouseEnter={() => setHoveredHeirId(heir.id)}
-                        onMouseLeave={() => setHoveredHeirId(null)}
-                      >
-                        <td className="p-3 font-bold text-white">
-                          <div className="flex items-center gap-2">
-                            <span 
-                              className="w-2.5 h-2.5 rounded-full inline-block shrink-0 ring-2 ring-slate-950" 
-                              style={{ backgroundColor: color }}
-                            />
-                            <span>{heir.name}</span>
-                          </div>
-                        </td>
-                        <td className="p-3">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${heir.gender === 'male' ? 'bg-blue-500/10 text-blue-400' : 'bg-pink-500/10 text-pink-400'}`}>
-                            {heir.gender === 'male' ? 'ذكر' : 'أنثى'}
-                          </span>
-                        </td>
-                        <td className="p-3 font-semibold text-slate-300">
-                          {heir.relationship === 'son' && 'ابن'}
-                          {heir.relationship === 'daughter' && 'ابنة'}
-                          {heir.relationship === 'wife' && 'زوجة'}
-                          {heir.relationship === 'husband' && 'زوج'}
-                          {heir.relationship === 'father' && 'أب'}
-                          {heir.relationship === 'mother' && 'أم'}
-                        </td>
-                        <td className="p-3 text-amber-400 font-bold font-mono">
-                          {heir.relationship === 'son' || heir.relationship === 'daughter' 
-                            ? 'عصبة (للذكر مثل حظ الأنثيين)' 
-                            : heir.relationship === 'wife' 
-                            ? 'فرض (ثمن/ربع التركة)' 
-                            : heir.relationship === 'husband'
-                            ? 'فرض (ربع/نصف التركة)'
-                            : 'فرض (سدس التركة)'
-                          }
-                        </td>
-                        <td className="p-3 text-center">
-                          <button 
-                            onClick={() => handleRemoveHeir(heir.id)}
-                            className="text-red-400 hover:text-red-350 p-1 hover:bg-slate-850 rounded transition-all cursor-pointer"
-                            title="حذف الوارث"
-                          >
-                            <Trash2 className="w-4 h-4 mx-auto" />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Left: Custom SVG Donut Chart (span 5) */}
-            <div className="lg:col-span-5 bg-slate-950/40 border border-slate-800 p-5 rounded-xl flex flex-col items-center space-y-4 shadow-inner">
-              <div className="flex items-center justify-between w-full border-b border-slate-800 pb-2">
-                <h4 className="text-white text-xs font-black flex items-center gap-1.5">
-                  <Percent className="w-4 h-4 text-amber-500" />
-                  <span>توزيع الأنصبة الشرعية بيانياً</span>
-                </h4>
-                <span className="text-[10px] text-slate-400 font-bold">بناءً على الشريعة الإسلامية</span>
-              </div>
-
-              {/* Dynamic SVG Donut */}
-              <div className="relative w-44 h-44 flex items-center justify-center">
-                <svg viewBox="0 0 120 120" className="w-full h-full transform -rotate-90">
-                  {/* Background Circle */}
-                  <circle 
-                    cx="60" 
-                    cy="60" 
-                    r="45" 
-                    fill="transparent" 
-                    stroke="#1e293b" 
-                    strokeWidth="8" 
+            {/* SECTION 1: Client Basic Details (ثابتة) */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+              <h3 className="text-white text-sm font-black flex items-center gap-2 border-b border-slate-800 pb-2.5">
+                <Shield className="w-5 h-5 text-amber-500 shrink-0" />
+                <span>القسم الأول: بيانات المستخدم الأساسية وصاحب الدعوى (ثابتة)</span>
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-slate-400 text-[11px] font-bold">الاسم الثلاثي أو بالكامل</label>
+                  <input 
+                    type="text"
+                    value={clientName}
+                    onChange={e => onUpdateCaseData({ clientName: e.target.value })}
+                    className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all"
                   />
-                  {/* Slices */}
-                  {(() => {
-                    let accumulatedPercent = 0;
-                    return heirsShares.map((share, idx) => {
-                      const color = CHART_COLORS[idx % CHART_COLORS.length];
-                      const circumference = 282.743;
-                      const strokeDash = `${(share.sharePercent / 100) * circumference} ${circumference}`;
-                      const strokeDashoffset = -((accumulatedPercent / 100) * circumference);
-                      accumulatedPercent += share.sharePercent;
-                      
-                      const isHovered = hoveredHeirId === share.id;
-                      
-                      return (
-                        <circle
-                          key={share.id}
-                          cx="60"
-                          cy="60"
-                          r="45"
-                          fill="transparent"
-                          stroke={color}
-                          strokeWidth={isHovered ? 12 : 8}
-                          strokeDasharray={strokeDash}
-                          strokeDashoffset={strokeDashoffset}
-                          className="transition-all duration-300 cursor-pointer"
-                          onMouseEnter={() => setHoveredHeirId(share.id)}
-                          onMouseLeave={() => setHoveredHeirId(null)}
-                          style={{
-                            transformOrigin: '60px 60px',
-                          }}
-                        />
-                      );
-                    });
-                  })()}
-                </svg>
-                
-                {/* Center text of the donut */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-4">
-                  <span className="text-[9px] text-slate-400 font-bold">القسمة الشرعية</span>
-                  <span className="text-sm font-black text-amber-400 font-mono tracking-tight mt-0.5 leading-none">
-                    {caseData.estateValue > 0 
-                      ? `${caseData.estateValue.toLocaleString('ar-EG')} ج` 
-                      : 'توزيع نسبي'}
-                  </span>
-                  <span className="text-[8px] text-slate-500 font-bold mt-1 leading-none">
-                    {caseData.heirs.length} ورثة مسجلين
-                  </span>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-slate-400 text-[11px] font-bold">الرقم القومي (١٤ رقم)</label>
+                  <input 
+                    type="text"
+                    maxLength={14}
+                    value={clientNationalId}
+                    onChange={e => onUpdateCaseData({ clientNationalId: e.target.value })}
+                    className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none transition-all"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-slate-400 text-[11px] font-bold">تاريخ الميلاد</label>
+                  <input 
+                    type="date"
+                    value={clientBirthDate}
+                    onChange={e => onUpdateCaseData({ clientBirthDate: e.target.value })}
+                    className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-slate-400 text-[11px] font-bold">المهنة الحالية</label>
+                  <input 
+                    type="text"
+                    value={clientJob}
+                    onChange={e => onUpdateCaseData({ clientJob: e.target.value })}
+                    className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-slate-400 text-[11px] font-bold">رقم الهاتف المحمول</label>
+                  <input 
+                    type="text"
+                    value={clientPhone}
+                    onChange={e => onUpdateCaseData({ clientPhone: e.target.value })}
+                    className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none transition-all"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-slate-400 text-[11px] font-bold">البريد الإلكتروني الموثق</label>
+                  <input 
+                    type="email"
+                    value={clientEmail}
+                    onChange={e => onUpdateCaseData({ clientEmail: e.target.value })}
+                    className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all"
+                  />
+                </div>
+
+                <div className="flex flex-col md:col-span-3 gap-1.5">
+                  <label className="text-slate-400 text-[11px] font-bold">العنوان السكني بالكامل</label>
+                  <textarea 
+                    rows={1}
+                    value={clientAddress}
+                    onChange={e => onUpdateCaseData({ clientAddress: e.target.value })}
+                    className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all resize-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* SECTION 2: Dynamic Property & Dispute Trigger Selector */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+              <h3 className="text-white text-sm font-black flex items-center gap-2 border-b border-slate-800 pb-2.5">
+                <Layers className="w-5 h-5 text-amber-500 shrink-0" />
+                <span>القسم الثاني: محرك العقار الذكي ونوع النزاع (المُحرك الديناميكي)</span>
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-slate-400 text-[11px] font-bold">تحديد تصنيف ونوع العقار المتنازع عليه</label>
+                  <select 
+                    value={propertyType}
+                    onChange={e => onUpdateCaseData({ propertyType: e.target.value as any })}
+                    className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2.5 text-white text-xs font-black focus:outline-none transition-all"
+                  >
+                    <option value="land">🏜️ أرض (فضاء - زراعية - صحراوية - مبنية)</option>
+                    <option value="apartment">🏠 وحدة سكنية (شقة - فيلا - دور سكني)</option>
+                    <option value="commercial">🏢 عقار تجاري (محل - مخزن - مكتب إداري)</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-slate-400 text-[11px] font-bold">توجيه المحكمة للموضوع والخصومة</label>
+                  <select 
+                    value={caseData.dispute.type}
+                    onChange={e => onUpdateCaseData({ dispute: { ...caseData.dispute, type: e.target.value as any } })}
+                    className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2.5 text-white text-xs font-black focus:outline-none transition-all"
+                  >
+                    <option value="inheritance">⚖️ إرث / ميراث (تركة شرعية وتصفية أنصبة)</option>
+                    <option value="ownership">📜 نزاع ملكية وحجية عقود مشهرة</option>
+                    <option value="boundary">📐 نزاع تداخل حدود ومساحات الأراضي</option>
+                    <option value="contract">✍️ نزاع عقود وإخلاء عين مؤجرة</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* SECTION 3(A): Land Specific Fields (تظهر فقط عند اختيار "أرض") */}
+            {propertyType === 'land' && (
+              <div className="bg-slate-900 border border-slate-850 rounded-2xl p-5 shadow-xl space-y-4 animate-in fade-in duration-300">
+                <h3 className="text-amber-400 text-xs font-black flex items-center gap-2 border-b border-slate-800 pb-2.5">
+                  <TrendingUp className="w-4 h-4" />
+                  <span>القسم الثالث (أ): مواصفات الأرض والرفع المساحي والزمام</span>
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-slate-400 text-[11px] font-bold">مساحة الأرض</label>
+                    <div className="flex gap-1">
+                      <input 
+                        type="number" 
+                        value={caseData.landArea}
+                        onChange={e => onUpdateCaseData({ landArea: Number(e.target.value) })}
+                        className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs font-bold w-2/3 focus:outline-none"
+                      />
+                      <select 
+                        value={landUnit}
+                        onChange={e => onUpdateCaseData({ landUnit: e.target.value as any })}
+                        className="bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-white text-xs w-1/3 focus:outline-none"
+                      >
+                        <option value="متر">متر ²</option>
+                        <option value="قيراط">قيراط</option>
+                        <option value="فدان">فدان</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-slate-400 text-[11px] font-bold">الزمام الإداري والجغرافي</label>
+                    <select 
+                      value={landZamam}
+                      onChange={e => onUpdateCaseData({ landZamam: e.target.value as any })}
+                      className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none"
+                    >
+                      <option value="زمام">زمام زراعي خصب</option>
+                      <option value="صحراوي">زمام صحراوي / استصلاح</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-slate-400 text-[11px] font-bold">نوع الملكية الحالية</label>
+                    <select 
+                      value={landOwnershipType}
+                      onChange={e => onUpdateCaseData({ landOwnershipType: e.target.value as any })}
+                      className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none"
+                    >
+                      <option value="ملكية خاصة">ملكية خاصة مسجلة</option>
+                      <option value="ملكية دولة">أملاك دولة (حق انتفاع)</option>
+                      <option value="وقف">أرض وقف خيرى أو أهلي</option>
+                      <option value="مشاع">ملكية شائعة بين شركاء</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="bg-slate-950/40 p-4 rounded-xl border border-slate-850/80 space-y-3">
+                  <span className="text-slate-300 text-[11px] font-black block">📍 الأرقام المساحية والسجل العيني للمديرية:</span>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="flex items-center gap-2 bg-slate-950 px-3 py-2 rounded-xl border border-slate-900">
+                      <span className="text-slate-500 text-[10px] font-bold shrink-0">رقم القطعة:</span>
+                      <input 
+                        type="text" 
+                        value={landPieceNum} 
+                        onChange={e => onUpdateCaseData({ landPieceNum: e.target.value })}
+                        className="bg-transparent text-white text-xs focus:outline-none w-full text-left font-mono font-bold"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 bg-slate-950 px-3 py-2 rounded-xl border border-slate-900">
+                      <span className="text-slate-500 text-[10px] font-bold shrink-0">اسم الحوض:</span>
+                      <input 
+                        type="text" 
+                        value={landBasinNum} 
+                        onChange={e => onUpdateCaseData({ landBasinNum: e.target.value })}
+                        className="bg-transparent text-white text-xs focus:outline-none w-full text-left font-bold"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 bg-slate-950 px-3 py-2 rounded-xl border border-slate-900">
+                      <span className="text-slate-500 text-[10px] font-bold shrink-0">رقم القسم:</span>
+                      <input 
+                        type="text" 
+                        value={landSectionNum} 
+                        onChange={e => onUpdateCaseData({ landSectionNum: e.target.value })}
+                        className="bg-transparent text-white text-xs focus:outline-none w-full text-left font-bold"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Boundaries */}
+                <div className="bg-slate-950/40 p-4 rounded-xl border border-slate-850/80 space-y-3">
+                  <span className="text-slate-300 text-[11px] font-black block">📐 الحدود الأربعة لقطعة الأرض وعقارات المجاورة:</span>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs font-bold">
+                    <div className="space-y-1">
+                      <span className="text-slate-500 text-[10px]">الحد الشرقي:</span>
+                      <input 
+                        type="text" 
+                        defaultValue="جار ملك ورثة أبو المعاطي"
+                        className="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-white text-xs w-full focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-slate-500 text-[10px]">الحد الغربي:</span>
+                      <input 
+                        type="text" 
+                        defaultValue="شارع رئيسي عرض ١٢ متر"
+                        className="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-white text-xs w-full focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-slate-500 text-[10px]">الحد الشمالي:</span>
+                      <input 
+                        type="text" 
+                        defaultValue="أرض زراعية فضاء"
+                        className="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-white text-xs w-full focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-slate-500 text-[10px]">الحد الجنوبي:</span>
+                      <input 
+                        type="text" 
+                        defaultValue="مسقى خاص ري الأراضي"
+                        className="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-white text-xs w-full focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* SECTION 3(B): Apartment Specific Fields (تظهر فقط عند اختيار "وحدة سكنية") */}
+            {propertyType === 'apartment' && (
+              <div className="bg-slate-900 border border-slate-850 rounded-2xl p-5 shadow-xl space-y-4 animate-in fade-in duration-300">
+                <h3 className="text-amber-400 text-xs font-black flex items-center gap-2 border-b border-slate-800 pb-2.5">
+                  <Building2 className="w-4 h-4" />
+                  <span>القسم الثالث (ب): بيانات الوحدة السكنية والعلاقة القانونية التفصيلية</span>
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="md:col-span-2 flex flex-col gap-1.5">
+                    <label className="text-slate-400 text-[11px] font-bold">العنوان التفصيلي للوحدة السكنية</label>
+                    <input 
+                      type="text"
+                      value={apartmentAddress}
+                      onChange={e => onUpdateCaseData({ apartmentAddress: e.target.value })}
+                      className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-slate-400 text-[11px] font-bold">الدور والرقم</label>
+                    <input 
+                      type="text"
+                      value={apartmentFloorAndNumber}
+                      onChange={e => onUpdateCaseData({ apartmentFloorAndNumber: e.target.value })}
+                      className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-slate-400 text-[11px] font-bold">المساحة الإجمالية بالمتر المربع</label>
+                    <input 
+                      type="number"
+                      value={apartmentAreaSqm}
+                      onChange={e => onUpdateCaseData({ apartmentAreaSqm: Number(e.target.value) })}
+                      className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all font-mono font-bold"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2 flex flex-col gap-1.5">
+                    <label className="text-slate-400 text-[11px] font-bold">تحديد العلاقة القانونية واستغلال الوحدة</label>
+                    <select 
+                      value={apartmentRelationType}
+                      onChange={e => onUpdateCaseData({ apartmentRelationType: e.target.value as any })}
+                      className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all font-bold"
+                    >
+                      <option value="old_rent">📜 إيجار قديم (قانون ٤ لسنة ١٩٩٦ الاستثنائي)</option>
+                      <option value="new_rent">✍️ إيجار جديد (قانون ٦ لسنة ١٩٩٧ المدني)</option>
+                      <option value="inheritance">👪 إرث / ميراث (تركة شرعية وتصفية شائعة)</option>
+                      <option value="waqf">🕌 وقف (أهلي عائلي أو خيري بوزارة الأوقاف)</option>
+                      <option value="other">⚙️ أخرى (حيازة مادية هادئة بدون سند مسموع)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Sub-inputs dependent on relation type selection */}
+                <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-850 space-y-3 animate-in slide-in-from-top-1 duration-200">
+                  {apartmentRelationType === 'old_rent' && (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                        <h4 className="text-amber-400 text-[11px] font-black">البيانات الإلزامية للإيجار القديم:</h4>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-slate-400 text-[10px]">القيمة الإيجارية الشهرية القديمة</span>
+                          <input type="text" defaultValue="١٥ جنيهاً مصرياً" className="bg-slate-950 border border-slate-800 rounded-xl p-2 text-white text-xs focus:outline-none" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-slate-400 text-[10px]">تاريخ تحرير عقد الإيجار ومستنده</span>
+                          <input type="text" defaultValue="١٢ أكتوبر ١٩٧٢" className="bg-slate-950 border border-slate-800 rounded-xl p-2 text-white text-xs focus:outline-none" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {apartmentRelationType === 'new_rent' && (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                        <h4 className="text-blue-400 text-[11px] font-black">البيانات الإلزامية للإيجار الجديد:</h4>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-slate-400 text-[10px]">القيمة الإيجارية الشهرية الموثقة</span>
+                          <input type="text" defaultValue="٣,٥٠٠ جنيه مصري" className="bg-slate-950 border border-slate-800 rounded-xl p-2 text-white text-xs focus:outline-none" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-slate-400 text-[10px]">مدة الإيجار وتاريخ انتهاء العلاقة</span>
+                          <input type="text" defaultValue="٥ سنوات ينتهي في ٢٠٢٨" className="bg-slate-950 border border-slate-800 rounded-xl p-2 text-white text-xs focus:outline-none" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {apartmentRelationType === 'inheritance' && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                          <h4 className="text-emerald-400 text-[11px] font-black">حالة التركة وقائمة الورثة الشرعيين:</h4>
+                        </div>
+                        {/* Notice & prompt link to the specific consolidated tab */}
+                        <span className="text-[10px] text-slate-500 font-bold">
+                          لديك <strong className="text-amber-500">{caseData.heirs.length}</strong> ورثة مسجلين بالتركة حالياً.
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 leading-relaxed font-semibold">
+                        إن أي تعديل على الورثة أو حاسبة أنصبتهم وشجرتهم التفاعلية يتم عبر <span className="text-amber-500 font-bold underline">بوابة المواريث والورثة الموحدة</span> في القائمة الجانبية لتجميع كافة التفاصيل الحسابية والشرعية بدقة متكاملة.
+                      </p>
+                    </div>
+                  )}
+
+                  {apartmentRelationType === 'waqf' && (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                        <h4 className="text-purple-400 text-[11px] font-black">بيانات حصر الوقف الخيري أو الأهلي:</h4>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-slate-400 text-[10px]">ناظر الوقف والجهة المشرفة</span>
+                          <input type="text" defaultValue="وزارة الأوقاف المصرية - منطقة الجيزة" className="bg-slate-950 border border-slate-800 rounded-xl p-2 text-white text-xs focus:outline-none" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-slate-400 text-[10px]">شروط الواقف أو ريع مصارف التوزيع</span>
+                          <input type="text" defaultValue="يصرف الريع بنسبة الثلث لأعمال البر وعمارة المساجد" className="bg-slate-950 border border-slate-800 rounded-xl p-2 text-white text-xs focus:outline-none" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {apartmentRelationType === 'other' && (
+                    <div className="space-y-2">
+                      <span className="text-slate-300 text-[11px] font-black block">تفاصيل الحيازة والوضع المادي للعين:</span>
+                      <textarea rows={2} placeholder="اكتب مبررات ومستندات حيازتك للوحدة السكنية والمطالب..." className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-white text-xs w-full focus:outline-none focus:border-amber-500" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* SECTION 4: Court Dispute Information (ثابتة في كل الحالات) */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+              <h3 className="text-white text-sm font-black flex items-center gap-2 border-b border-slate-800 pb-2.5">
+                <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
+                <span>القسم الرابع: تفاصيل النزاع القانوني القائم ومذكرات الخصوم والطلبات</span>
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-slate-400 text-[11px] font-bold">عنوان أو موجز الخصومة القضائية</label>
+                  <input 
+                    type="text" 
+                    value={caseData.title}
+                    onChange={e => onUpdateCaseData({ title: e.target.value })}
+                    className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs font-bold focus:outline-none transition-all"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-slate-400 text-[11px] font-bold">تاريخ بدء النزاع الموثق بالدعوى</label>
+                  <input 
+                    type="date" 
+                    defaultValue="2026-06-30"
+                    className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-slate-400 text-[11px] font-bold">الطرف الآخر المشتكى عليه (الخصم)</label>
+                  <input 
+                    type="text" 
+                    defaultValue="خالد محمد عبدالله وشريكه"
+                    className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-slate-400 text-[11px] font-bold">بيانات اتصال الخصم ومحل إقامته المختار</label>
+                  <input 
+                    type="text" 
+                    defaultValue="01124567890 - شارع فيصل، الجيزة"
+                    className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all"
+                  />
+                </div>
+
+                <div className="md:col-span-2 flex flex-col gap-1.5">
+                  <label className="text-slate-400 text-[11px] font-bold">وصف النزاع الفني بالتفصيل (يتكيف تلقائياً مع حجم الكتابة)</label>
+                  <textarea 
+                    rows={4}
+                    value={caseData.dispute.details}
+                    onChange={e => onUpdateCaseData({ dispute: { ...caseData.dispute, details: e.target.value } })}
+                    className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl p-3 text-white text-xs leading-relaxed focus:outline-none transition-all focus:ring-1 focus:ring-amber-500"
+                    placeholder="اكتب تفصيل الادعاءات أو مذكرات المعاينة الميدانية بدقة هنا..."
+                  />
+                </div>
+
+                <div className="md:col-span-2 flex flex-col gap-1.5">
+                  <label className="text-slate-400 text-[11px] font-bold">المطالب القضائية المقدمة للمجلس الأعلى للعدالة والخبراء</label>
+                  <textarea 
+                    rows={2}
+                    defaultValue="تصفية الريع بالكامل، وإجراء الفرز والتجنيب العيني لقطعة الأرض السكنية محل التناحر، ومنع التعرض وحيازة الحصص المفرزة."
+                    className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl p-3 text-white text-xs focus:outline-none transition-all resize-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* SECTION 5: Dictation Voice Input, Video & Multi-Media Attachments (ذكي وتفاعلي) */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+              <h3 className="text-white text-sm font-black flex items-center gap-2 border-b border-slate-800 pb-2.5">
+                <Mic className="w-5 h-5 text-amber-500 shrink-0" />
+                <span>القسم الخامس: أدوات الإدخال الصوتي التفاعلي والوثائق الرقمية الحية</span>
+              </h3>
+
+              {/* Dictation Tool */}
+              <div className="bg-slate-950/40 p-4 rounded-xl border border-slate-850 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="space-y-1 text-right flex-1">
+                  <span className="text-amber-400 text-[11px] font-black block">🎙️ حاسوب الإملاء الصوتي القضائي والتحويل التلقائي لنص:</span>
+                  <p className="text-[10px] text-slate-400 leading-relaxed font-semibold">
+                    اضغط على زر التسجيل وتحدث بلسانك لتوثيق الشهادة أو تقرير المعاينة. سيقوم النموذج بتحويل موجات صوتك إلى نصوص قضائية مكتوبة في وصف النزاع فورياً.
+                  </p>
+                  {isRecording && (
+                    <div className="flex items-center gap-2 mt-2 bg-red-500/10 border border-red-500/20 px-2.5 py-1 rounded-lg w-max animate-pulse">
+                      <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                      <span className="text-red-400 font-mono text-[10px] font-black">جاري الاستماع... {recordingSeconds} ثانية</span>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleToggleRecording}
+                  className={`px-5 py-3 rounded-xl font-black text-xs flex items-center gap-2 cursor-pointer transition-all shrink-0 ${
+                    isRecording 
+                      ? 'bg-red-600 hover:bg-red-700 text-white animate-bounce' 
+                      : 'bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-md shadow-amber-500/10'
+                  }`}
+                >
+                  {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                  <span>{isRecording ? 'إيقاف وحفظ الإملاء' : 'بدء إملاء المعاينة ميدانياً'}</span>
+                </button>
+              </div>
+
+              {/* Document and Video dropzone */}
+              <div 
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                className="border-2 border-dashed border-slate-800 hover:border-amber-500/40 rounded-xl p-6 bg-slate-950/20 text-center space-y-3 transition-all cursor-pointer"
+              >
+                <div className="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center mx-auto border border-slate-800">
+                  <Upload className="w-5 h-5 text-slate-500" />
+                </div>
+                <div className="space-y-1">
+                  <span className="text-white text-xs font-black block">اسحب وأفلت الملفات والخرائط أو الفيديوهات هنا</span>
+                  <span className="text-[10px] text-slate-500 block">أو انقر لتصفح ملفات جهازك المحلي (بصيغ PDF, JPG, WAV, MP4)</span>
+                  <span className="text-[9px] text-amber-500/60 font-black block">الحد الأقصى للفيديوهات: ١٠٠ ميجابايت</span>
                 </div>
               </div>
 
-              {/* Custom interactive legend */}
-              <div className="w-full space-y-2 mt-2">
-                {heirsShares.map((share, idx) => {
-                  const color = CHART_COLORS[idx % CHART_COLORS.length];
-                  const isHovered = hoveredHeirId === share.id;
-                  const relationship = caseData.heirs.find(h => h.id === share.id)?.relationship;
-                  return (
-                    <div 
-                      key={share.id}
-                      className={`flex items-center justify-between p-2.5 rounded-xl border transition-all duration-200 ${
-                        isHovered 
-                          ? 'bg-slate-800/50 border-slate-700 shadow-md translate-x-1' 
-                          : 'bg-slate-950/20 border-slate-850'
-                      }`}
-                      onMouseEnter={() => setHoveredHeirId(share.id)}
-                      onMouseLeave={() => setHoveredHeirId(null)}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span 
-                          className="w-2.5 h-2.5 rounded-full inline-block shrink-0 ring-1 ring-slate-800" 
-                          style={{ backgroundColor: color }}
-                        />
-                        <div className="text-right">
-                          <p className="text-white text-[11px] font-black leading-tight">{share.name}</p>
-                          <p className="text-[9px] text-slate-400 font-bold mt-0.5">
-                            {relationship === 'son' && 'ابن (عصبة)'}
-                            {relationship === 'daughter' && 'ابنة (عصبة)'}
-                            {relationship === 'wife' && 'زوجة (فرض)'}
-                            {relationship === 'husband' && 'زوج (فرض)'}
-                            {relationship === 'father' && 'أب (فرض)'}
-                            {relationship === 'mother' && 'أم (فرض)'}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="text-left shrink-0">
-                        <p className="text-amber-400 text-xs font-black font-mono leading-tight">{share.sharePercent.toFixed(1)}%</p>
-                        <p className="text-[9px] text-slate-400 font-bold mt-0.5 font-mono font-sans">
-                          {share.shareFraction}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
+              {/* Video Specific warning */}
+              <div className="bg-slate-950/40 border border-slate-850 p-3.5 rounded-xl flex items-start gap-3">
+                <Video className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
+                <div className="space-y-0.5 text-right">
+                  <span className="text-slate-300 text-[10px] font-black block">قيد جودة الفيديو الميداني (رصد التلفيات بالهاتف):</span>
+                  <p className="text-[9px] text-slate-500 leading-relaxed">
+                    يدعم النظام دقة 1080p بمعدل ٣٠ إطاراً في الثانية كحد أقصى لضمان سرعة التحميل لفرق الخبراء المعاونة أثناء جلسات المداولة الفنية.
+                  </p>
+                </div>
               </div>
-            </div>
 
-            {/* 📋 Heirs Analytical Comparison Table (جدول مقارنات وتحليل الورثة الشرعي) 📋 */}
-            <div className="lg:col-span-12 border border-slate-800 bg-slate-950/40 rounded-xl p-4 space-y-3 mt-4">
-              <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
-                <Percent className="w-4 h-4 text-amber-500" />
-                <h4 className="text-white text-xs font-black">جدول المقارنة الشرعية والتحليل المالي للورثة</h4>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-right border-collapse min-w-[650px]">
-                  <thead>
-                    <tr className="bg-slate-950 border-b border-slate-800 text-slate-400 text-[10px] font-extrabold uppercase">
-                      <th className="p-2.5">الوارث</th>
-                      <th className="p-2.5">القرابة بالجذر</th>
-                      <th className="p-2.5">جهة الاستحقاق</th>
-                      <th className="p-2.5">الكسر الشرعي</th>
-                      <th className="p-2.5">النسبة المئوية</th>
-                      <th className="p-2.5">النصيب المالي التقديري</th>
-                      <th className="p-2.5">المستند الشرعي والضابط الفقهي المطبق</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/50 text-[11px] text-slate-300 font-medium">
-                    {heirsShares.map((share, idx) => {
-                      const color = CHART_COLORS[idx % CHART_COLORS.length];
-                      const mainHeir = caseData.heirs.find(h => h.id === share.id);
-                      const relationship = mainHeir?.relationship || 'son';
-                      
-                      const hasSons = caseData.heirs.some(h => h.relationship === 'son');
-                      const hasDaughters = caseData.heirs.some(h => h.relationship === 'daughter');
-                      const hasChildren = hasSons || hasDaughters;
-                      
-                      const ruleDesc = getIslamicRuleDesc(relationship, hasChildren);
-                      
-                      return (
-                        <tr key={share.id} className="hover:bg-slate-800/10 transition-colors">
-                          <td className="p-2.5 font-bold text-white">
-                            <div className="flex items-center gap-1.5">
-                              <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: color }} />
-                              <span>{share.name}</span>
-                            </div>
-                          </td>
-                          <td className="p-2.5">
-                            <span className="text-slate-400 font-bold">
-                              {relationship === 'son' && 'ابن مباشر'}
-                              {relationship === 'daughter' && 'ابنة مباشرة'}
-                              {relationship === 'wife' && 'زوجة المتوفى'}
-                              {relationship === 'husband' && 'زوج المتوفاة'}
-                              {relationship === 'father' && 'أب مباشر'}
-                              {relationship === 'mother' && 'أم مباشرة'}
-                            </span>
-                          </td>
-                          <td className="p-2.5">
-                            <span className={`px-2 py-0.5 rounded text-[9px] font-black ${
-                              relationship === 'son' || relationship === 'daughter'
-                                ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                                : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                            }`}>
-                              {relationship === 'son' || relationship === 'daughter' ? 'تعصيب (عصبة)' : 'فرض شرعي'}
-                            </span>
-                          </td>
-                          <td className="p-2.5 font-mono font-bold text-cyan-400 text-xs">
-                            {share.shareFraction}
-                          </td>
-                          <td className="p-2.5 font-mono font-black text-amber-400">
-                            {share.sharePercent.toFixed(1)}%
-                          </td>
-                          <td className="p-2.5 font-mono font-bold text-emerald-400 text-xs">
-                            {share.shareValue > 0 
-                              ? `${Math.round(share.shareValue).toLocaleString('ar-EG')} ج` 
-                              : `(توزيع نسبي)`}
-                          </td>
-                          <td className="p-2.5 text-slate-400 text-[10px] leading-relaxed max-w-sm whitespace-normal" title={ruleDesc}>
-                            {ruleDesc}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-          </div>
-        ) : (
-          <div className="p-6 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl bg-slate-950/10">
-            لا يوجد ورثة مسجلين في الشجرة بعد. استخدم النموذج أعلاه للإضافة.
-          </div>
-        )}
-      </div>
-
-      {/* ========================================================================= */}
-      {/* 🕰️ 3. COURT SESSIONS TIMELINE & SCHEDULER 🕰️ */}
-      {/* ========================================================================= */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-6">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3 flex-wrap gap-2">
-          <h3 className="text-white text-base font-black flex items-center gap-2">
-            <Gavel className="w-5 h-5 text-amber-500" />
-            <span>جدول الجلسات القضائية والخطط الزمنية للمحاكمة</span>
-          </h3>
-          <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-full font-bold">
-            {sessions.length} جلسات مسجلة
-          </span>
-        </div>
-
-        {/* Add Session Form */}
-        <form onSubmit={handleAddSession} className="bg-slate-950/40 border border-slate-850 p-4 rounded-xl space-y-4 shadow-inner">
-          <h4 className="text-white text-xs font-black flex items-center gap-1.5 border-b border-slate-850 pb-2">
-            <Plus className="w-4 h-4 text-amber-500" />
-            <span>تسجيل جلسة قضائية أو إجراء خبير جديد</span>
-          </h4>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-slate-400 text-[11px] font-bold">تاريخ الجلسة</label>
-              <input 
-                type="date"
-                required
-                value={sessDate}
-                onChange={e => setSessDate(e.target.value)}
-                className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none transition-all"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-slate-400 text-[11px] font-bold">وقت الجلسة</label>
-              <input 
-                type="time"
-                value={sessTime}
-                onChange={e => setSessTime(e.target.value)}
-                className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none transition-all"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-slate-400 text-[11px] font-bold">تصنيف الجلسة / نوع الإجراء</label>
-              <select 
-                value={sessType}
-                onChange={e => setSessType(e.target.value)}
-                className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs font-bold focus:outline-none transition-all"
-              >
-                <option value="معاينة ميدانية">معاينة ميدانية للموقع</option>
-                <option value="جلسة فرز وتجنيب">جلسة فرز وتجنيب الأنصبة</option>
-                <option value="تقديم مذكرات ومستندات">تقديم مذكرات ومستندات</option>
-                <option value="جلسة خبراء وتداول">جلسة خبراء وتداول الأقوال</option>
-                <option value="جلسة حسم ونطق بالحكم">جلسة حسم ونطق بالحكم</option>
-                <option value="جلسة مرافعة شفهية">جلسة مرافعة شفهية</option>
-                <option value="أخرى">أخرى / إجراء مخصص</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-slate-400 text-[11px] font-bold">ملاحظات المحكمة والتعليمات القضائية الفنية الخاصة بالجلسة</label>
-            <textarea 
-              rows={2}
-              placeholder="اكتب توجيهات المستشار رئيس الدائرة أو تعليمات الحضور أو مستهدفات المعاينة الميدانية..."
-              value={sessNotes}
-              onChange={e => setSessNotes(e.target.value)}
-              className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs focus:outline-none transition-all resize-none"
-            />
-          </div>
-
-          <div className="flex justify-end pt-1">
-            <button 
-              type="submit"
-              className="bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-600 hover:to-amber-500 text-slate-950 font-black text-xs px-5 py-2.5 rounded-xl transition-all flex items-center gap-1.5 shadow-md shadow-amber-500/10 cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>إدراج الجلسة في الجدول الزمني</span>
-            </button>
-          </div>
-        </form>
-
-        {/* Timeline representation */}
-        {sessions.length > 0 ? (
-          <div className="space-y-4 relative before:absolute before:inset-y-0 before:right-3 before:w-0.5 before:bg-slate-800">
-            {sessions
-              .sort((a, b) => a.date.localeCompare(b.date))
-              .map((sess) => {
-                const isUpcoming = sess.date >= todayStr;
-                return (
-                  <div key={sess.id} className="relative pr-8 group">
-                    {/* Circle Indicator on the line */}
-                    <span className={`absolute right-1.5 top-2.5 w-3.5 h-3.5 rounded-full border-2 transform translate-x-1/2 transition-all ${
-                      isUpcoming 
-                        ? 'bg-amber-500 border-slate-900 ring-4 ring-amber-500/20' 
-                        : 'bg-slate-800 border-slate-900'
-                    }`} />
-                    
-                    <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 flex flex-col md:flex-row md:items-start md:justify-between gap-4 hover:border-slate-700 transition-all text-right">
-                      <div className="space-y-1.5 text-right flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-white text-xs font-black">{sess.type}</span>
-                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                            isUpcoming 
-                              ? 'bg-amber-500/15 text-amber-400 border border-amber-500/25' 
-                              : 'bg-slate-800 text-slate-400'
-                          }`}>
-                            {isUpcoming ? 'جلسة قادمة' : 'جلسة سابقة'}
-                          </span>
-                        </div>
-                        <p className="text-slate-400 text-xs leading-relaxed">{sess.notes}</p>
-                      </div>
-                      
-                      <div className="flex items-center justify-between md:flex-col md:items-end shrink-0 gap-3 border-t md:border-t-0 pt-2.5 md:pt-0 border-slate-850">
-                        <div className="text-slate-300 font-mono text-xs font-bold text-right">
-                          <div className="flex items-center gap-1.5 justify-end">
-                            <span>{sess.date}</span>
-                            <Calendar className="w-3.5 h-3.5 text-slate-500" />
-                          </div>
-                          <div className="flex items-center gap-1.5 justify-end mt-0.5 text-[11px] text-slate-400">
-                            <span>{sess.time}</span>
-                            <Clock className="w-3.5 h-3.5 text-slate-500" />
+              {/* Uploaded Files Registry List */}
+              {uploadedDocs.length > 0 && (
+                <div className="space-y-2">
+                  <span className="text-slate-400 text-[10px] font-black block">قائمة المرفقات المستلمة والمسجلة بالملف القضائي:</span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {uploadedDocs.map((doc, idx) => (
+                      <div key={idx} className="bg-slate-950 p-2.5 rounded-xl border border-slate-850 flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileText className="w-4 h-4 text-amber-500 shrink-0" />
+                          <div className="min-w-0 text-right">
+                            <span className="text-white font-bold block truncate max-w-[180px]">{doc.name}</span>
+                            <span className="text-[9px] text-slate-500 font-bold block">{doc.type} • {doc.size}</span>
                           </div>
                         </div>
-                        
                         <button 
-                          type="button"
-                          onClick={() => handleRemoveSession(sess.id)}
-                          className="text-red-400 hover:text-red-350 p-1 hover:bg-slate-900 rounded transition-all cursor-pointer"
-                          title="حذف الجلسة"
+                          onClick={() => {
+                            setUploadedDocs(prev => prev.filter((_, i) => i !== idx));
+                            triggerToast('🗑️ تم استبعاد المرفق القضائي', 'info');
+                          }}
+                          className="text-slate-500 hover:text-red-400 p-1 hover:bg-slate-900 rounded transition-all"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+          </div>
+
+          {/* LEFT SIDE: Instant Live Preview Panel (span 4) */}
+          <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-4">
+            
+            <div className="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-5 shadow-2xl space-y-5">
+              <h3 className="text-amber-400 text-xs font-black flex items-center gap-2 border-b border-slate-850 pb-2.5">
+                <Eye className="w-4 h-4" />
+                <span>شاشة المعاينة الفورية للتحديثات (Instant Preview)</span>
+              </h3>
+
+              {/* Interactive Report Card */}
+              <div className="bg-slate-950 border border-slate-850 p-4 rounded-xl space-y-4">
+                
+                {/* Simulated Stamp */}
+                <div className="flex items-center justify-between">
+                  <div className="border border-emerald-500/30 bg-emerald-500/5 px-2 py-0.5 rounded text-[9px] text-emerald-400 font-black">
+                    ملف قضائي نشط
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-mono font-bold">
+                    {caseData.caseNumber}
+                  </span>
+                </div>
+
+                <div className="space-y-3.5">
+                  <div className="space-y-1">
+                    <span className="text-[9px] text-slate-500 font-bold block">موضوع الدعوى:</span>
+                    <p className="text-white text-xs font-black leading-snug">{caseData.title}</p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-[9px] text-slate-500 font-bold block">المدعي وصاحب الحق:</span>
+                    <p className="text-white text-xs font-bold">{clientName}</p>
+                    <span className="text-[8px] text-slate-500 font-mono block">الرقم القومي: {clientNationalId}</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-900/60 text-xs">
+                    <div>
+                      <span className="text-[9px] text-slate-500 font-bold block">نوع المعاينة:</span>
+                      <span className="text-amber-400 font-black">
+                        {propertyType === 'land' ? '🏜️ أطيان وأراضي' : propertyType === 'apartment' ? '🏠 شقة سكنية' : '🏢 تجاري وإداري'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-slate-500 font-bold block">المساحة المقدرة:</span>
+                      <span className="text-white font-mono font-black">
+                        {propertyType === 'land' ? `${caseData.landArea} ${landUnit}` : `${apartmentAreaSqm} متر ²`}
+                      </span>
                     </div>
                   </div>
-                );
-              })}
+
+                  <div className="space-y-1.5 pt-2 border-t border-slate-900/60 text-xs">
+                    <span className="text-[9px] text-slate-500 font-bold block">التفاصيل الفنية الجارية للادعاء:</span>
+                    <p className="text-slate-300 text-[10px] leading-relaxed font-semibold line-clamp-3 bg-slate-900/40 p-2 rounded-lg border border-slate-900">
+                      {caseData.dispute.details || 'لا توجد تفاصيل حتى الآن...'}
+                    </p>
+                  </div>
+
+                  {/* Compliance Indicator Badge */}
+                  <div className="bg-slate-900/80 border border-slate-850 p-2.5 rounded-xl flex items-center justify-between text-[10px]">
+                    <span className="text-slate-400 font-bold">درجة التطابق المستندي مع الجهات الجغرافية:</span>
+                    <span className="text-emerald-400 font-mono font-black bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
+                      {caseData.complianceScore || 92}%
+                    </span>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Live Status Indicators */}
+              <div className="bg-slate-950/40 p-3 rounded-xl border border-slate-850 text-xs space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">محل الإنعقاد:</span>
+                  <span className="text-slate-300 font-bold">{caseData.court}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">رئيس الجلسة:</span>
+                  <span className="text-slate-300 font-bold">{caseData.judge}</span>
+                </div>
+              </div>
+
+              {/* Simulated Save Button */}
+              <button
+                type="button"
+                onClick={() => triggerToast('💾 تم حفظ ومزامنة كافة التحديثات والنموذج الديناميكي لملف القضية والأرشيف بنجاح!', 'success')}
+                className="w-full bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-600 hover:to-amber-500 text-slate-950 font-black text-xs py-2.5 rounded-xl transition-all shadow-md shadow-amber-500/10 flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <FileCheck className="w-4 h-4" />
+                <span>حفظ التعديلات وتجميد البيانات (Save)</span>
+              </button>
+
+            </div>
+
           </div>
-        ) : (
-          <div className="p-6 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl bg-slate-950/10">
-            لم يتم تسجيل أي جلسات قضائية أو خطط زمنية للمحاكمة حتى الآن.
-          </div>
-        )}
-      </div>
-    </>
-  )}
-</div>
+
+        </div>
+      )}
+
+    </div>
   );
 }

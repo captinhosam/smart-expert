@@ -7,6 +7,7 @@ import Sidebar from './components/Sidebar';
 import RightPanel from './components/RightPanel';
 import MapTab from './components/MapTab';
 import CaseDetailsTab from './components/CaseDetailsTab';
+import HeirsHubTab from './components/HeirsHubTab';
 import ChatVoiceUploadTab from './components/ChatVoiceUploadTab';
 import AgentSmithRunner from './components/AgentSmithRunner';
 import ReportView from './components/ReportView';
@@ -85,7 +86,7 @@ export default function App() {
     return SAMPLE_CASES[0];
   });
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'details' | 'map' | 'agents' | 'report' | 'files' | 'mindmap'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'details' | 'map' | 'agents' | 'report' | 'files' | 'mindmap' | 'heirs_hub'>('dashboard');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
@@ -712,6 +713,15 @@ export default function App() {
           {activeTab === 'details' && (
             <div className="animate-in fade-in duration-200">
               <CaseDetailsTab 
+                caseData={caseData} 
+                onUpdateCaseData={handleUpdateCaseData} 
+              />
+            </div>
+          )}
+
+          {activeTab === 'heirs_hub' && (
+            <div className="animate-in fade-in duration-200">
+              <HeirsHubTab 
                 caseData={caseData} 
                 onUpdateCaseData={handleUpdateCaseData} 
               />

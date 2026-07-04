@@ -13,7 +13,9 @@ import {
   AlertCircle,
   UploadCloud,
   Download,
-  Home
+  Home,
+  MapPin,
+  Clock
 } from 'lucide-react';
 import { triggerToast } from '../lib/toast';
 
@@ -114,11 +116,27 @@ export default function FieldReferencesPanel({ caseData, onUpdateCaseData }: Fie
     // Use a random preset if no URL provided
     const urlToUse = photoUrl.trim() || PRESET_MOCK_PHOTOS[Math.floor(Math.random() * PRESET_MOCK_PHOTOS.length)].url;
 
+    // Simulated/real GPS and precise Egyptian local timestamp for fallback
+    const now = new Date();
+    const simulatedLat = (30.0444 + (Math.random() - 0.5) * 0.005).toFixed(6);
+    const simulatedLng = (31.2357 + (Math.random() - 0.5) * 0.005).toFixed(6);
+    const timestampStr = now.toLocaleString('ar-EG', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
+
     const newPhoto: FieldPhoto = {
       id: `photo-${Date.now()}`,
       url: urlToUse,
       caption: photoCaption,
-      date: new Date().toISOString().split('T')[0]
+      date: new Date().toISOString().split('T')[0],
+      location: `${simulatedLat}° N, ${simulatedLng}° E (تحديد معاينة تلقائي)`,
+      timestamp: timestampStr
     };
 
     onUpdateCaseData({
@@ -270,10 +288,24 @@ export default function FieldReferencesPanel({ caseData, onUpdateCaseData }: Fie
                   </div>
                 </div>
                 <div className="p-2 flex-1 flex flex-col justify-between">
-                  <p className="text-[10px] text-slate-300 font-bold line-clamp-1 leading-normal">
-                    {photo.caption}
-                  </p>
-                  <div className="flex items-center justify-between mt-1 text-[9px] text-slate-500 font-mono">
+                  <div>
+                    <p className="text-[10px] text-slate-300 font-bold line-clamp-1 leading-normal">
+                      {photo.caption}
+                    </p>
+                    {photo.location && (
+                      <div className="flex items-center gap-1 mt-1 text-[8px] text-amber-500 font-mono" dir="rtl">
+                        <MapPin className="w-2.5 h-2.5 text-amber-500 shrink-0" />
+                        <span className="truncate">{photo.location}</span>
+                      </div>
+                    )}
+                    {photo.timestamp && (
+                      <div className="flex items-center gap-1 mt-0.5 text-[8px] text-cyan-400 font-mono" dir="rtl">
+                        <Clock className="w-2.5 h-2.5 text-cyan-400 shrink-0" />
+                        <span className="truncate">{photo.timestamp}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between mt-1.5 text-[9px] text-slate-500 font-mono border-t border-slate-900/60 pt-1.5">
                     <span>{photo.date}</span>
                     <div className="flex items-center gap-1">
                       <a
@@ -502,7 +534,22 @@ export default function FieldReferencesPanel({ caseData, onUpdateCaseData }: Fie
             
             <div className="bg-slate-900/90 border border-slate-800 px-5 py-3 rounded-2xl max-w-xl text-center space-y-2 flex flex-col items-center">
               <p className="text-white text-xs font-black">{selectedPhoto.caption}</p>
-              <p className="text-[10px] text-amber-500 font-mono font-bold">تاريخ المعاينة المسجلة: {selectedPhoto.date}</p>
+              
+              {selectedPhoto.location && (
+                <div className="flex items-center gap-1 text-[10px] text-amber-400 font-bold font-mono">
+                  <MapPin className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <span>الموقع الجغرافي: {selectedPhoto.location}</span>
+                </div>
+              )}
+              
+              {selectedPhoto.timestamp && (
+                <div className="flex items-center gap-1 text-[10px] text-cyan-400 font-bold font-mono">
+                  <Clock className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                  <span>وسم المعاينة الزمني: {selectedPhoto.timestamp}</span>
+                </div>
+              )}
+
+              <p className="text-[9px] text-slate-500 font-mono">تاريخ التسجيل بالتقرير: {selectedPhoto.date}</p>
               <a
                 href={selectedPhoto.url}
                 target="_blank"

@@ -35,6 +35,8 @@ export interface FieldPhoto {
   url: string;
   caption: string;
   date: string;
+  location?: string;
+  timestamp?: string;
 }
 
 export interface CaseData {
@@ -83,6 +85,39 @@ export interface CaseData {
   // Field Photos & Approved References
   photos?: FieldPhoto[];
   references?: FieldReference[];
+
+  // Client / User Details (ثابتة)
+  clientName?: string;
+  clientNationalId?: string;
+  clientBirthDate?: string;
+  clientJob?: string;
+  clientPhone?: string;
+  clientEmail?: string;
+  clientAddress?: string;
+
+  // Dynamic property details
+  propertyType?: 'land' | 'apartment' | 'commercial';
+  landUnit?: 'فدان' | 'قيراط' | 'متر';
+  landZamam?: 'زمام' | 'صحراوي';
+  landPieceNum?: string;
+  landBasinNum?: string;
+  landSectionNum?: string;
+  landBoundaries?: { east?: string; west?: string; north?: string; south?: string };
+  landOwnershipType?: 'ملكية خاصة' | 'ملكية دولة' | 'وقف' | 'مشاع';
+
+  // Apartment details
+  apartmentAddress?: string;
+  apartmentFloorAndNumber?: string;
+  apartmentAreaSqm?: number;
+  apartmentRelationType?: 'old_rent' | 'new_rent' | 'inheritance' | 'waqf' | 'other';
+  apartmentOldRentValue?: string;
+  apartmentOldRentDetails?: string;
+  apartmentNewRentValue?: string;
+  apartmentNewRentDetails?: string;
+  apartmentInheritanceDetails?: string;
+  apartmentWaqfSupervisor?: string;
+  apartmentWaqfDetails?: string;
+  apartmentOtherDetails?: string;
 }
 
 export interface AgentInfo {

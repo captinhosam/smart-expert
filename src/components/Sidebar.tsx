@@ -9,12 +9,13 @@ import {
   HelpCircle,
   FolderOpen,
   MessageSquare,
-  Compass
+  Compass,
+  Users
 } from 'lucide-react';
 
 interface SidebarProps {
-  activeTab: 'dashboard' | 'details' | 'map' | 'agents' | 'report' | 'files' | 'mindmap';
-  setActiveTab: (tab: 'dashboard' | 'details' | 'map' | 'agents' | 'report' | 'files' | 'mindmap') => void;
+  activeTab: 'dashboard' | 'details' | 'map' | 'agents' | 'report' | 'files' | 'mindmap' | 'heirs_hub';
+  setActiveTab: (tab: 'dashboard' | 'details' | 'map' | 'agents' | 'report' | 'files' | 'mindmap' | 'heirs_hub') => void;
   caseTitle: string;
   caseNumber: string;
 }
@@ -23,6 +24,7 @@ export default function Sidebar({ activeTab, setActiveTab, caseTitle, caseNumber
   const menuItems = [
     { id: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard, desc: 'ملخص المؤشرات ومراحل تقدم الخبرة' },
     { id: 'details', label: 'بيانات العقار والخصوم', icon: FolderOpen, desc: 'الرفع المساحي، التشطيبات، والورثة' },
+    { id: 'heirs_hub', label: 'بوابة الورثة الموحدة', icon: Users, desc: 'شجرة العائلة والتركات والأنصبة الشرعية' },
     { id: 'files', label: 'الشات والملفات والصوت', icon: MessageSquare, desc: 'المركز القضائي الموحد للمحادثة والاتصال' },
     { id: 'mindmap', label: 'الخريطة الذهنية للأراضي', icon: Compass, desc: 'القوانين الحاكمة، والجهات المنفذة' },
     { id: 'map', label: 'نظم الخرائط و GPS', icon: Map, desc: 'الإحداثيات الجغرافية والمسح الطيفي' },
