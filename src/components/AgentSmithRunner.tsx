@@ -30,7 +30,8 @@ import {
   Eye,
   Lock,
   Compass,
-  Maximize2
+  Maximize2,
+  Printer
 } from 'lucide-react';
 
 import { triggerToast } from '../lib/toast';
@@ -315,6 +316,43 @@ export default function AgentSmithRunner({
   const [biometricStatus, setBiometricStatus] = useState<'idle' | 'scanning' | 'success'>('idle');
   const [scanProgress, setScanProgress] = useState(0);
   const [securityLevel, setSecurityLevel] = useState('مستوى الحماية العادي');
+
+  // Cybersecurity forensic states
+  const [forensicProgress, setForensicProgress] = useState(0);
+  const [forensicStatus, setForensicStatus] = useState<'idle' | 'tracing' | 'success'>('idle');
+  const [forensicLogs, setForensicLogs] = useState<string[]>([]);
+
+  const handleRunForensics = () => {
+    if (forensicStatus !== 'idle') return;
+    setForensicStatus('tracing');
+    setForensicProgress(0);
+    setForensicLogs([]);
+
+    const steps = [
+      '🔌 تفعيل جدار الحماية الفيدرالي وربط نظام [Agent Smith] لمراقبة حزم البيانات...',
+      '📡 رصد محاولة تسلل غير مصرحة على خادم السجل العيني الرقمي وخرائط الرفع المساحي...',
+      '🔍 فحص عنوان الـ IP المصدر: [82.197.211.45] - تحديد الموقع الجغرافي: أمستردام، هولندا (Netherlands)...',
+      '🛑 كشف استخدام شبكة VPN افتراضية ممسوحة ونظام تشغيل Kali Linux لاستهداف قاعدة البيانات القانونية...',
+      '🛡️ إفشال عملية محاولة تعديل بيانات الورثة وإحداثيات الأرض لـ [كابتن حسام]...',
+      '💾 استخلاص البصمة الرقمية الجنائية (Hash Signature: SHA-256) وسجل العمليات المعطلة...',
+      '⚖️ تكييف الواقعة جنائياً تحت مواد القانون المصري رقم 175 لسنة 2018 لمكافحة الجرائم المعلوماتية...',
+      '📑 توليد "تقرير الأدلة الرقمية الجنائية المعتمد" صالح للتقديم فورياً للنيابة العامة والشرطة.'
+    ];
+
+    steps.forEach((step, idx) => {
+      setTimeout(() => {
+        setForensicLogs(prev => [...prev, `[${new Date().toLocaleTimeString('ar-EG')}] ${step}`]);
+        setForensicProgress(prev => {
+          const next = Math.min(100, Math.round((idx + 1) * 12.5));
+          if (next === 100) {
+            setForensicStatus('success');
+            triggerToast('🛡️ تم إحباط الاختراق واستخراج التقرير الجنائي المعتمد للنيابة العامة والشرطة!', 'success');
+          }
+          return next;
+        });
+      }, (idx + 1) * 1000);
+    });
+  };
 
   // Egypt Land Sector Mind Map States
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
@@ -753,6 +791,20 @@ ${selectedNodesInfo.join('\n')}
           <Award className="w-4 h-4 text-amber-400" />
           <span>📋 الاستراتيجية الشاملة لجودة الأحكام وإدارة الوكلاء</span>
         </button>
+        <button
+          onClick={() => {
+            setActiveTab('cyber_security' as any);
+            triggerToast('🕵️‍♂️ تم تفعيل عميل الحماية الفيدرالي Agent Smith لكشف الاختراقات وتتبع المتسللين عبر هولندا!', 'info');
+          }}
+          className={`px-5 py-3 text-xs font-black transition-all border-b-2 flex items-center gap-2 ${
+            activeTab === ('cyber_security' as any)
+              ? 'border-red-500 text-red-500 bg-[#1e1e21]' 
+              : 'border-transparent text-slate-400 hover:text-white hover:border-red-500/20'
+          }`}
+        >
+          <ShieldCheck className="w-4 h-4 text-red-500" />
+          <span>🕵️‍♂️ الأمن الرقمي وتتبع الاختراقات (Cyber Forensics)</span>
+        </button>
       </div>
 
       {/* CHAT TAB CONTENT WITH INTELLIGENT AGENT PERSPECTIVE SELECTOR */}
@@ -1160,242 +1212,167 @@ ${selectedNodesInfo.join('\n')}
             
             {/* Action panel displaying selected items count */}
             <div className="flex items-center gap-3 self-end md:self-center">
-              <button
-                onClick={() => setSelectedNodeIds([])}
-                className="text-slate-400 hover:text-white text-xs px-3 py-1.5 bg-zinc-900 border border-[#2d2d31] rounded-xl transition-all"
-                disabled={selectedNodeIds.length === 0}
-              >
-                إلغاء التحديد بالكامل ({selectedNodeIds.length})
-              </button>
-              <button
-                onClick={handleFeedSelectionsToChat}
-                className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs px-4 py-2 rounded-xl transition-all shadow-lg shadow-amber-500/10 flex items-center gap-2 cursor-pointer active:scale-95"
-              >
-                <span>🚀 تلقيم الاختيارات المحددة إلى الشات</span>
-                <span className="bg-slate-950 text-amber-400 text-[10px] px-1.5 py-0.5 rounded-full font-extrabold">
-                  {selectedNodeIds.length}
-                </span>
-              </button>
+              {selectedNodeIds.length > 0 && (
+                <button
+                  onClick={() => setSelectedNodeIds([])}
+                  className="text-slate-400 hover:text-white text-xs px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 rounded-lg border border-zinc-800 transition-all cursor-pointer"
+                >
+                  إلغاء التحديد ({selectedNodeIds.length})
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Search bar & Pre-sets Panel */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-            
-            {/* Search Input Card */}
-            <div className="lg:col-span-4 bg-zinc-950 p-4 rounded-2xl border border-zinc-900 flex flex-col justify-between space-y-3">
-              <div className="space-y-1.5">
-                <span className="text-slate-400 text-xs font-black block">🔍 بحث ذكي في الخريطة الذهنية:</span>
-                <input
-                  type="text"
-                  placeholder="ابحث عن قانون، هيئة، تحدي، حيز..."
-                  value={mindMapSearchQuery}
-                  onChange={(e) => setMindMapSearchQuery(e.target.value)}
-                  className="w-full bg-[#1e1e21] text-white text-xs rounded-xl px-3 py-2.5 border border-[#2d2d31] focus:outline-none focus:border-cyan-500 placeholder:text-slate-600 text-right font-medium"
-                />
-              </div>
-
-              {/* Guide card */}
-              <div className="bg-[#1e1e21]/40 border border-[#2d2d31] p-3 rounded-xl space-y-2">
-                <span className="text-amber-500 text-[10px] font-black block">💡 كيف تستخدم الخريطة الذهنية؟</span>
-                <p className="text-[10px] text-slate-400 leading-relaxed font-semibold">
-                  اختر البنود التي تهمك في قضيتك (مثل نوع الأرض، القوانين المطبقة، الجهة، أو التحدي) من الفروع الستة التفاعلية المقابلة، ثم اضغط على <strong>"تلقيم الاختيارات"</strong> لتمريرها في عقل الوكلاء الإدراكيين لتقديم إجابة مخصصة وحسابات فائقة الدقة!
-                </p>
-              </div>
-            </div>
-
-            {/* Pre-sets selections Card */}
-            <div className="lg:col-span-8 bg-zinc-950 p-4 rounded-2xl border border-zinc-900 space-y-3">
-              <span className="text-slate-400 text-xs font-black block">⚡ سياقات وحالات شائعة جاهزة (نقرة واحدة للتحديد المتعدد):</span>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {PRESETS_DATA.map((preset, pIdx) => (
+          {/* Presets and Search */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            {/* Presets Column */}
+            <div className="md:col-span-8 space-y-2">
+              <span className="text-slate-400 text-[10px] font-black block">💡 نماذج وسيناريوهات جاهزة للتحديد السريع:</span>
+              <div className="flex flex-wrap gap-2">
+                {PRESETS_DATA.map((preset, idx) => (
                   <button
-                    key={pIdx}
+                    key={idx}
                     onClick={() => {
                       setSelectedNodeIds(preset.nodeIds);
-                      triggerToast(`تم تطبيق قالب "${preset.name}" وتحديد بنوده تلقائياً!`, 'success');
+                      triggerToast(`تم تحميل بنود وتوصيات: ${preset.name}`, 'success');
                     }}
-                    className="p-3 bg-[#1e1e21] hover:bg-zinc-900 text-right rounded-xl border border-[#2d2d31] hover:border-cyan-500/40 transition-all flex flex-col gap-1 relative group cursor-pointer"
+                    className="text-right p-2.5 bg-zinc-950 hover:bg-zinc-900 border border-zinc-900 hover:border-zinc-800 rounded-xl transition-all text-xs font-semibold space-y-0.5 group shrink-0"
                   >
-                    <span className="text-white text-xs font-black group-hover:text-cyan-400 transition-colors">{preset.name}</span>
-                    <span className="text-slate-400 text-[10px] leading-relaxed font-semibold">{preset.description}</span>
+                    <span className="text-white group-hover:text-amber-400 transition-colors block font-bold">{preset.name}</span>
+                    <span className="text-slate-500 text-[9px] block font-medium max-w-[240px] truncate">{preset.description}</span>
                   </button>
                 ))}
               </div>
             </div>
 
+            {/* Search Column */}
+            <div className="md:col-span-4 space-y-2">
+              <span className="text-slate-400 text-[10px] font-black block">🔎 بحث سريع في بنود التشريعات والمخاطر:</span>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="ابحث عن مادة، تملك، حيازة، ميراث..."
+                  value={mindMapSearchQuery}
+                  onChange={(e) => setMindMapSearchQuery(e.target.value)}
+                  className="w-full bg-zinc-950 text-white text-xs font-semibold px-3 py-2.5 pr-8 rounded-xl border border-zinc-850 focus:outline-none focus:border-cyan-500 text-right"
+                />
+              </div>
+            </div>
           </div>
 
-          {/* Interactive Branches (6 main branches) */}
-          <div className="space-y-4 pt-2">
-            <span className="text-slate-400 text-xs font-black block mb-1">🔘 المستوى الأول: قطاع الأراضي في مصر (نظام متكامل للتملك والتداول والتخطيط)</span>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {MIND_MAP_DATA.map((branch) => {
-                // Filter nodes if search query exists
-                const filteredNodes = branch.nodes.filter(node => 
-                  node.label.includes(mindMapSearchQuery) || 
-                  (node.details && node.details.includes(mindMapSearchQuery))
-                );
+          {/* Interactive Mind Map Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {MIND_MAP_DATA.map((branch) => {
+              const filteredNodes = branch.nodes.filter(node => 
+                node.label.includes(mindMapSearchQuery) || 
+                (node.details && node.details.includes(mindMapSearchQuery))
+              );
 
-                const isExpanded = expandedBranches.includes(branch.id);
-                const selectedCountInBranch = branch.nodes.filter(n => selectedNodeIds.includes(n.id)).length;
+              if (filteredNodes.length === 0) return null;
 
-                // Toggle branch accordion
-                const toggleBranch = () => {
-                  if (isExpanded) {
-                    setExpandedBranches(expandedBranches.filter(id => id !== branch.id));
-                  } else {
-                    setExpandedBranches([...expandedBranches, branch.id]);
-                  }
-                };
+              const isExpanded = expandedBranches.includes(branch.id);
 
-                const selectAllInBranch = (e: React.MouseEvent) => {
-                  e.stopPropagation();
-                  const allBranchIds = branch.nodes.map(n => n.id);
-                  setSelectedNodeIds(prev => {
-                    const filtered = prev.filter(id => !allBranchIds.includes(id));
-                    return [...filtered, ...allBranchIds];
-                  });
-                  triggerToast(`تم تحديد كافة عناصر [${branch.title}]`, 'success');
-                };
-
-                const deselectAllInBranch = (e: React.MouseEvent) => {
-                  e.stopPropagation();
-                  const allBranchIds = branch.nodes.map(n => n.id);
-                  setSelectedNodeIds(prev => prev.filter(id => !allBranchIds.includes(id)));
-                  triggerToast(`تم إلغاء تحديد عناصر [${branch.title}]`, 'info');
-                };
-
-                // Skip branch if search query entered and no matching nodes
-                if (mindMapSearchQuery && filteredNodes.length === 0) return null;
-
-                return (
-                  <div 
-                    key={branch.id} 
-                    className="bg-zinc-950 rounded-2xl border border-[#2d2d31] overflow-hidden hover:border-[#3e3e42] transition-all flex flex-col h-full"
-                  >
-                    {/* Branch Title Row */}
-                    <div 
-                      onClick={toggleBranch}
-                      className="bg-zinc-900/60 p-4 border-b border-[#2d2d31]/80 flex items-center justify-between cursor-pointer hover:bg-zinc-900 transition-all select-none"
+              return (
+                <div 
+                  key={branch.id} 
+                  className="bg-zinc-950/50 border border-zinc-900 rounded-2xl p-4 space-y-3 flex flex-col justify-between hover:border-zinc-800 transition-all"
+                >
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => {
+                        setExpandedBranches(prev => 
+                          prev.includes(branch.id) 
+                            ? prev.filter(id => id !== branch.id) 
+                            : [...prev, branch.id]
+                        );
+                      }}
+                      className="w-full flex items-center justify-between border-b border-zinc-900 pb-2 cursor-pointer"
                     >
                       <div className="flex items-center gap-2">
-                        <span className="text-xl">{branch.icon}</span>
-                        <div className="flex flex-col text-right">
-                          <span className="text-xs font-black text-white">{branch.title}</span>
-                          <span className="text-[9px] text-slate-500 font-bold">المستوى الثاني • فرع رئيسي</span>
-                        </div>
+                        <span className="text-sm">{branch.icon}</span>
+                        <h5 className="text-white text-xs font-black">{branch.title}</h5>
                       </div>
-                      
-                      <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                        {selectedCountInBranch > 0 && (
-                          <span className="text-[9px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 px-2 py-0.5 rounded-full font-black animate-pulse">
-                            {selectedCountInBranch} محدد
-                          </span>
-                        )}
-                        <span className="text-slate-600 font-bold text-xs">
-                          {isExpanded ? '▲' : '▼'}
-                        </span>
-                      </div>
-                    </div>
+                      <span className="text-[10px] text-slate-500 font-bold">
+                        {isExpanded ? 'إغلاق' : 'عرض البنود'}
+                      </span>
+                    </button>
 
-                    {/* Expandable Leaf Nodes View */}
                     {isExpanded && (
-                      <div className="p-4 flex-1 flex flex-col justify-between space-y-4">
-                        {/* Multi-select toggle helper */}
-                        <div className="flex items-center justify-between border-b border-[#2d2d31]/40 pb-2 text-[10px]">
-                          <span className="text-slate-500 font-bold">المستويات الفرعية (التفاصيل):</span>
-                          <div className="flex gap-2">
-                            <button 
-                              onClick={selectAllInBranch}
-                              className="text-cyan-400 hover:text-cyan-300 font-black cursor-pointer"
+                      <div className="space-y-2">
+                        {filteredNodes.map((node) => {
+                          const isSelected = selectedNodeIds.includes(node.id);
+                          return (
+                            <button
+                              key={node.id}
+                              onClick={() => {
+                                setSelectedNodeIds(prev => 
+                                  prev.includes(node.id) 
+                                    ? prev.filter(id => id !== node.id) 
+                                    : [...prev, node.id]
+                                );
+                              }}
+                              className={`w-full text-right p-2.5 rounded-xl border transition-all space-y-1.5 group cursor-pointer ${
+                                isSelected 
+                                  ? 'bg-cyan-500/5 border-cyan-500/40 shadow-sm shadow-cyan-500/5' 
+                                  : 'bg-zinc-950 border-zinc-900 hover:border-zinc-800'
+                              }`}
                             >
-                              تحديد الكل
-                            </button>
-                            <span className="text-slate-700">|</span>
-                            <button 
-                              onClick={deselectAllInBranch}
-                              className="text-slate-500 hover:text-slate-400 font-bold cursor-pointer"
-                            >
-                              إلغاء الكل
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Nodes List */}
-                        <div className="space-y-3 flex-1 overflow-y-auto max-h-[250px] pr-1 scrollbar-thin">
-                          {filteredNodes.map((node) => {
-                            const isNodeSelected = selectedNodeIds.includes(node.id);
-                            
-                            const handleNodeToggle = () => {
-                              if (isNodeSelected) {
-                                setSelectedNodeIds(selectedNodeIds.filter(id => id !== node.id));
-                              } else {
-                                setSelectedNodeIds([...selectedNodeIds, node.id]);
-                              }
-                            };
-
-                            return (
-                              <div 
-                                key={node.id}
-                                onClick={handleNodeToggle}
-                                className={`p-2.5 rounded-xl border transition-all cursor-pointer text-right space-y-1 relative group select-none ${
-                                  isNodeSelected 
-                                    ? 'bg-cyan-500/5 border-cyan-500/40 shadow-sm shadow-cyan-500/5' 
-                                    : 'bg-[#1e1e21]/40 border-[#2d2d31]/60 hover:border-slate-800'
-                                }`}
-                              >
-                                <div className="flex items-start gap-2.5">
-                                  {/* Custom Checkbox */}
-                                  <div className={`w-3.5 h-3.5 rounded border mt-0.5 shrink-0 flex items-center justify-center transition-all ${
-                                    isNodeSelected 
-                                      ? 'bg-cyan-500 border-cyan-500 text-slate-950' 
-                                      : 'border-[#2d2d31] group-hover:border-slate-700'
-                                  }`}>
-                                    {isNodeSelected && <Check className="w-2.5 h-2.5 text-slate-950 stroke-[4px]" />}
-                                  </div>
-
-                                  <div className="flex-1 space-y-0.5">
-                                    <span className={`text-[11px] font-black block leading-snug ${
-                                      isNodeSelected ? 'text-cyan-400' : 'text-slate-200'
-                                    }`}>
-                                      {node.label}
-                                    </span>
-                                    {node.details && (
-                                      <p className="text-[10px] text-slate-500 leading-normal font-semibold">
-                                        {node.details}
-                                      </p>
-                                    )}
-                                  </div>
+                              <div className="flex items-start justify-between gap-2">
+                                <span className={`text-[10px] font-black leading-tight ${
+                                  isSelected ? 'text-cyan-400' : 'text-slate-300 group-hover:text-white transition-colors'
+                                }`}>
+                                  {node.label}
+                                </span>
+                                <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${
+                                  isSelected 
+                                    ? 'bg-cyan-500 border-cyan-500 text-slate-950' 
+                                    : 'border-zinc-700 group-hover:border-zinc-500'
+                                }`}>
+                                  {isSelected && <Check className="w-2.5 h-2.5" />}
                                 </div>
                               </div>
-                            );
-                          })}
-                        </div>
+                              {node.details && (
+                                <p className="text-slate-500 text-[9px] leading-relaxed font-semibold">
+                                  {node.details}
+                                </p>
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
 
-          {/* Glowing feed control footer inside tab */}
-          <div className="bg-gradient-to-r from-zinc-900 to-zinc-950 p-4 rounded-xl border border-[#2d2d31] flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
-            <div className="text-right">
-              <span className="text-white text-xs font-black block">هل انتهيت من تجميع نقاط الخريطة الذهنية؟</span>
-              <p className="text-slate-400 text-[10px] font-bold mt-1">
-                اضغط على الزر لتوجيه الاستعلام وحث عقل السرب الفيدرالي لإنشاء صياغات تخصصية بالغة الدقة.
-              </p>
+          {/* Bottom Integration Action Bar */}
+          {selectedNodeIds.length > 0 && (
+            <div className="bg-[#242428] border border-zinc-800 p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-bottom duration-300">
+              <div className="text-right">
+                <span className="text-cyan-400 text-xs font-black block">💡 دمج ذكي مع شات الوكلاء الإدراكية:</span>
+                <p className="text-[10px] text-slate-400 mt-1 font-semibold leading-relaxed">
+                  قمت بتحديد **{selectedNodeIds.length} بنود تشريعية وفنية**. انقر على الزر لتلقيمها مباشرة إلى الشات وطرح استفسار دقيق للوكلاء المنسقين.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  const selectedLabels = MIND_MAP_DATA.flatMap(b => b.nodes)
+                    .filter(n => selectedNodeIds.includes(n.id))
+                    .map(n => n.label)
+                    .join(' ، ');
+                  setChatInput(`أرغب في الاستفسار والتحقق الفيدرالي في هذه البنود والتشريعات المحددة من الخريطة الذهنية: [${selectedLabels}]`);
+                  setActiveTab('chat');
+                  triggerToast('⚡ تم نقل البنود المختارة بنجاح إلى صندوق الشات!', 'success');
+                }}
+                className="w-full sm:w-auto px-5 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white font-black text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all shadow-lg shadow-cyan-500/10"
+              >
+                <Zap className="w-4 h-4" />
+                <span>تلقيم البنود إلى الشات والبدء ⚡</span>
+              </button>
             </div>
-            <button
-              onClick={handleFeedSelectionsToChat}
-              className="w-full md:w-auto bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs px-6 py-3 rounded-xl transition-all shadow-xl shadow-amber-500/10 flex items-center justify-center gap-2.5 cursor-pointer active:scale-95"
-            >
-              <span>🚀 تلقيم النقاط المحددة ({selectedNodeIds.length}) لشات كرو إيجنت</span>
-            </button>
-          </div>
+          )}
 
         </div>
       )}
@@ -1429,7 +1406,7 @@ ${selectedNodesInfo.join('\n')}
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                الجزء الأول: جودة الأحكام
+                الجزء الأول: جودة وصحة الأحكام
               </button>
               <button
                 onClick={() => setActivePlanSection('part2')}
@@ -1449,7 +1426,7 @@ ${selectedNodesInfo.join('\n')}
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                خريطة الطريق والربط الذكي
+                📋 الخلاصة التنفيذية وخريطة الطريق
               </button>
             </div>
           </div>
@@ -1458,97 +1435,169 @@ ${selectedNodesInfo.join('\n')}
           {activePlanSection === 'part1' && (
             <div className="space-y-6">
               <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-xl">
-                <span className="text-amber-400 text-xs font-black block mb-1">الرؤية العامة للجزء الأول: جودة وصحة الأحكام القضائية</span>
+                <span className="text-amber-400 text-xs font-black block mb-1">الرؤية العامة للجزء الأول: الخطة المحكمة للحصول على جودة عالية ونسبة صحيحة من الأحكام</span>
                 <p className="text-slate-300 text-[11px] leading-relaxed">
-                  يهدف هذا المحور إلى إرساء قواعد عمل صارمة للحد من الثغرات، وضمان الالتزام بحيادية وشفافية المعاينة الميدانية، وتوفير دعائم قوية للقضاة لإصدار أحكام متسقة تماماً مع القانون والشريعة الإسلامية.
+                  يهدف هذا المحور إلى بناء ركائز عمل دقيقة للحد من الثغرات في إعداد وصياغة ومتابعة الدعاوى والنزاعات القضائية لضمان إصدار أحكام قانونية وشرعية متسقة ومتماسكة تخدم العدالة المطلقة.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* Point 1 */}
-                <div className="bg-zinc-900/60 border border-zinc-850 p-4 rounded-xl flex flex-col justify-between space-y-3 hover:border-amber-500/20 transition-all">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-xs font-extrabold">١</span>
-                      <h5 className="text-white text-xs font-black">الإعداد القانوني المتقن للدعوى</h5>
+              {/* Sub-sections layout */}
+              <div className="space-y-6">
+                
+                {/* 1. الإعداد القانوني المتقن للدعوى */}
+                <div className="bg-zinc-900/60 border border-zinc-850 rounded-xl p-4 space-y-3">
+                  <h5 className="text-amber-400 text-xs font-black flex items-center gap-2 border-b border-zinc-800 pb-2">
+                    <span className="w-5 h-5 rounded bg-amber-500/10 flex items-center justify-center text-[11px] font-mono">1</span>
+                    <span>الإعداد القانوني المتقن للدعوى (مرحلة ما قبل رفع الدعوى)</span>
+                  </h5>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                    <div className="bg-zinc-950 p-3 rounded-lg border border-zinc-900 space-y-1">
+                      <span className="text-white font-black block">🔎 الفحص القانوني الشامل:</span>
+                      <p className="text-slate-400 text-[11px] leading-normal font-semibold">
+                        مراجعة كافة المستندات والعقود والتوكيلات، والتأكد من صحتها وسلامتها القانونية، وفحص حدود الملكية وخلو الأرض من النزاعات أو الرهون.
+                      </p>
                     </div>
-                    <p className="text-slate-400 text-[10px] leading-relaxed font-semibold">
-                      تتضمن مرحلة ما قبل رفع الدعوى دراسة مستفيضة للمذكرات، وتحليل الموقف المبدئي للنزاع، والتحقق من استكمال كافة المستندات والبيانات الأساسية قبل المباشرة الميدانية.
-                    </p>
-                  </div>
-                  <div className="pt-2 border-t border-zinc-950 flex items-center justify-between text-[9px]">
-                    <span className="text-slate-500">الوكيل المسؤول:</span>
-                    <span className="text-amber-400 font-bold bg-amber-500/5 px-2 py-0.5 rounded-md border border-amber-500/10">الوكيل الإدراكي (Cognitive)</span>
+                    <div className="bg-zinc-950 p-3 rounded-lg border border-zinc-900 space-y-1">
+                      <span className="text-white font-black block">📊 تحليل النزاع بدقة:</span>
+                      <p className="text-slate-400 text-[11px] leading-normal font-semibold">
+                        تحديد جوهر النزاع القانوني بوضوح، وتصنيفه (مدني، جنائي، إداري) لتحديد المحكمة المختصة والإجراءات المناسبة.
+                      </p>
+                    </div>
+                    <div className="bg-zinc-950 p-3 rounded-lg border border-zinc-900 space-y-1">
+                      <span className="text-white font-black block">💾 جمع الأدلة وحفظها:</span>
+                      <p className="text-slate-400 text-[11px] leading-normal font-semibold">
+                        جمع جميع الأدلة (المستندات، العقود، الإيصالات، المراسلات، الأدلة الرقمية) وحفظها بطريقة آمنة تضمن سلامتها وعدم العبث بها، مع توثيقها رسمياً.
+                      </p>
+                    </div>
+                    <div className="bg-zinc-950 p-3 rounded-lg border border-zinc-900 space-y-1">
+                      <span className="text-white font-black block">🎓 الاستشارة القانونية المتخصصة:</span>
+                      <p className="text-slate-400 text-[11px] leading-normal font-semibold">
+                        الاستعانة بمحامين وخبراء متخصصين في نوع النزاع (عقاري، تجاري، إلخ) لوضع استراتيجية قانونية محكمة.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                {/* Point 2 */}
-                <div className="bg-zinc-900/60 border border-zinc-850 p-4 rounded-xl flex flex-col justify-between space-y-3 hover:border-amber-500/20 transition-all">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-xs font-extrabold">٢</span>
-                      <h5 className="text-white text-xs font-black">صياغة صحيفة الدعوى والمذكرات</h5>
+                {/* 2. صياغة صحيفة الدعوى والمذكرات القانونية */}
+                <div className="bg-zinc-900/60 border border-zinc-850 rounded-xl p-4 space-y-3">
+                  <h5 className="text-amber-400 text-xs font-black flex items-center gap-2 border-b border-zinc-800 pb-2">
+                    <span className="w-5 h-5 rounded bg-amber-500/10 flex items-center justify-center text-[11px] font-mono">2</span>
+                    <span>صياغة صحيفة الدعوى والمذكرات القانونية</span>
+                  </h5>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                    <div className="bg-zinc-950 p-3 rounded-lg border border-zinc-900 space-y-1">
+                      <span className="text-white font-black block">✍️ الصياغة الدقيقة:</span>
+                      <p className="text-slate-400 text-[11px] leading-normal font-semibold">
+                        كتابة صحيفة الدعوى والمذكرات بلغة قانونية واضحة، مع ترتيب الوقائع والأسانيد القانونية ترتيباً منطقياً.
+                      </p>
                     </div>
-                    <p className="text-slate-400 text-[10px] leading-relaxed font-semibold">
-                      صياغة فنية بالغة الإحكام تفرز الحجج القانونية بعناية، وتصنف الدفوع بشكل موضوعي، لتفادي الطعون أو التأويلات الخاطئة أثناء مراحل التقاضي.
-                    </p>
-                  </div>
-                  <div className="pt-2 border-t border-zinc-950 flex items-center justify-between text-[9px]">
-                    <span className="text-slate-500">الوكيل المسؤول:</span>
-                    <span className="text-amber-400 font-bold bg-amber-500/5 px-2 py-0.5 rounded-md border border-amber-500/10">مساعد الصياغة القانونية</span>
+                    <div className="bg-zinc-950 p-3 rounded-lg border border-zinc-900 space-y-1">
+                      <span className="text-white font-black block">📚 الاستشهاد السليم:</span>
+                      <p className="text-slate-400 text-[11px] leading-normal font-semibold">
+                        الاستشهاد بالنصوص القانونية السارية، وأحكام محكمة النقض والمبادئ القضائية المستقرة، مع توثيق المصادر بدقة.
+                      </p>
+                    </div>
+                    <div className="bg-zinc-950 p-3 rounded-lg border border-zinc-900 space-y-1">
+                      <span className="text-white font-black block">✨ الوضوح والإيجاز:</span>
+                      <p className="text-slate-400 text-[11px] leading-normal font-semibold">
+                        تجنب الإطالة غير المبررة، والتركيز على النقاط الجوهرية التي تخدم موقف الدعوى.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                {/* Point 3 */}
-                <div className="bg-zinc-900/60 border border-zinc-850 p-4 rounded-xl flex flex-col justify-between space-y-3 hover:border-amber-500/20 transition-all">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-xs font-extrabold">٣</span>
-                      <h5 className="text-white text-xs font-black">الإجراءات والتعامل مع المحكمة</h5>
+                {/* 3. الإجراءات القضائية والتعامل مع المحكمة */}
+                <div className="bg-zinc-900/60 border border-zinc-850 rounded-xl p-4 space-y-3">
+                  <h5 className="text-amber-400 text-xs font-black flex items-center gap-2 border-b border-zinc-800 pb-2">
+                    <span className="w-5 h-5 rounded bg-amber-500/10 flex items-center justify-center text-[11px] font-mono">3</span>
+                    <span>الإجراءات القضائية والتعامل مع المحكمة</span>
+                  </h5>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                    <div className="bg-zinc-950 p-3 rounded-lg border border-zinc-900 space-y-1">
+                      <span className="text-white font-black block">⏰ الالتزام بالمواعيد القضائية:</span>
+                      <p className="text-slate-400 text-[11px] leading-normal font-semibold">
+                        مراعاة كافة المواعيد الإجرائية لتقديم المستندات والطعون، والحضور الحاسم للجلسات لضمان عدم سقوط الحقوق القانونية لشركاء الوطن.
+                      </p>
                     </div>
-                    <p className="text-slate-400 text-[10px] leading-relaxed font-semibold">
-                      إثبات الحضور، والالتزام بتقديم المستندات والتقارير الفنية والجيوديسية في الآجال المحددة، والتعامل بأسلوب مهني يعزز ثقة الهيئة القضائية.
-                    </p>
-                  </div>
-                  <div className="pt-2 border-t border-zinc-950 flex items-center justify-between text-[9px]">
-                    <span className="text-slate-500">الوكيل المسؤول:</span>
-                    <span className="text-amber-400 font-bold bg-amber-500/5 px-2 py-0.5 rounded-md border border-amber-500/10">الوكيل المنسق (Orchestrator)</span>
+                    <div className="bg-zinc-950 p-3 rounded-lg border border-zinc-900 space-y-1">
+                      <span className="text-white font-black block">🎯 التجهيز الفني للجلسات:</span>
+                      <p className="text-slate-400 text-[11px] leading-normal font-semibold">
+                        الإعداد المسبق لدفوع الهيئة القضائية، وتفنيد مزاعم المدعين عبر خرائط السجل العيني الرقمية والمستندات التاريخية القاطعة.
+                      </p>
+                    </div>
+                    <div className="bg-zinc-950 p-3 rounded-lg border border-zinc-900 space-y-1">
+                      <span className="text-white font-black block">🤝 التعاون مع خبراء وزارة العدل:</span>
+                      <p className="text-slate-400 text-[11px] leading-normal font-semibold">
+                        توفير التلقيم الرقمي الفيدرالي لخبراء المساحة لتسهيل مهامهم الميدانية ونفي أي شبهة أو تعارض في التقارير المساحية والمخططات الهندسية.
+                      </p>
+                    </div>
+                    <div className="bg-zinc-950 p-3 rounded-lg border border-zinc-900 space-y-1">
+                      <span className="text-white font-black block">⚖️ الالتزام بآداب المرافعة والقضاء:</span>
+                      <p className="text-slate-400 text-[11px] leading-normal font-semibold">
+                        ترسيخ وقار المرافعة والموضوعية الشاملة، وتقديم الأدلة بصيغة تقنية محايدة وواضحة تسهل مهمة وجدان العدالة لسيادة المستشارين.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                {/* Point 4 */}
-                <div className="bg-zinc-900/60 border border-zinc-850 p-4 rounded-xl flex flex-col justify-between space-y-3 hover:border-amber-500/20 transition-all">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-xs font-extrabold">٤</span>
-                      <h5 className="text-white text-xs font-black">ضمانات صحة الحكم القضائي</h5>
+                {/* 4. ضمانات صحة الحكم (مرحلة ما بعد الإصدار) */}
+                <div className="bg-zinc-900/60 border border-zinc-850 rounded-xl p-4 space-y-3">
+                  <h5 className="text-amber-400 text-xs font-black flex items-center gap-2 border-b border-zinc-800 pb-2">
+                    <span className="w-5 h-5 rounded bg-amber-500/10 flex items-center justify-center text-[11px] font-mono">4</span>
+                    <span>ضمانات صحة الحكم (مرحلة ما بعد الإصدار)</span>
+                  </h5>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                    <div className="bg-zinc-950 p-3 rounded-lg border border-zinc-900 space-y-1">
+                      <span className="text-white font-black block">👁️ المراجعة الهيكلية للحكم:</span>
+                      <p className="text-slate-400 text-[11px] leading-normal font-semibold">
+                        مطابقة منطوق الحكم بمسودات التقارير الفيدرالية لضمان النقل الصحيح للإحداثيات والحدود الهندسية وتلافي الأخطاء المادية.
+                      </p>
                     </div>
-                    <p className="text-slate-400 text-[10px] leading-relaxed font-semibold">
-                      استخدام أدلة وبراهين لا تقبل الشك، كالوسم الجغرافي (GPS) المؤكد، والوسم الزمني الحاسم على صور المعاينة، وتوثيق الحدود بدقة متناهية لنفي التداخل والتدليس.
-                    </p>
-                  </div>
-                  <div className="pt-2 border-t border-zinc-950 flex items-center justify-between text-[9px]">
-                    <span className="text-slate-500">الوكيل المسؤول:</span>
-                    <span className="text-amber-400 font-bold bg-amber-500/5 px-2 py-0.5 rounded-md border border-amber-500/10">الوكيل الجغرافي ونظم GPS</span>
+                    <div className="bg-zinc-950 p-3 rounded-lg border border-zinc-900 space-y-1">
+                      <span className="text-white font-black block">📜 تسبّيب الحسابات المساحية:</span>
+                      <p className="text-slate-400 text-[11px] leading-normal font-semibold">
+                        التأكد من أن الأسباب التي بني عليها التقرير الفني والمستندات المساحية كافية ومستقاة من شواهد ميدانية، لتعزيز الاطمئنان والعدالة.
+                      </p>
+                    </div>
+                    <div className="bg-zinc-950 p-3 rounded-lg border border-zinc-900 space-y-1">
+                      <span className="text-white font-black block">⚖️ التقدم بالطعون القانونية السليمة:</span>
+                      <p className="text-slate-400 text-[11px] leading-normal font-semibold">
+                        تجهيز الطعون القضائية والاستئنافات بناءً على ثغرات مساحية أو مادية مرصودة في منطوق الحكم لضمان استقرار الحقوق العقارية.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                {/* Point 5 */}
-                <div className="bg-zinc-900/60 border border-zinc-850 p-4 rounded-xl flex flex-col justify-between space-y-3 hover:border-amber-500/20 transition-all">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-xs font-extrabold">٥</span>
-                      <h5 className="text-white text-xs font-black">معايير قياس الجودة (KPIs)</h5>
+                {/* 5. معايير قياس الجودة */}
+                <div className="bg-zinc-900/60 border border-zinc-850 rounded-xl p-4 space-y-3">
+                  <h5 className="text-emerald-400 text-xs font-black flex items-center gap-2 border-b border-zinc-800 pb-2">
+                    <span className="w-5 h-5 rounded bg-emerald-500/10 flex items-center justify-center text-[11px] font-mono">5</span>
+                    <span>معايير قياس الجودة (أدوات التحقق الفيدرالية للتقرير الفني)</span>
+                  </h5>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-center text-xs">
+                    <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-900">
+                      <span className="text-slate-500 text-[10px] block font-bold mb-1">الدقة التشريعية</span>
+                      <span className="text-white font-black text-xs block">تطبيق صحيح للقانون</span>
                     </div>
-                    <p className="text-slate-400 text-[10px] leading-relaxed font-semibold">
-                      تأسيس آلية رقابية مستمرة لمطابقة مخرجات التقارير بالمعايير الهندسية والفقهية المعتمدة، لتقليل نسب نقض الأحكام وضمان استقرار المراكز القانونية.
-                    </p>
-                  </div>
-                  <div className="pt-2 border-t border-zinc-950 flex items-center justify-between text-[9px]">
-                    <span className="text-slate-500">الوكيل المسؤول:</span>
-                    <span className="text-amber-400 font-bold bg-amber-500/5 px-2 py-0.5 rounded-md border border-amber-500/10">الوكيل الفوقي (Meta-Agent)</span>
+                    <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-900">
+                      <span className="text-slate-500 text-[10px] block font-bold mb-1">السلامة المنطقية</span>
+                      <span className="text-white font-black text-xs block">تطابق الحسابات والميدان</span>
+                    </div>
+                    <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-900">
+                      <span className="text-slate-500 text-[10px] block font-bold mb-1">الوضوح الهيكلي</span>
+                      <span className="text-white font-black text-xs block">سهولة الفهم والصياغة</span>
+                    </div>
+                    <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-900">
+                      <span className="text-slate-500 text-[10px] block font-bold mb-1">العدالة الميدانية</span>
+                      <span className="text-white font-black text-xs block">موازنة حقوق الورثة</span>
+                    </div>
+                    <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-900 col-span-2 md:col-span-1">
+                      <span className="text-slate-500 text-[10px] block font-bold mb-1">السرعة الإجرائية</span>
+                      <span className="text-white font-black text-xs block">الالتزام الصارم بالمهل</span>
+                    </div>
                   </div>
                 </div>
+
               </div>
             </div>
           )}
@@ -1622,7 +1671,7 @@ ${selectedNodesInfo.join('\n')}
                       <h5 className="text-white text-xs font-black">ضمان قبول المجتمع ورضائه</h5>
                     </div>
                     <p className="text-slate-400 text-[10px] leading-relaxed font-semibold">
-                      تقديم تبريرات واقعية مدعومة بالأدلة المقنعة، وصياغة مبسطة للحلول تفند كافة مزاعم الخصوم بأسلوب علمي ومنطقي محايد وموثق، يبعث بالرضا والسكينة لكافة الأطراف.
+                      تقديم تبريرات واقعية مدعومة بالأدلة المقنعة، وصياغة مبسطة للحلول تفند كافة مزاعم الخصوم بأسلوب علمي ومنطكي محايد وموثق، يبعث بالرضا والسكينة لكافة الأطراف.
                     </p>
                   </div>
                   <div className="pt-2 border-t border-zinc-950 flex items-center justify-between text-[9px]">
@@ -1715,6 +1764,276 @@ ${selectedNodesInfo.join('\n')}
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+        </div>
+      )}
+
+      {/* CYBER FORENSICS TAB CONTENT (الأمن الرقمي الجنائي - موديول جولدست إيجنت سميث) */}
+      {activeTab === ('cyber_security' as any) && (
+        <div className="space-y-6 text-right animate-in fade-in duration-300">
+          
+          {/* Main Controls Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            {/* Terminal Console and controls (8 cols) */}
+            <div className="lg:col-span-8 bg-[#1a1a1d] border border-[#2d2d31] rounded-2xl p-5 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b border-[#2d2d31] pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
+                  <h4 className="text-white text-xs font-black">جهاز التحليل وتتبع البصمات الرقمية (Agent Smith Engine)</h4>
+                </div>
+                <span className="text-[10px] bg-red-500/10 text-red-500 px-2.5 py-0.5 rounded-full font-bold border border-red-500/20">
+                  بروتوكول حظر الاختراق نشط
+                </span>
+              </div>
+
+              {/* Forensic Dashboard Overview Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-900 text-center space-y-1">
+                  <span className="text-slate-500 text-[10px] font-bold block">إجمالي محاولات الهجوم المصدودة</span>
+                  <span className="text-white font-mono text-base font-black">١٤ محاولة</span>
+                </div>
+                <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-900 text-center space-y-1">
+                  <span className="text-slate-500 text-[10px] font-bold block">آخر عنوان IP مسجل بالاختراق</span>
+                  <span className="text-red-400 font-mono text-xs font-black">82.197.211.45 (هولندا)</span>
+                </div>
+                <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-900 text-center space-y-1">
+                  <span className="text-slate-500 text-[10px] font-bold block">أداة الهجوم المفضلة</span>
+                  <span className="text-amber-500 font-mono text-xs font-black">Kali Linux / VPN Proxy</span>
+                </div>
+              </div>
+
+              {/* Start Forensic Button / Progress Bar */}
+              <div className="bg-[#242428] border border-zinc-800 p-4 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="space-y-1 text-right flex-1">
+                  <span className="text-amber-400 text-xs font-black block">🛡️ محاكي التحقيق الجنائي وقانون تقنية المعلومات المصري 175 لسنة 2018:</span>
+                  <p className="text-[10px] text-slate-400 leading-relaxed font-semibold">
+                    انقر لبدء عملية التتبع الجنائي ومراقبة خوادم السجل العيني لتوليد تقرير إثبات قانوني معتمد موجه للنيابة العامة ضد محاولة اختراق السجلات والتلاعب بإحداثيات الأراضي والورثة من خوادم في هولندا.
+                  </p>
+                </div>
+                
+                <button
+                  onClick={handleRunForensics}
+                  disabled={forensicStatus === 'tracing'}
+                  className={`px-5 py-3 rounded-xl font-black text-xs flex items-center gap-2 cursor-pointer transition-all shrink-0 ${
+                    forensicStatus === 'tracing'
+                      ? 'bg-zinc-800 text-slate-500 border border-zinc-700 animate-pulse'
+                      : forensicStatus === 'success'
+                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                      : 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/10'
+                  }`}
+                >
+                  <Play className="w-4 h-4" />
+                  <span>
+                    {forensicStatus === 'tracing' ? 'جاري التحقيق والتعقب...' : forensicStatus === 'success' ? 'تحقيق مكتمل بنجاح' : 'بدء التحقيق الجنائي الفوري'}
+                  </span>
+                </button>
+              </div>
+
+              {/* Progress Bar */}
+              {forensicStatus !== 'idle' && (
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-[10px] font-bold">
+                    <span className="text-slate-400">تحليل الحزم والملفات المؤرشفة بالذكاء الاصطناعي</span>
+                    <span className="text-amber-500 font-mono">{forensicProgress}%</span>
+                  </div>
+                  <div className="w-full bg-zinc-950 h-2 rounded-full overflow-hidden border border-zinc-900">
+                    <div 
+                      className="bg-gradient-to-r from-red-500 to-amber-500 h-full transition-all duration-300" 
+                      style={{ width: `${forensicProgress}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
+
+              {/* Forensic Terminal Console Output */}
+              <div className="space-y-1.5">
+                <span className="text-slate-400 text-[10px] font-black block">🖥️ سجل مخرجات شاشة تتبع البصمات والعمليات الرقمية (Console Logs):</span>
+                <div className="bg-zinc-950 font-mono text-[10px] text-zinc-300 p-4 rounded-xl border border-zinc-900 h-44 overflow-y-auto space-y-1.5 text-left direction-ltr">
+                  {forensicLogs.length === 0 ? (
+                    <div className="text-center text-slate-600 font-bold py-12">
+                      [سجل الأوامر مغلق] انقر على زر التحقيق في الأعلى لتغذية المحاكي وسحب سجلات الأمن القومي...
+                    </div>
+                  ) : (
+                    forensicLogs.map((log, index) => (
+                      <div key={index} className="text-right text-emerald-400/90 font-semibold leading-relaxed border-b border-zinc-900 pb-1">
+                        {log}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Sidebar legal panel (4 cols) */}
+            <div className="lg:col-span-4 bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-5 shadow-2xl space-y-4">
+              <h4 className="text-white text-xs font-black flex items-center gap-2 border-b border-[#2d2d31] pb-2.5">
+                <Lock className="w-4 h-4 text-amber-500" />
+                <span>التكييف والوصف القانوني المصري</span>
+              </h4>
+
+              <div className="bg-zinc-950/50 p-4 rounded-xl border border-zinc-900 space-y-3">
+                <span className="text-red-400 text-[10px] font-black block">قانون مكافحة جرائم تقنية المعلومات 175 لسنة 2018:</span>
+                <p className="text-[10px] text-slate-300 leading-relaxed font-semibold">
+                  تخضع الواقعة الرقمية لـ <strong>القانون 175 لسنة 2018</strong> المنظم لجرائم الشبكات والأنظمة في جمهورية مصر العربية:
+                </p>
+                
+                <div className="space-y-3 pt-2 text-[10px] leading-relaxed">
+                  <div className="border-r-2 border-red-500 pr-2">
+                    <strong className="text-amber-400 block font-black">المادة ١٤ (اختراق شبكة الدولة):</strong>
+                    <span className="text-slate-400">يعاقب بالحبس مدة لا تقل عن سنتين وبغرامة لا تقل عن ١٠٠ ألف جنيه كل من اخترق عمداً موقعاً أو حساباً خاصاً بالدولة أو إحدى جهاتها الخدمية.</span>
+                  </div>
+                  <div className="border-r-2 border-red-500 pr-2">
+                    <strong className="text-amber-400 block font-black">المادة ١٨ (تعديل السجلات الرسمية):</strong>
+                    <span className="text-slate-400">يعاقب بالسجن المشدد وبغرامة تصل إلى نصف مليون جنيه كل من تلاعب أو زور أو أتلف بياناً أو خريطة أو مستنداً رسمياً للدولة مسجلاً إلكترونياً.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-red-500/5 border border-red-500/10 p-3.5 rounded-xl space-y-1">
+                <span className="text-red-400 text-[10px] font-black block">ملاحظة أمنية سيادية:</span>
+                <p className="text-[9px] text-slate-400 leading-relaxed">
+                  يعد استخدام أدوات كالي لينوكس وبروكسيات vpn من الخارج (مثل هولندا) لإخفاء الهوية دليلاً جنائياً يعزز القصد الجنائي بالتآمر واستهداف الأمن الاقتصادي للدولة لتعديل ملكيات ومواريث المواطنين.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Admissible Court Forensics Report (تقرير الأدلة القضائية) */}
+          {forensicStatus === 'success' && (
+            <div className="bg-white text-slate-900 p-8 rounded-2xl shadow-2xl space-y-6 max-w-4xl mx-auto border-4 border-double border-slate-400 animate-in slide-in-from-bottom-3 duration-500 text-right font-serif relative overflow-hidden">
+              {/* Seal Watermark Background */}
+              <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-15 pointer-events-none"></div>
+              
+              {/* Formal Header */}
+              <div className="flex justify-between items-start border-b-2 border-slate-950 pb-5">
+                <div className="space-y-1 text-center text-xs font-black">
+                  <span className="block">جمهورية مصر العربية</span>
+                  <span className="block">وزارة العدل والداخلية</span>
+                  <span className="block">مصلحة الأدلة الجنائية والجرائم الرقمية</span>
+                </div>
+                <div className="text-center space-y-1 shrink-0">
+                  <h3 className="text-base font-black tracking-widest text-slate-900 underline">تقرير الأدلة الرقمية الجنائية المعتمد</h3>
+                  <span className="text-[10px] bg-red-100 text-red-800 px-3 py-0.5 rounded font-bold font-mono">ملف الاختراق: NL-EGYPT-2026-82</span>
+                </div>
+                <div className="space-y-1 text-center text-xs font-black">
+                  <span className="block">التاريخ: ٤ يوليو ٢٠٢٦</span>
+                  <span className="block">الصفة: تقرير قضائي ثبوتي</span>
+                  <span className="block">سري للغاية</span>
+                </div>
+              </div>
+
+              {/* Section 1: Intro */}
+              <div className="space-y-2 text-xs">
+                <p className="leading-relaxed font-bold">
+                  بناءً على طلب النيابة العامة بجمهورية مصر العربية بخصوص التحقيق الفني للاشتباه في تعديل قاعدة بيانات الأراضي والرفع الطبوغرافي ونسب الورثة المسجلة إلكترونياً. قمنا نحن المهندس خبير أمن تكنولوجيا المعلومات بإدارة الجرائم التقنية برصد وفحص حزم البيانات وتتبع المخترق ونرفع لمعاليكم تقريرنا هذا:
+                </p>
+              </div>
+
+              {/* Table of Evidence */}
+              <div className="space-y-3">
+                <span className="text-slate-950 text-xs font-black block border-r-4 border-slate-900 pr-2">أولاً: البيانات الفنية والرقمية لعملية التسلل (Technical Metadata):</span>
+                <div className="border border-slate-300 rounded-lg overflow-hidden text-xs">
+                  <table className="w-full text-right border-collapse">
+                    <thead>
+                      <tr className="bg-slate-100 border-b border-slate-300 text-slate-800 font-bold">
+                        <th className="p-2 border-l border-slate-300">البيان الفني</th>
+                        <th className="p-2">تفاصيل القيد والتحريات الرقمية</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200">
+                      <tr>
+                        <td className="p-2 border-l border-slate-200 font-bold bg-slate-50">عنوان الـ IP للمهاجم:</td>
+                        <td className="p-2 font-mono font-bold text-red-700">82.197.211.45</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 border-l border-slate-200 font-bold bg-slate-50">خادم البروكسي / الموقع الجغرافي:</td>
+                        <td className="p-2">أمستردام، هولندا (Amsterdam, Netherlands) - VPN Provider Host</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 border-l border-slate-200 font-bold bg-slate-50">نظام التشغيل وموقع الهجوم:</td>
+                        <td className="p-2 font-mono">Kali Linux v2026.2 • Nmap & Sqlmap Automated Modules</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 border-l border-slate-200 font-bold bg-slate-50">بصمة التحقق الجنائية الرقمية:</td>
+                        <td className="p-2 font-mono text-[10px] break-all">SHA-256: d5a4e761f1c89098b6567f89ac0f2142e88a0329b3f07a0011e03a987efc90a1</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 border-l border-slate-200 font-bold bg-slate-50">هدف الاختراق المعطل:</td>
+                        <td className="p-2 text-red-800 font-black">قاعدة بيانات الورثة الشرعيين والتركات لإحداث التلاعب والتمكين غير القانوني للخارج</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Section 2: Legal framing */}
+              <div className="space-y-2.5 text-xs">
+                <span className="text-slate-950 text-xs font-black block border-r-4 border-slate-900 pr-2">ثانياً: التوصيف الجنائي والتأصيل القانوني:</span>
+                <p className="leading-relaxed">
+                  بموجب نصوص <strong>القانون رقم ١٧٥ لسنة ٢٠١٨ في شأن مكافحة جرائم تقنية المعلومات</strong>، يُشكل هذا السلوك المؤثم الجرائم التالية:
+                </p>
+                <ul className="list-disc list-inside space-y-1.5 pr-2">
+                  <li><strong>جريمة الاعتداء على سلامة البيانات والمنظومات (المادة ١٤):</strong> تمثل في محاولة فك الشفرة واستخدام بروكسي هولندا للاختراق غير المشروع لخادم السجل العقاري.</li>
+                  <li><strong>جريمة التزوير والعبث بالسجلات الرقمية السيادية (المادة ١٨):</strong> تمثل في القصد الجنائي للتعديل في بيانات حيازة الأراضي والورثة لـ كابتن حسام، ويعد ذلك جناية تزوير محكومة بالسجن المشدد.</li>
+                </ul>
+              </div>
+
+              {/* Section 3: Recommendations to prosecution and police */}
+              <div className="space-y-2 text-xs">
+                <span className="text-slate-950 text-xs font-black block border-r-4 border-slate-900 pr-2">ثالثاً: التوصيات الميدانية والقرارات المطلوبة للنيابة العامة والشرطة:</span>
+                <ol className="list-decimal list-inside space-y-1.5 pr-2 font-bold text-slate-800">
+                  <li>مخاطبة الإنتربول الدولي (الشرطة الجنائية الدولية) رسمياً لتتبع خادم الـ IP في هولندا لمعرفة المالك النهائي والمستأجر المستفيد من الاختراق.</li>
+                  <li>تكليف مباحث الاتصالات وتكنولوجيا المعلومات بقطاع الأمن بضبط المتعاونين محلياً داخل جمهورية مصر العربية المستفيدين من التلاعب ببيانات الحيازة.</li>
+                  <li>اعتماد الأدلة الرقمية المشفرة (SHA-256 Hash) في حرز رسمي مع حظر كافة عناوين الـ IP التابعة لنفس مقدم الخدمة الهولندي وقائمتها السوداء.</li>
+                </ol>
+              </div>
+
+              {/* Stamp and Seals */}
+              <div className="flex justify-between items-center pt-8 border-t border-slate-300">
+                <div className="text-center space-y-4">
+                  <span className="text-xs font-bold block">إمضاء خبير الجرائم الرقمية</span>
+                  <div className="border border-slate-400 bg-slate-50 px-4 py-2 text-xs font-mono rounded font-bold">
+                    ENG. FORENSIC_OFFICER_AISTUDIO
+                  </div>
+                </div>
+                
+                {/* Simulated Seal */}
+                <div className="w-24 h-24 rounded-full border-4 border-double border-red-700/60 bg-red-500/5 flex flex-col items-center justify-center text-center p-2 text-[8px] text-red-700 font-black tracking-tighter leading-tight relative -rotate-6">
+                  <span className="block border-b border-red-700/30 pb-0.5 mb-0.5">وزارة العدل</span>
+                  <span className="block">الأدلة الجنائية</span>
+                  <span className="block">مصلحة الجرائم التقنية</span>
+                  <span className="block font-mono text-[6px] mt-0.5">VERIFIED 2026</span>
+                </div>
+
+                <div className="text-center space-y-2">
+                  <span className="text-xs font-bold block">قرار النيابة العامة</span>
+                  <span className="text-[10px] text-slate-500 block">يُقيد كدليل جنائي معتمد بالدعوى</span>
+                </div>
+              </div>
+
+              {/* Export/Print forensic report buttons */}
+              <div className="mt-6 flex justify-end gap-3" data-pdf-ignore>
+                <button
+                  type="button"
+                  onClick={() => triggerToast('🖨️ جاري تحضير التقرير لإرساله المباشر للطباعة المعتمدة...', 'info')}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>طباعة الدليل</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => triggerToast('📂 تم نسخ رابط مستند التشفير وبصمة الجريمة SHA-256 للمشاركة الرقمية مع المحققين!', 'success')}
+                  className="px-4 py-2 bg-slate-900 hover:bg-zinc-800 text-amber-400 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 cursor-pointer border border-zinc-800"
+                >
+                  <Share2 className="w-4 h-4 text-amber-500" />
+                  <span>مشاركة بصمة SHA-256</span>
+                </button>
+              </div>
+
             </div>
           )}
 

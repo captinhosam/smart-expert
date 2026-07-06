@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CaseData, CalculationResults } from '../types';
 import { SAMPLE_LOCATIONS } from '../data/expertSystemData';
 import { triggerToast } from '../lib/toast';
+import VirtualCourt from './VirtualCourt/VirtualCourt';
 import { 
   MapPin, 
   Satellite, 
@@ -12,7 +13,8 @@ import {
   Droplet, 
   Wind,
   Layers,
-  Sparkles
+  Sparkles,
+  Scale
 } from 'lucide-react';
 
 interface MapTabProps {
@@ -25,12 +27,30 @@ interface MapTabProps {
     scannedArea?: number, 
     complianceScore?: number
   ) => void;
+  startWithVirtualCourt?: boolean;
+  onClearStartWithVirtualCourt?: () => void;
 }
 
-export default function MapTab({ caseData, results, onUpdateCoordinates }: MapTabProps) {
+export default function MapTab({ 
+  caseData, 
+  results, 
+  onUpdateCoordinates,
+  startWithVirtualCourt,
+  onClearStartWithVirtualCourt
+}: MapTabProps) {
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
   const [activeLayer, setActiveLayer] = useState<'streets' | 'satellite' | 'terrain'>('satellite');
+  const [showVirtualCourt, setShowVirtualCourt] = useState(false);
+
+  useEffect(() => {
+    if (startWithVirtualCourt) {
+      setShowVirtualCourt(true);
+      if (onClearStartWithVirtualCourt) {
+        onClearStartWithVirtualCourt();
+      }
+    }
+  }, [startWithVirtualCourt, onClearStartWithVirtualCourt]);
 
   useEffect(() => {
     if (isScanning) {
@@ -257,16 +277,34 @@ export default function MapTab({ caseData, results, onUpdateCoordinates }: MapTa
               </span>
             </div>
             
-            <button 
-              onClick={triggerSatelliteScan}
-              disabled={isScanning}
-              className="bg-amber-500 hover:bg-amber-600 active:scale-95 disabled:opacity-50 text-slate-950 font-extrabold text-xs px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 shadow-md shadow-amber-500/10"
-            >
-              <Satellite className="w-3.5 h-3.5" />
-              <span>بدء مسح طيفي للتربة والمساحة</span>
-            </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button 
+                onClick={triggerSatelliteScan}
+                disabled={isScanning}
+                className="bg-slate-800 hover:bg-slate-700 active:scale-95 disabled:opacity-50 text-slate-200 font-extrabold text-xs px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 border border-slate-700"
+              >
+                <Satellite className="w-3.5 h-3.5" />
+                <span>بدء مسح طيفي للتربة</span>
+              </button>
+
+              <button 
+                onClick={() => setShowVirtualCourt(true)}
+                className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 text-slate-950 font-black text-xs px-4 py-2 rounded-lg shadow-md shadow-amber-500/10 hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Scale className="w-3.5 h-3.5" />
+                <span>افتتاح المحكمة الافتراضية ⚖️</span>
+              </button>
+            </div>
           </div>
         </div>
+
+        {showVirtualCourt && (
+          <VirtualCourt 
+            onClose={() => setShowVirtualCourt(false)} 
+            caseData={caseData}
+            results={results}
+          />
+        )}
 
         {/* Dynamic Area & Document Compliance Dashboard with Neon Glow Effects */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl relative overflow-hidden group hover:border-amber-500/30 hover:shadow-[0_0_20px_rgba(245,158,11,0.15)] transition-all duration-300">

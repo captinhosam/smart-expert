@@ -17,6 +17,7 @@ import ValuationTrends from './components/ValuationTrends';
 import ComplianceTrends from './components/ComplianceTrends';
 import AreaRegistry from './components/AreaRegistry';
 import MindMapTab from './components/MindMapTab';
+import CourtTab from './components/CourtTab';
 import { triggerToast } from './lib/toast';
 
 import { 
@@ -86,13 +87,16 @@ export default function App() {
     return SAMPLE_CASES[0];
   });
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'details' | 'map' | 'agents' | 'report' | 'files' | 'mindmap' | 'heirs_hub'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'details' | 'map' | 'agents' | 'report' | 'files' | 'mindmap' | 'heirs_hub' | 'court'>('dashboard');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
   const [showStartPage, setShowStartPage] = useState(true);
   const [theme, setTheme] = useState<'dark' | 'paper'>('dark');
+  const [startWithVirtualCourt, setStartWithVirtualCourt] = useState(false);
+  const [maximizedPanel, setMaximizedPanel] = useState<'references' | 'gallery' | 'heirs_list' | 'area_registry' | 'cases_archive' | null>(null);
+  const [maximizedSection, setMaximizedSection] = useState<'references' | 'gallery' | null>(null);
 
   // Global Toast State & Custom Event Listener
   interface ToastItem {
@@ -306,8 +310,9 @@ export default function App() {
   if (showStartPage) {
     return (
       <StartPage 
-        onEnterWorkspace={(tab) => {
+        onEnterWorkspace={(tab, launchCourt) => {
           if (tab) setActiveTab(tab);
+          if (launchCourt) setStartWithVirtualCourt(true);
           setShowStartPage(false);
         }} 
         onLoadSampleAndEnter={(index, tab) => {
@@ -432,7 +437,7 @@ export default function App() {
         </div>
 
         {/* MIDDLE Column: Main Dynamic Content Area (الشاشة الوسطى) */}
-        <main className={`${(activeTab === 'files' || activeTab === 'mindmap') ? 'lg:col-span-9' : 'lg:col-span-6'} space-y-6 order-2 lg:order-none`}>
+        <main className={`${(activeTab === 'files' || activeTab === 'mindmap' || activeTab === 'court') ? 'lg:col-span-9' : 'lg:col-span-6'} space-y-6 order-2 lg:order-none`}>
           
           {activeTab === 'dashboard' && (
             <div className="space-y-6 animate-in fade-in duration-200">
@@ -501,7 +506,11 @@ export default function App() {
               <ComplianceTrends caseData={caseData} theme={theme} />
 
               {/* Custom Area Record & verification registry */}
-              <AreaRegistry caseData={caseData} theme={theme} />
+              <AreaRegistry 
+                caseData={caseData} 
+                theme={theme} 
+                onMaximize={(panelId) => setMaximizedPanel(panelId)}
+              />
 
               {/* Central Information Desk */}
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
@@ -569,12 +578,21 @@ export default function App() {
               </div>
 
               {/* Case Archives & Persistence Console (أرشيف القضايا الموثق ونظام الحفظ) */}
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+              <div 
+                onDoubleClick={() => setMaximizedPanel('cases_archive')}
+                className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4 hover:ring-1 hover:ring-amber-500/20 transition-all cursor-pointer group/cases"
+                title="انقر نقراً مزدوجاً (Double Click) لتوسيع مركز الحفظ والأرشفة بعرض الشاشة"
+              >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
                   <div className="flex items-center gap-2">
                     <Database className="w-5 h-5 text-amber-500" />
                     <div className="flex flex-col text-right">
-                      <span className="text-white text-sm font-black">مركز الحفظ والتأريخ والأرشفة القضائية</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-white text-sm font-black">مركز الحفظ والتأريخ والأرشفة القضائية</span>
+                        <span className="text-[9px] text-slate-500 font-bold animate-pulse hidden group-hover/cases:inline-block bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
+                          (دبل كليك للتوسيع ⛶)
+                        </span>
+                      </div>
                       <span className="text-[10px] text-slate-500 font-bold mt-0.5">سجل القضايا النشطة والمحفوظة محلياً بتحديث تلقائي لجميع التعديلات</span>
                     </div>
                   </div>
@@ -586,6 +604,90 @@ export default function App() {
                     <span>إضافة قضية جديدة تماماً</span>
                   </button>
                 </div>
+
+                {/* 📊 لوحة بيانات المحفظة الاستثمارية العقارية المصغرة (Dashboard Widget) */}
+                {(() => {
+                  const totalAssetsCount = casesArchive.length;
+                  const totalPortfolioValue = casesArchive.reduce((acc, sc) => {
+                    // Estimate value: estateValue (for inheritance), transactionValue (for contracts), or landArea * 15000 as fallback
+                    const val = sc.estateValue || sc.transactionValue || (sc.landArea * 15000) || 500000;
+                    return acc + val;
+                  }, 0);
+
+                  // Group by dispute type
+                  const disputeCounts = casesArchive.reduce((acc, sc) => {
+                    const type = sc.dispute?.type || 'none';
+                    acc[type] = (acc[type] || 0) + 1;
+                    return acc;
+                  }, {} as Record<string, number>);
+
+                  const disputeTypesData = [
+                    { id: 'inheritance', name: 'مواريث وتركات', count: disputeCounts['inheritance'] || 0, color: 'bg-amber-500', barColor: '#f59e0b' },
+                    { id: 'contract', name: 'نزاع عقدي وإخلاء', count: disputeCounts['contract'] || 0, color: 'bg-emerald-500', barColor: '#10b981' },
+                    { id: 'boundary', name: 'تداخل حدود عقارية', count: disputeCounts['boundary'] || 0, color: 'bg-cyan-500', barColor: '#06b6d4' },
+                    { id: 'ownership', name: 'تقييم عقاري وتثبيت ملكية', count: (disputeCounts['ownership'] || 0) + (disputeCounts['none'] || 0), color: 'bg-purple-500', barColor: '#a855f7' }
+                  ];
+
+                  const totalDisputesWithCount = disputeTypesData.reduce((acc, d) => acc + d.count, 0) || 1;
+
+                  return (
+                    <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-4 grid grid-cols-1 lg:grid-cols-12 gap-5 select-none hover:border-amber-500/25 transition-all">
+                      <div className="lg:col-span-5 flex flex-col justify-between text-right space-y-3">
+                        <div>
+                          <div className="flex items-center gap-2 justify-end">
+                            <span className="text-slate-400 text-xs font-black">المحفظة الاستثمارية العقارية المأرشفة</span>
+                            <TrendingUp className="w-4 h-4 text-emerald-500" />
+                          </div>
+                          <h3 className="text-xl md:text-2xl font-black text-white mt-1.5 font-mono tracking-tight">
+                            {totalPortfolioValue.toLocaleString('ar-EG')} <span className="text-xs font-black text-slate-400">ج.م</span>
+                          </h3>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="bg-slate-900/50 p-2 text-right rounded-xl border border-slate-850/60">
+                            <span className="text-slate-500 text-[10px] font-bold block mb-0.5">الأصول المدرجة</span>
+                            <span className="text-white font-black text-xs font-mono">{totalAssetsCount} قضايا</span>
+                          </div>
+                          <div className="bg-slate-900/50 p-2 text-right rounded-xl border border-slate-850/60">
+                            <span className="text-slate-500 text-[10px] font-bold block mb-0.5">متوسط قيمة الأصول</span>
+                            <span className="text-emerald-400 font-black text-xs font-mono">
+                              {Math.round(totalPortfolioValue / (totalAssetsCount || 1)).toLocaleString('ar-EG')} ج
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="lg:col-span-7 border-t lg:border-t-0 lg:border-r border-slate-800/80 pt-3 lg:pt-0 lg:pr-5 flex flex-col justify-center space-y-2">
+                        <span className="text-slate-400 text-xs font-black text-right block">📊 توزيع أنواع النزاعات وحصصها في المحفظة</span>
+                        <div className="space-y-1.5">
+                          {disputeTypesData.map((d) => {
+                            const pct = Math.round((d.count / totalDisputesWithCount) * 100);
+                            return (
+                              <div key={d.id} className="space-y-1">
+                                <div className="flex justify-between items-center text-[10px] font-bold">
+                                  <span className="text-slate-500 font-mono">{pct}% ({d.count})</span>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-slate-300">{d.name}</span>
+                                    <span className={`w-2 h-2 rounded-full ${d.color}`} />
+                                  </div>
+                                </div>
+                                <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden border border-slate-850">
+                                  <div 
+                                    className="h-full rounded-full transition-all duration-500"
+                                    style={{ 
+                                      width: `${pct}%`,
+                                      backgroundColor: d.barColor,
+                                      boxShadow: `0 0 4px ${d.barColor}80`
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {casesArchive.map((sc) => {
@@ -724,6 +826,7 @@ export default function App() {
               <HeirsHubTab 
                 caseData={caseData} 
                 onUpdateCaseData={handleUpdateCaseData} 
+                onMaximize={(panelId) => setMaximizedPanel(panelId)}
               />
             </div>
           )}
@@ -794,19 +897,35 @@ export default function App() {
             </div>
           )}
 
+          {activeTab === 'court' && (
+            <div className="animate-in fade-in duration-200">
+              <CourtTab 
+                caseData={caseData}
+                results={results}
+                onUpdateCaseData={handleUpdateCaseData}
+              />
+            </div>
+          )}
+
         </main>
 
-        {/* LEFT Column: Maps and Images (شمال الشاشة) - Hidden on files and mindmap tab as they are fully integrated or need full width there */}
-        {activeTab !== 'files' && activeTab !== 'mindmap' && (
+        {/* LEFT Column: Maps and Images (شمال الشاشة) - Hidden on files, mindmap, and court tabs as they are fully integrated or need full width there */}
+        {activeTab !== 'files' && activeTab !== 'mindmap' && activeTab !== 'court' && (
           <div className="lg:col-span-3 space-y-6 order-3 lg:order-none">
             <MapTab 
               caseData={caseData} 
               results={results} 
               onUpdateCoordinates={handleUpdateCoordinates} 
+              startWithVirtualCourt={startWithVirtualCourt}
+              onClearStartWithVirtualCourt={() => setStartWithVirtualCourt(false)}
             />
             <FieldReferencesPanel 
               caseData={caseData}
               onUpdateCaseData={handleUpdateCaseData}
+              onMaximize={(panelId) => {
+                setMaximizedPanel(panelId);
+                setMaximizedSection(panelId === 'gallery' ? 'gallery' : 'references');
+              }}
             />
           </div>
         )}
@@ -1026,6 +1145,214 @@ export default function App() {
           </div>
         ))}
       </div>
+
+      {/* ⛶ FULL-SCREEN MAXIMIZED PANEL OVERLAY */}
+      {maximizedPanel && (
+        <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex flex-col p-6 overflow-y-auto animate-in fade-in duration-300" dir="rtl">
+          <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col gap-4 animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-amber-500 text-lg">⛶</span>
+                <h3 className="text-white text-base font-black">
+                  {maximizedPanel === 'gallery' && 'معرض الصور الميدانية الهندسي'}
+                  {maximizedPanel === 'references' && 'المراجع والمطابقات القانونية والهندسية'}
+                  {maximizedPanel === 'heirs_list' && 'بوابة تقسيم المواريث والتركات الشائعة'}
+                  {maximizedPanel === 'area_registry' && 'منصة الإدارة والفرز العقاري الذكي'}
+                  {maximizedPanel === 'cases_archive' && 'مركز الحفظ والتأريخ والأرشفة القضائية'}
+                </h3>
+                <span className="text-[10px] bg-slate-900 border border-slate-800 text-slate-400 px-2.5 py-0.5 rounded font-bold">
+                  عرض كامل الشاشة
+                </span>
+              </div>
+              <button 
+                onClick={() => setMaximizedPanel(null)}
+                className="bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>تصغير النافذة</span>
+                <span>✕</span>
+              </button>
+            </div>
+
+            {/* Content body */}
+            <div className="flex-1 bg-slate-950/40 border border-slate-900 rounded-2xl p-6 overflow-y-auto">
+              {maximizedPanel === 'references' && (
+                <FieldReferencesPanel 
+                  caseData={caseData}
+                  onUpdateCaseData={handleUpdateCaseData}
+                  isMaximized={true}
+                  maximizedSection="references"
+                />
+              )}
+              {maximizedPanel === 'gallery' && (
+                <FieldReferencesPanel 
+                  caseData={caseData}
+                  onUpdateCaseData={handleUpdateCaseData}
+                  isMaximized={true}
+                  maximizedSection="gallery"
+                />
+              )}
+              {maximizedPanel === 'heirs_list' && (
+                <HeirsHubTab 
+                  caseData={caseData}
+                  onUpdateCaseData={handleUpdateCaseData}
+                  isMaximized={true}
+                  onMaximize={() => setMaximizedPanel(null)}
+                />
+              )}
+              {maximizedPanel === 'area_registry' && (
+                <AreaRegistry 
+                  caseData={caseData}
+                  theme={theme}
+                  isMaximized={true}
+                  onMaximize={() => setMaximizedPanel(null)}
+                />
+              )}
+              {maximizedPanel === 'cases_archive' && (
+                <div className="space-y-6 text-right">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-900 pb-3">
+                    <p className="text-slate-400 text-xs font-semibold leading-relaxed">
+                      تصفح وإدارة كافة القضايا والنزاعات العقارية المؤرشفة في النظام مع إمكانية التكرار أو الحذف الفوري وتلقائية العمل والمحاكاة:
+                    </p>
+                    <button
+                      onClick={() => {
+                        handleNewCase();
+                        setMaximizedPanel(null);
+                      }}
+                      className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-md shadow-amber-500/10"
+                    >
+                      <PlusCircle className="w-4 h-4" />
+                      <span>إضافة قضية جديدة</span>
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {casesArchive.map((sc) => {
+                      const isActive = sc.caseNumber === caseData.caseNumber;
+                      const scSessions = sc.sessions || [];
+                      const todayStr = new Date().toISOString().split('T')[0];
+                      const upcomingSessions = scSessions.filter(s => s.date >= todayStr);
+                      const nextSession = upcomingSessions.length > 0 
+                        ? upcomingSessions.sort((a, b) => a.date.localeCompare(b.date))[0]
+                        : null;
+                      
+                      let daysUntilNext = 9999;
+                      if (nextSession) {
+                        const today = new Date(todayStr);
+                        const sessDateObj = new Date(nextSession.date);
+                        const diffTime = sessDateObj.getTime() - today.getTime();
+                        daysUntilNext = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      }
+
+                      return (
+                        <div
+                          key={sc.caseNumber}
+                          className={`p-5 rounded-2xl border transition-all flex flex-col justify-between gap-4 ${
+                            isActive 
+                              ? 'bg-amber-500/5 border-amber-500/40 shadow-xl' 
+                              : 'bg-slate-900/60 border-slate-800 hover:bg-slate-800/40 hover:border-slate-700'
+                          }`}
+                        >
+                          <div className="space-y-2 text-right">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-slate-400 font-mono font-bold">{sc.caseNumber}</span>
+                              <span className={`text-[10px] px-2.5 py-1 rounded-full font-extrabold ${
+                                sc.status === 'جديدة' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                                sc.status === 'قيد النظر' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                                'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                              }`}>
+                                {sc.status}
+                              </span>
+                            </div>
+                            
+                            <h4 className="text-white text-sm font-black leading-snug">
+                              {sc.title}
+                            </h4>
+                            
+                            <p className="text-xs text-slate-400 leading-snug font-semibold">
+                              🏢 {sc.court}
+                            </p>
+                            
+                            <div className="flex items-center gap-2 text-xs text-slate-500 font-bold">
+                              <span>📐 المساحة: {sc.landArea} م²</span>
+                              <span>•</span>
+                              <span>⚖️ التخصص: {
+                                sc.dispute.type === 'inheritance' ? 'مواريث وتركات' : 
+                                sc.dispute.type === 'contract' ? 'نزاع عقدي وإخلاء' : 
+                                sc.dispute.type === 'boundary' ? 'تداخل حدود عقارية' : 'تقييم عقاري وتثبيت ملكية'
+                              }</span>
+                            </div>
+
+                            {nextSession ? (
+                              <div className={`mt-2 p-2 rounded-xl border flex items-center justify-between text-xs font-black ${
+                                daysUntilNext <= 3 
+                                  ? 'bg-red-500/10 border-red-500/20 text-red-400 animate-pulse' 
+                                  : daysUntilNext <= 7 
+                                  ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' 
+                                  : 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400'
+                              }`}>
+                                <span className="flex items-center gap-1.5 truncate">
+                                  <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                                  <span>جلسة ({nextSession.type}): {nextSession.date}</span>
+                                </span>
+                                <span className="bg-slate-950 px-2 py-0.5 rounded font-mono shrink-0 text-[10px]">
+                                  {daysUntilNext === 0 ? 'اليوم!' : daysUntilNext === 1 ? 'غداً!' : `خلال ${daysUntilNext} يوم`}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="mt-2 p-1.5 rounded-lg bg-slate-950/20 border border-slate-850/30 text-[10px] text-slate-500 font-bold flex items-center gap-1 justify-center">
+                                <span>لم تحدد جلسات قادمة</span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2 border-t border-slate-800/80 pt-3">
+                            <button
+                              onClick={() => {
+                                handleLoadArchivedCase(sc.caseNumber);
+                                setMaximizedPanel(null);
+                              }}
+                              disabled={isActive}
+                              className={`flex-1 text-center py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                                isActive
+                                  ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20 cursor-default'
+                                  : 'bg-slate-850 border border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-white'
+                              }`}
+                            >
+                              <FileCheck className="w-4 h-4 text-amber-500" />
+                              <span>{isActive ? 'القضية النشطة حالياً' : 'تحميل للعمل والمحاكاة'}</span>
+                            </button>
+
+                            <button
+                              onClick={() => handleCloneCase(sc)}
+                              className="bg-slate-850 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 p-2 rounded-xl transition-all"
+                              title="نسخ القضية وتكرارها"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                handleDeleteArchivedCase(sc.caseNumber);
+                                if (isActive) {
+                                  setMaximizedPanel(null);
+                                }
+                              }}
+                              className="bg-slate-850 hover:bg-slate-800 hover:border-red-900 text-slate-500 hover:text-red-400 border border-slate-800 p-2 rounded-xl transition-all"
+                              title="حذف القضية نهائياً"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -79,6 +79,10 @@ export interface CaseData {
   complianceScore?: number; // matching score with official documents (0-100)
   scannedArea?: number; // GPS scanned area
 
+  plaintiff?: string; // اسم المدعي
+  defendant?: string; // اسم المدعى عليه
+  caseType?: string; // نوع القضية (جنائي، مدني، إداري، إلخ)
+
   // Upcoming Court Sessions & schedule
   sessions?: CourtSession[];
 

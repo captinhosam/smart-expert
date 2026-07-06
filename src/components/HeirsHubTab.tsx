@@ -37,9 +37,16 @@ const CHART_COLORS = [
 interface HeirsHubTabProps {
   caseData: CaseData;
   onUpdateCaseData: (data: Partial<CaseData>) => void;
+  onMaximize?: (panelId: 'heirs_list') => void;
+  isMaximized?: boolean;
 }
 
-export default function HeirsHubTab({ caseData, onUpdateCaseData }: HeirsHubTabProps) {
+export default function HeirsHubTab({ 
+  caseData, 
+  onUpdateCaseData,
+  onMaximize,
+  isMaximized = false
+}: HeirsHubTabProps) {
   const [newHeirName, setNewHeirName] = useState('');
   const [newHeirGender, setNewHeirGender] = useState<'male' | 'female'>('male');
   const [newHeirRelation, setNewHeirRelation] = useState<Heir['relationship']>('son');
@@ -127,7 +134,12 @@ export default function HeirsHubTab({ caseData, onUpdateCaseData }: HeirsHubTabP
   };
 
   return (
-    <div className="space-y-6 text-right" dir="rtl">
+    <div 
+      onDoubleClick={() => onMaximize?.('heirs_list')}
+      className={`space-y-6 text-right ${!isMaximized ? 'cursor-pointer' : ''}`}
+      title={!isMaximized ? "انقر نقراً مزدوجاً (Double Click) لتوسيع بوابة المواريث والورثة بعرض الشاشة" : undefined}
+      dir="rtl"
+    >
       
       {/* Top Welcome Panel */}
       <div className="bg-gradient-to-r from-amber-600/10 via-amber-500/5 to-transparent border border-amber-500/20 rounded-2xl p-6 shadow-xl relative overflow-hidden">
@@ -140,6 +152,11 @@ export default function HeirsHubTab({ caseData, onUpdateCaseData }: HeirsHubTabP
               <span className="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full font-bold border border-amber-500/30">
                 مدمج بالكامل
               </span>
+              {!isMaximized && (
+                <span className="text-[9px] text-slate-500 font-bold animate-pulse mr-2 bg-slate-900 border border-slate-800 px-2 py-1 rounded">
+                  (دبل كليك للتوسيع ⛶)
+                </span>
+              )}
             </h2>
             <p className="text-slate-400 text-xs mt-1 font-semibold leading-relaxed">
               هذه الصفحة تجمع كل البيانات القضائية والمالية والرسومية الخاصة بالتركات وشجرة الورثة في مكان واحد. أي تحديث هنا ينعكس على تقارير الخبراء والرفع المساحي فورياً.

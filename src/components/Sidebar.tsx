@@ -10,12 +10,13 @@ import {
   FolderOpen,
   MessageSquare,
   Compass,
-  Users
+  Users,
+  Scale
 } from 'lucide-react';
 
 interface SidebarProps {
-  activeTab: 'dashboard' | 'details' | 'map' | 'agents' | 'report' | 'files' | 'mindmap' | 'heirs_hub';
-  setActiveTab: (tab: 'dashboard' | 'details' | 'map' | 'agents' | 'report' | 'files' | 'mindmap' | 'heirs_hub') => void;
+  activeTab: 'dashboard' | 'details' | 'map' | 'agents' | 'report' | 'files' | 'mindmap' | 'heirs_hub' | 'court';
+  setActiveTab: (tab: 'dashboard' | 'details' | 'map' | 'agents' | 'report' | 'files' | 'mindmap' | 'heirs_hub' | 'court') => void;
   caseTitle: string;
   caseNumber: string;
 }
@@ -29,6 +30,7 @@ export default function Sidebar({ activeTab, setActiveTab, caseTitle, caseNumber
     { id: 'mindmap', label: 'الخريطة الذهنية للأراضي', icon: Compass, desc: 'القوانين الحاكمة، والجهات المنفذة' },
     { id: 'map', label: 'نظم الخرائط و GPS', icon: Map, desc: 'الإحداثيات الجغرافية والمسح الطيفي' },
     { id: 'agents', label: 'محاكاة 50+ وكيل خبير', icon: Cpu, desc: 'العقل الاستدلالي ومستودع الوكلاء' },
+    { id: 'court', label: 'المحكمة الافتراضية والتنفيذ', icon: Scale, desc: 'قاعة المحكمة ثلاثية الأبعاد ونظام المحضرين' },
     { id: 'report', label: 'التقرير القضائي المعتمد', icon: FileText, desc: 'التقرير النهائي الجاهز للطباعة والتقديم' }
   ] as const;
 

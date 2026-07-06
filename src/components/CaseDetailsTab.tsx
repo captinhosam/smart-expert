@@ -588,6 +588,157 @@ export default function CaseDetailsTab({ caseData, onUpdateCaseData }: CaseDetai
               </div>
             )}
 
+            {/* SECTION 3(C): Heirs & Sharia Division (تظهر عندما يكون نوع النزاع "ميراث") */}
+            {caseData.dispute.type === 'inheritance' && (
+              <div className="bg-slate-900 border border-slate-850 rounded-2xl p-5 shadow-xl space-y-4 animate-in fade-in duration-300">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
+                  <h3 className="text-emerald-400 text-xs font-black flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    <span>القسم الثالث (ج): حصر الورثة التفاعلي وقسمة التركة الشرعية الفورية</span>
+                  </h3>
+                  <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2.5 py-0.5 rounded-full font-bold border border-emerald-500/20">
+                    تحديث لحظي نشط
+                  </span>
+                </div>
+
+                {/* Info about estate */}
+                <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-850 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <span className="text-white text-xs font-black block">القيمة السوقية الإجمالية للتركة (Estate Value):</span>
+                    <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
+                      يتم حساب توزيع المواريث والأنصبة استناداً إلى هذه القيمة. يمكنك تغييرها لتحديث القيم النقدية فوراً.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <input 
+                      type="number"
+                      value={caseData.estateValue || 240000}
+                      onChange={e => onUpdateCaseData({ estateValue: Number(e.target.value) })}
+                      className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white font-mono text-xs font-bold w-36 focus:outline-none"
+                    />
+                    <span className="text-slate-400 text-xs font-bold">ج.م</span>
+                  </div>
+                </div>
+
+                {/* Interactive Add Heir Form */}
+                <div className="bg-slate-950/30 p-4 rounded-xl border border-slate-850/60 space-y-3">
+                  <span className="text-slate-300 text-[11px] font-black block">➕ إضافة وريث جديد لجدول النزاع:</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    <div className="sm:col-span-2">
+                      <input 
+                        type="text"
+                        placeholder="اسم الوريث بالكامل..."
+                        id="form-heir-name"
+                        className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs w-full focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <select 
+                        id="form-heir-gender"
+                        className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs w-full focus:outline-none"
+                      >
+                        <option value="male">ذكر</option>
+                        <option value="female">أنثى</option>
+                      </select>
+                    </div>
+                    <div>
+                      <select 
+                        id="form-heir-relation"
+                        className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2 text-white text-xs w-full focus:outline-none"
+                      >
+                        <option value="son">ابن</option>
+                        <option value="daughter">ابنة</option>
+                        <option value="wife">زوجة</option>
+                        <option value="husband">زوج</option>
+                        <option value="father">أب</option>
+                        <option value="mother">أم</option>
+                      </select>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nameEl = document.getElementById('form-heir-name') as HTMLInputElement;
+                      const genderEl = document.getElementById('form-heir-gender') as HTMLSelectElement;
+                      const relationEl = document.getElementById('form-heir-relation') as HTMLSelectElement;
+                      if (!nameEl || !nameEl.value.trim()) {
+                        triggerToast('⚠️ يرجى إدخال اسم الوارث كاملاً', 'warning');
+                        return;
+                      }
+                      const newHeir: Heir = {
+                        id: `heir_${Date.now()}`,
+                        name: nameEl.value.trim(),
+                        gender: genderEl.value as 'male' | 'female',
+                        relationship: relationEl.value as any
+                      };
+                      onUpdateCaseData({
+                        heirs: [...caseData.heirs, newHeir]
+                      });
+                      nameEl.value = '';
+                      triggerToast('👥 تم إدراج الوارث وإعادة احتساب الأنصبة الشرعية لحظياً!', 'success');
+                    }}
+                    className="w-full bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-750 font-black text-xs py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <UserPlus className="w-4 h-4 text-amber-500" />
+                    <span>إدراج الوارث وتطبيق قواعد الشريعة</span>
+                  </button>
+                </div>
+
+                {/* List of Heirs with calculated shares */}
+                {caseData.heirs.length === 0 ? (
+                  <div className="p-4 rounded-xl border border-slate-850 bg-slate-950/20 text-center text-slate-500 text-xs font-bold">
+                    لم يتم تسجيل أي ورثة لهذه القضية حتى الآن. استخدم حقول الإضافة أعلاه لبناء شجرة التركة.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <span className="text-slate-400 text-[10px] font-black block">الورثة المسجلون وتوزيع حصصهم من التركة:</span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {results.heirsShares.map((hs) => {
+                        const originalHeir = caseData.heirs.find(h => h.id === hs.id);
+                        return (
+                          <div key={hs.id} className="bg-slate-950 p-3 rounded-xl border border-slate-850 flex items-center justify-between text-xs hover:border-emerald-500/20 transition-all">
+                            <div className="text-right space-y-1 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-white font-black">{hs.name}</span>
+                                <span className="text-[9px] bg-slate-900 border border-slate-850 text-slate-400 px-1.5 py-0.5 rounded">
+                                  {originalHeir?.relationship === 'son' && 'ابن'}
+                                  {originalHeir?.relationship === 'daughter' && 'ابنة'}
+                                  {originalHeir?.relationship === 'wife' && 'زوجة'}
+                                  {originalHeir?.relationship === 'husband' && 'زوج'}
+                                  {originalHeir?.relationship === 'father' && 'أب'}
+                                  {originalHeir?.relationship === 'mother' && 'أم'}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-[10px] font-semibold text-slate-400">
+                                <span className="text-emerald-400 font-black">{hs.sharePercent.toFixed(2)}%</span>
+                                <span>•</span>
+                                <span className="text-slate-500">{hs.shareFraction}</span>
+                              </div>
+                              <div className="text-[11px] font-mono font-bold text-amber-400">
+                                {hs.shareValue.toLocaleString('ar-EG')} ج.م
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onUpdateCaseData({
+                                  heirs: caseData.heirs.filter(h => h.id !== hs.id)
+                                });
+                                triggerToast('🗑️ تم استبعاد الوارث وإعادة تصفية الحسابات', 'info');
+                              }}
+                              className="text-slate-500 hover:text-red-400 p-1.5 hover:bg-slate-900 rounded-lg transition-all"
+                            >
+                              <Trash2 className="w-4.5 h-4.5" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* SECTION 4: Court Dispute Information (ثابتة في كل الحالات) */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
               <h3 className="text-white text-sm font-black flex items-center gap-2 border-b border-slate-800 pb-2.5">
@@ -805,6 +956,25 @@ export default function CaseDetailsTab({ caseData, onUpdateCaseData }: CaseDetai
                       {caseData.dispute.details || 'لا توجد تفاصيل حتى الآن...'}
                     </p>
                   </div>
+
+                  {/* Dynamic Sharia Division Summary (تحديث فوري للورثة) */}
+                  {caseData.dispute.type === 'inheritance' && caseData.heirs.length > 0 && (
+                    <div className="space-y-2 pt-2 border-t border-slate-900/60 text-xs text-right animate-in fade-in duration-200">
+                      <span className="text-[9px] text-emerald-400 font-black block">القسمة الشرعية الفورية للورثة ({caseData.heirs.length}):</span>
+                      <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-lg p-2.5 space-y-1.5 max-h-36 overflow-y-auto scrollbar-thin">
+                        {results.heirsShares.map(hs => (
+                          <div key={hs.id} className="flex justify-between items-center text-[10px] border-b border-slate-900/45 pb-1 last:border-0 last:pb-0">
+                            <span className="text-white font-bold">{hs.name}</span>
+                            <div className="flex items-center gap-2 font-semibold">
+                              <span className="text-emerald-400">{hs.sharePercent.toFixed(1)}%</span>
+                              <span className="text-slate-500">•</span>
+                              <span className="text-amber-400 font-mono font-bold text-[9px]">{hs.shareValue.toLocaleString('ar-EG')} ج</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Compliance Indicator Badge */}
                   <div className="bg-slate-900/80 border border-slate-850 p-2.5 rounded-xl flex items-center justify-between text-[10px]">

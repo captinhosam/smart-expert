@@ -49,9 +49,11 @@ interface ApartmentRecord {
 interface AreaRegistryProps {
   caseData: CaseData;
   theme: 'dark' | 'paper';
+  onMaximize?: (panelId: 'area_registry') => void;
+  isMaximized?: boolean;
 }
 
-export default function AreaRegistry({ caseData, theme }: AreaRegistryProps) {
+export default function AreaRegistry({ caseData, theme, onMaximize, isMaximized = false }: AreaRegistryProps) {
   // ----------------------------------------------------
   // Part 1: Area Records State (Original functionality)
   // ----------------------------------------------------
@@ -436,13 +438,22 @@ export default function AreaRegistry({ caseData, theme }: AreaRegistryProps) {
   const isPaper = theme === 'paper';
 
   return (
-    <div className="space-y-6">
+    <div 
+      onDoubleClick={() => onMaximize?.('area_registry')}
+      className={`space-y-6 ${!isMaximized ? 'cursor-pointer' : ''}`}
+      title={!isMaximized ? "انقر نقراً مزدوجاً (Double Click) لتوسيع بوابة الفرز العقاري بعرض الشاشة" : undefined}
+    >
       
       {/* SECTION SELECTOR TABS */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-slate-950 p-3 rounded-2xl border border-slate-800">
         <span className="text-white text-xs font-black flex items-center gap-1.5 px-2">
           <BookOpen className="w-4 h-4 text-amber-500 animate-pulse" />
           <span>منصة الإدارة والفرز العقاري الذكي</span>
+          {!isMaximized && (
+            <span className="text-[9px] text-slate-500 font-bold animate-pulse mr-2 bg-slate-900 border border-slate-800 px-2 py-1 rounded">
+              (دبل كليك للتوسيع ⛶)
+            </span>
+          )}
         </span>
         <div className="flex items-center gap-2 flex-wrap">
           <button
