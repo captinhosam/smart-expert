@@ -124,17 +124,18 @@ export function calculateAll(caseData: CaseData): CalculationResults {
   // First, check if there is a spouse or parents.
   // Then, residue is divided between sons and daughters (males get twice as females).
   const heirsShares: CalculationResults['heirsShares'] = [];
-  if (heirs.length > 0) {
+  const activeHeirs = heirs.filter(h => h.selected !== false);
+  if (activeHeirs.length > 0) {
     const calcEstate = estateValue > 0 ? estateValue : 240000;
     let remainingEstate = calcEstate;
     
     // Find spouse
-    const wives = heirs.filter(h => h.relationship === 'wife');
-    const husbands = heirs.filter(h => h.relationship === 'husband');
-    const fathers = heirs.filter(h => h.relationship === 'father');
-    const mothers = heirs.filter(h => h.relationship === 'mother');
-    const sons = heirs.filter(h => h.relationship === 'son');
-    const daughters = heirs.filter(h => h.relationship === 'daughter');
+    const wives = activeHeirs.filter(h => h.relationship === 'wife');
+    const husbands = activeHeirs.filter(h => h.relationship === 'husband');
+    const fathers = activeHeirs.filter(h => h.relationship === 'father');
+    const mothers = activeHeirs.filter(h => h.relationship === 'mother');
+    const sons = activeHeirs.filter(h => h.relationship === 'son');
+    const daughters = activeHeirs.filter(h => h.relationship === 'daughter');
     
     const hasChildren = (sons.length + daughters.length) > 0;
     

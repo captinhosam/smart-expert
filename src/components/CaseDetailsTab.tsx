@@ -32,12 +32,17 @@ import {
   Scale,
   Sparkles,
   RefreshCw,
-  Video
+  Video,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { calculateAll } from '../utils/calculations';
 import FieldCameraTab from './FieldCameraTab';
 import DocumentsGuidePanel from './DocumentsGuidePanel';
 import { triggerToast } from '../lib/toast';
+import { SAMPLE_LOCATIONS } from '../data/expertSystemData';
+import ComplianceTrends from './ComplianceTrends';
+import AreaRegistry from './AreaRegistry';
 
 const DICTATION_PRESETS: Record<string, string> = {
   ownership: "أنا بصفتي وكيلاً عن المدعي، أثبت أن الأرض الكائنة بشارع الهرم هي ملك خالص لموكلي بموجب عقد البيع المشهر رقم ٢٤٠٥ لسنة ٢٠١٢، والخصم يضع يده عليها دون وجه حق أو سند قانوني صحيح، ونطالب بطرده وتسليم الأرض خالية.",
@@ -49,10 +54,29 @@ const DICTATION_PRESETS: Record<string, string> = {
 interface CaseDetailsTabProps {
   caseData: CaseData;
   onUpdateCaseData: (data: Partial<CaseData>) => void;
+  theme?: 'dark' | 'paper';
 }
 
-export default function CaseDetailsTab({ caseData, onUpdateCaseData }: CaseDetailsTabProps) {
+export default function CaseDetailsTab({ caseData, onUpdateCaseData, theme }: CaseDetailsTabProps) {
   const [subTab, setSubTab] = useState<'profile' | 'camera' | 'documents'>('profile');
+  const [isDisputeGuideOpen, setIsDisputeGuideOpen] = useState(false);
+  const [isDisputeDropdownOpen, setIsDisputeDropdownOpen] = useState(false);
+  const [expandedDisputeSections, setExpandedDisputeSections] = useState<Record<string, boolean>>({
+    property: false,
+    contracts: false,
+    rents: false,
+    construction: false,
+    handling: false,
+    importance: false,
+    ending: false
+  });
+
+  const toggleDisputeSection = (section: string) => {
+    setExpandedDisputeSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
   
   // Voice recording states
   const [isRecording, setIsRecording] = useState(false);
@@ -192,7 +216,8 @@ export default function CaseDetailsTab({ caseData, onUpdateCaseData }: CaseDetai
           <DocumentsGuidePanel />
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
           {/* RIGHT SIDE: Dynamic Form (span 7 or 8) */}
           <div className="lg:col-span-8 space-y-6">
@@ -299,19 +324,294 @@ export default function CaseDetailsTab({ caseData, onUpdateCaseData }: CaseDetai
                   </select>
                 </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-slate-400 text-[11px] font-bold">توجيه المحكمة للموضوع والخصومة</label>
-                  <select 
-                    value={caseData.dispute.type}
-                    onChange={e => onUpdateCaseData({ dispute: { ...caseData.dispute, type: e.target.value as any } })}
-                    className="bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3 py-2.5 text-white text-xs font-black focus:outline-none transition-all"
-                  >
-                    <option value="inheritance">⚖️ إرث / ميراث (تركة شرعية وتصفية أنصبة)</option>
-                    <option value="ownership">📜 نزاع ملكية وحجية عقود مشهرة</option>
-                    <option value="boundary">📐 نزاع تداخل حدود ومساحات الأراضي</option>
-                    <option value="contract">✍️ نزاع عقود وإخلاء عين مؤجرة</option>
-                  </select>
+                <div className="flex flex-col gap-1.5 relative">
+                  <label className="text-slate-400 text-[11px] font-bold">توجيه المحكمة للموضوع والخصومة (نوع النزاع)</label>
+                  
+                  {/* Custom Dropdown Trigger Card */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setIsDisputeDropdownOpen(!isDisputeDropdownOpen)}
+                      className="w-full flex items-center justify-between bg-slate-950 border border-slate-800 hover:border-amber-500/50 focus:border-amber-500 rounded-xl px-3 py-2.5 text-white text-xs font-black transition-all cursor-pointer text-right"
+                    >
+                      <span className="flex items-center gap-2">
+                        {caseData.dispute.type === 'inheritance' && '⚖️ إرث / ميراث (تركة شرعية وتصفية أنصبة)'}
+                        {caseData.dispute.type === 'ownership' && '📜 نزاعات الملكية والتعديات'}
+                        {caseData.dispute.type === 'boundary' && '📐 نزاع تداخل حدود ومساحات الأراضي'}
+                        {caseData.dispute.type === 'contract' && '✍️ نزاعات العقود والإخلال بالالتزامات'}
+                        {caseData.dispute.type === 'rent' && '🏠 نزاعات الإيجار والتمكين'}
+                        {caseData.dispute.type === 'construction' && '🏗️ نزاعات البناء والتطوير العقاري'}
+                        {caseData.dispute.type === 'none' && '🔍 غير محدد / لم يختر بعد'}
+                      </span>
+                      <ChevronDown className={`w-4 h-4 text-amber-500 transition-transform duration-350 ${isDisputeDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {/* Custom Dropdown Options */}
+                    {isDisputeDropdownOpen && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-40" 
+                          onClick={() => setIsDisputeDropdownOpen(false)}
+                        />
+                        <div className="absolute z-50 left-0 right-0 mt-1.5 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl p-1.5 space-y-1 animate-in fade-in slide-in-from-top-2 duration-150">
+                          {[
+                            { value: 'inheritance', label: '⚖️ إرث / ميراث (تركة شرعية وتصفية أنصبة)' },
+                            { value: 'ownership', label: '📜 نزاعات الملكية والتعديات' },
+                            { value: 'boundary', label: '📐 نزاع تداخل حدود ومساحات الأراضي' },
+                            { value: 'contract', label: '✍️ نزاعات العقود والإخلال بالالتزامات' },
+                            { value: 'rent', label: '🏠 نزاعات الإيجار والتمكين' },
+                            { value: 'construction', label: '🏗️ نزاعات البناء والتطوير العقاري' }
+                          ].map((opt) => (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => {
+                                onUpdateCaseData({ dispute: { ...caseData.dispute, type: opt.value as any } });
+                                setIsDisputeDropdownOpen(false);
+                              }}
+                              className={`w-full text-right px-3 py-2 text-xs rounded-lg transition-all flex items-center justify-between ${
+                                caseData.dispute.type === opt.value 
+                                  ? 'bg-amber-500/10 text-amber-400 font-black border border-amber-500/25' 
+                                  : 'text-slate-300 hover:bg-slate-900 hover:text-white'
+                              }`}
+                            >
+                              <span>{opt.label}</span>
+                              {caseData.dispute.type === opt.value && <span className="text-amber-500 text-[10px]">✓ نشط</span>}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
+              </div>
+
+              {/* Collapsible & Interactive Types of Disputes Guide Panel */}
+              <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/40 transition-all">
+                <button
+                  type="button"
+                  onClick={() => setIsDisputeGuideOpen(!isDisputeGuideOpen)}
+                  className="w-full flex items-center justify-between px-4 py-3 bg-slate-950 text-right hover:bg-slate-900 transition-all border-b border-slate-800/65"
+                >
+                  <div className="flex items-center gap-2 text-amber-500 font-black text-xs">
+                    <Scale className="w-4 h-4 shrink-0" />
+                    <span>📖 دليل تصنيف وتفصيل أنواع النزاعات والمنازعات العقارية الشائعة</span>
+                  </div>
+                  {isDisputeGuideOpen ? (
+                    <ChevronUp className="w-4 h-4 text-slate-400 shrink-0" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
+                  )}
+                </button>
+
+                {isDisputeGuideOpen && (
+                  <div className="p-4 space-y-4 text-right text-xs leading-relaxed text-slate-300 animate-in slide-in-from-top-1 duration-200">
+                    
+                    {/* Intro */}
+                    <div className="bg-amber-500/5 border border-amber-500/10 p-3 rounded-xl text-slate-300">
+                      <p className="font-semibold text-justify">
+                        <strong>القضايا العقارية</strong> هي النزاعات القانونية التي تنشأ بسبب التعاملات في مجال العقارات، وتشمل النطاقات والتفاصيل الرئيسية الموضحة أدناه. انقر على أي سهم لاستعراض التفاصيل الكاملة:
+                      </p>
+                    </div>
+
+                    {/* Interactive Collapsible Boxes for Dispute Categories */}
+                    <div className="space-y-3">
+                      
+                      {/* 1. نزاعات الملكية */}
+                      <div className="border border-slate-800/80 rounded-xl overflow-hidden bg-slate-900/60">
+                        <button
+                          type="button"
+                          onClick={() => toggleDisputeSection('property')}
+                          className="w-full flex items-center justify-between px-4 py-3 bg-slate-950 hover:bg-slate-900 text-right transition-all"
+                        >
+                          <span className="font-bold text-amber-400 text-xs flex items-center gap-1.5">
+                            <span>📜 نزاعات الملكية والتعديات</span>
+                          </span>
+                          <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${expandedDisputeSections.property ? 'rotate-180' : ''}`} />
+                        </button>
+                        {expandedDisputeSections.property && (
+                          <div className="p-4 bg-slate-950/20 border-t border-slate-800/60 text-slate-300 space-y-3 animate-in slide-in-from-top-1 duration-150">
+                            <p className="text-justify text-[11px] leading-relaxed">
+                              القضايا العقارية هي النزاعات القانونية التي تنشأ بسبب التعاملات في مجال العقارات، وتشمل:
+                            </p>
+                            <div className="bg-slate-950/40 p-2.5 rounded-lg border border-slate-800">
+                              <span className="font-bold text-amber-500 block mb-1 text-[11px]">📍 نزاعات الملكية:</span>
+                              <p className="text-slate-400 text-[11px]">مثل التعدي على الملكية، النزاعات حول الحدود، وعدم وضوح الملكية.</p>
+                            </div>
+                            <div className="bg-slate-950/40 p-2.5 rounded-lg border border-slate-800 space-y-1.5">
+                              <span className="font-bold text-white block text-[11px]">⚖️ أنواع المنازعات العقارية الشائعة:</span>
+                              <p className="text-slate-400 text-[11px]"><strong className="text-slate-200">التعدي على الملكية:</strong> عندما يقوم شخص بالتعدي على أرض أو عقار مملوك لشخص آخر.</p>
+                              <p className="text-slate-400 text-[11px]"><strong className="text-slate-200">النزاعات حول الحدود:</strong> عندما تكون هناك خلافات حول الحدود الدقيقة بين الممتلكات.</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 2. نزاعات العقود */}
+                      <div className="border border-slate-800/80 rounded-xl overflow-hidden bg-slate-900/60">
+                        <button
+                          type="button"
+                          onClick={() => toggleDisputeSection('contracts')}
+                          className="w-full flex items-center justify-between px-4 py-3 bg-slate-950 hover:bg-slate-900 text-right transition-all"
+                        >
+                          <span className="font-bold text-amber-400 text-xs flex items-center gap-1.5">
+                            <span>✍️ نزاعات العقود والإخلال بالالعقود</span>
+                          </span>
+                          <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${expandedDisputeSections.contracts ? 'rotate-180' : ''}`} />
+                        </button>
+                        {expandedDisputeSections.contracts && (
+                          <div className="p-4 bg-slate-950/20 border-t border-slate-800/60 text-slate-300 space-y-3 animate-in slide-in-from-top-1 duration-150">
+                            <p className="text-justify text-[11px] leading-relaxed">
+                              القضايا العقارية هي النزاعات القانونية التي تنشأ بسبب التعاملات في مجال العقارات، وتشمل:
+                            </p>
+                            <div className="bg-slate-950/40 p-2.5 rounded-lg border border-slate-800">
+                              <span className="font-bold text-amber-500 block mb-1 text-[11px]">📍 نزاعات العقود:</span>
+                              <p className="text-slate-400 text-[11px]">مثل الإخلال بشروط العقود، التأخير في تسليم العقارات، وعدم الوفاء بالالتزامات التعاقدية.</p>
+                            </div>
+                            <div className="bg-slate-950/40 p-2.5 rounded-lg border border-slate-800 space-y-1.5">
+                              <span className="font-bold text-white block text-[11px]">⚖️ أنواع المنازعات العقارية الشائعة:</span>
+                              <p className="text-slate-400 text-[11px]"><strong className="text-slate-200">إخلال بشروط العقد:</strong> عندما لا يلتزم أحد الأطراف بشروط العقد المبرم، مثل عدم الدفع أو عدم تسليم العقار في الموعد المتفق عليه.</p>
+                              <p className="text-slate-400 text-[11px]"><strong className="text-slate-200">تأخير التسليم:</strong> تأخير في تسليم العقار من قبل البائع أو المطور العقاري.</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 3. نزاعات الإيجار */}
+                      <div className="border border-slate-800/80 rounded-xl overflow-hidden bg-slate-900/60">
+                        <button
+                          type="button"
+                          onClick={() => toggleDisputeSection('rents')}
+                          className="w-full flex items-center justify-between px-4 py-3 bg-slate-950 hover:bg-slate-900 text-right transition-all"
+                        >
+                          <span className="font-bold text-amber-400 text-xs flex items-center gap-1.5">
+                            <span>🏠 نزاعات الإيجار والتمكين</span>
+                          </span>
+                          <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${expandedDisputeSections.rents ? 'rotate-180' : ''}`} />
+                        </button>
+                        {expandedDisputeSections.rents && (
+                          <div className="p-4 bg-slate-950/20 border-t border-slate-800/60 text-slate-300 space-y-3 animate-in slide-in-from-top-1 duration-150">
+                            <p className="text-justify text-[11px] leading-relaxed">
+                              القضايا العقارية هي النزاعات القانونية التي تنشأ بسبب التعاملات في مجال العقارات، وتشمل:
+                            </p>
+                            <div className="bg-slate-950/40 p-2.5 rounded-lg border border-slate-800">
+                              <span className="font-bold text-amber-500 block mb-1 text-[11px]">📍 نزاعات الإيجار:</span>
+                              <p className="text-slate-400 text-[11px]">مثل عدم دفع الإيجار، الإخلاء غير القانوني، وانتهاكات شروط عقد الإيجار.</p>
+                            </div>
+                            <div className="bg-slate-950/40 p-2.5 rounded-lg border border-slate-800 space-y-1.5">
+                              <span className="font-bold text-white block text-[11px]">⚖️ أنواع المنازعات العقارية الشائعة:</span>
+                              <p className="text-slate-400 text-[11px]"><strong className="text-slate-200">عدم دفع الإيجار:</strong> عندما يفشل المستأجر في دفع الإيجار في الموعد المحدد.</p>
+                              <p className="text-slate-400 text-[11px]"><strong className="text-slate-200">الإخلاء غير القانوني:</strong> عندما يحاول المالك إخلاء المستأجر دون اتباع الإجراءات القانونية.</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 4. نزاعات البناء */}
+                      <div className="border border-slate-800/80 rounded-xl overflow-hidden bg-slate-900/60">
+                        <button
+                          type="button"
+                          onClick={() => toggleDisputeSection('construction')}
+                          className="w-full flex items-center justify-between px-4 py-3 bg-slate-950 hover:bg-slate-900 text-right transition-all"
+                        >
+                          <span className="font-bold text-amber-400 text-xs flex items-center gap-1.5">
+                            <span>🏗️ نزاعات البناء والتطوير العقاري</span>
+                          </span>
+                          <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${expandedDisputeSections.construction ? 'rotate-180' : ''}`} />
+                        </button>
+                        {expandedDisputeSections.construction && (
+                          <div className="p-4 bg-slate-950/20 border-t border-slate-800/60 text-slate-300 space-y-3 animate-in slide-in-from-top-1 duration-150">
+                            <p className="text-justify text-[11px] leading-relaxed">
+                              القضايا العقارية هي النزاعات القانونية التي تنشأ بسبب التعاملات في مجال العقارات، وتشمل:
+                            </p>
+                            <div className="bg-slate-950/40 p-2.5 rounded-lg border border-slate-800">
+                              <span className="font-bold text-amber-500 block mb-1 text-[11px]">📍 نزاعات البناء والتطوير:</span>
+                              <p className="text-slate-400 text-[11px]">مثل تأخير المشاريع، العيوب في البناء، والمشاكل مع المقاولين.</p>
+                            </div>
+                            <div className="bg-slate-950/40 p-2.5 rounded-lg border border-slate-800 space-y-1.5">
+                              <span className="font-bold text-white block text-[11px]">⚖️ أنواع المنازعات العقارية الشائعة:</span>
+                              <p className="text-slate-400 text-[11px]"><strong className="text-slate-200">العيوب في البناء:</strong> عندما تكون هناك عيوب في البناء تؤثر على استخدام العقار.</p>
+                              <p className="text-slate-400 text-[11px]"><strong className="text-slate-200">تأخير المشاريع:</strong> تأخير في إتمام المشاريع العقارية مما يسبب خسائر للمستثمرين أو المشترين.</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 5. كيفية التعامل */}
+                      <div className="border border-slate-800/80 rounded-xl overflow-hidden bg-slate-900/60">
+                        <button
+                          type="button"
+                          onClick={() => toggleDisputeSection('handling')}
+                          className="w-full flex items-center justify-between px-4 py-3 bg-slate-950 hover:bg-slate-900 text-right transition-all"
+                        >
+                          <span className="font-bold text-amber-400 text-xs flex items-center gap-1.5">
+                            <span>⚖️ كيفية التعامل مع القضايا العقارية وتصفيتها</span>
+                          </span>
+                          <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${expandedDisputeSections.handling ? 'rotate-180' : ''}`} />
+                        </button>
+                        {expandedDisputeSections.handling && (
+                          <div className="p-4 bg-slate-950/20 border-t border-slate-800/60 text-slate-300 space-y-2.5 text-[11px] animate-in slide-in-from-top-1 duration-150">
+                            <p className="text-slate-400"><strong className="text-slate-200">التفاوض والتسوية:</strong> في كثير من الحالات، يمكن حل النزاعات العقارية عن طريق التفاوض والتسوية الودية بين الأطراف. قد يشمل ذلك تقديم تعويضات مالية أو إجراء تعديلات على الاتفاقات.</p>
+                            <p className="text-slate-400"><strong className="text-slate-200">التحكيم والوساطة:</strong> تعد الوساطة والتحكيم من الوسائل الفعالة لحل النزاعات العقارية دون اللجوء إلى المحاكم. يمكن للطرفين الاتفاق على تعيين وسيط أو محكم لحل النزاع.</p>
+                            <p className="text-slate-400"><strong className="text-slate-200">الإجراءات القضائية:</strong> إذا فشلت محاولات التفاوض والتسوية، يمكن للطرف المتضرر اللجوء إلى المحاكم لحل النزاع. تشمل الإجراءات القضائية تقديم دعاوى قضائية واتباع الإجراءات القانونية اللازمة.</p>
+                            <p className="text-slate-400"><strong className="text-slate-200">الاستشارات القانونية:</strong> من الضروري الحصول على استشارات قانونية متخصصة للتعامل مع النزاعات العقارية. يمكن للمحامي المختص تقديم النصائح والإرشادات القانونية لضمان حقوق الأطراف وحماية مصالحهم.</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 6. أهمية الاستشارات */}
+                      <div className="border border-slate-800/80 rounded-xl overflow-hidden bg-slate-900/60">
+                        <button
+                          type="button"
+                          onClick={() => toggleDisputeSection('importance')}
+                          className="w-full flex items-center justify-between px-4 py-3 bg-slate-950 hover:bg-slate-900 text-right transition-all"
+                        >
+                          <span className="font-bold text-amber-400 text-xs flex items-center gap-1.5">
+                            <span>🛡️ أهمية الاستشارات القانونية في حل المنازعات</span>
+                          </span>
+                          <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${expandedDisputeSections.importance ? 'rotate-180' : ''}`} />
+                        </button>
+                        {expandedDisputeSections.importance && (
+                          <div className="p-4 bg-slate-950/20 border-t border-slate-800/60 text-slate-300 space-y-2.5 text-[11px] animate-in slide-in-from-top-1 duration-150">
+                            <p className="text-slate-400"><strong className="text-slate-200">حماية الحقوق:</strong> تضمن الاستشارات القانونية حماية حقوق جميع الأطراف المعنية في النزاعات العقارية.</p>
+                            <p className="text-slate-400"><strong className="text-slate-200">الامتثال للقوانين:</strong> تساعد الاستشارات القانونية في ضمان الامتثال للقوانين واللوائح المحلية المتعلقة بالعقارات.</p>
+                            <p className="text-slate-400"><strong className="text-slate-200">تفادي النزاعات المستقبلية:</strong> يمكن للمحامي تقديم النصائح اللازمة لتفادي النزاعات المستقبلية من خلال إعداد عقود واضحة وشروط تفصيلية.</p>
+                            <p className="text-slate-400"><strong className="text-slate-200">تسريع الإجراءات:</strong> يساعد الحصول على استشارات قانونية متخصصة في تسريع حل النزاعات وتوفير الوقت والجهد.</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 7. الخاتمة واستشارات شركة تقادم */}
+                      <div className="border border-slate-800/80 rounded-xl overflow-hidden bg-slate-900/60">
+                        <button
+                          type="button"
+                          onClick={() => toggleDisputeSection('ending')}
+                          className="w-full flex items-center justify-between px-4 py-3 bg-slate-950 hover:bg-slate-900 text-right transition-all"
+                        >
+                          <span className="font-bold text-amber-400 text-xs flex items-center gap-1.5">
+                            <span>✨ الخاتمة واستشارة شركة تقادم للمحاماة والاستشارات</span>
+                          </span>
+                          <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${expandedDisputeSections.ending ? 'rotate-180' : ''}`} />
+                        </button>
+                        {expandedDisputeSections.ending && (
+                          <div className="p-4 bg-slate-950/20 border-t border-slate-800/60 text-slate-300 space-y-3 text-[11px] animate-in slide-in-from-top-1 duration-150 text-justify leading-relaxed">
+                            <p className="text-slate-300">
+                              تعد القضايا والمنازعات القضائية في مجال العقارات من التحديات التي قد تواجه الأفراد والشركات. من خلال التفاوض، التحكيم، والإجراءات القضائية، يمكن حل هذه النزاعات بفعالية. تعد الاستشارات القانونية المتخصصة ضرورية لضمان حماية الحقوق والامتثال للقوانين، مما يعزز من فرص حل النزاعات بشكل ودي وسريع.
+                            </p>
+                            <div className="bg-amber-500/10 border border-amber-500/30 p-3.5 rounded-lg text-slate-200 space-y-2 mt-2 shadow-sm">
+                              <p className="font-bold text-amber-400 text-xs">🛡️ استشارة متخصصة ودعم قانوني متكامل من الخبراء:</p>
+                              <p className="text-slate-300 text-[10px] text-justify leading-relaxed">
+                                إذا كنت تواجه نزاعات عقارية أو تحتاج إلى استشارة قانونية، فإن <strong>شركة تقادم للمحاماة والاستشارات القانونية</strong> مستعدة لتقديم الدعم والمساعدة اللازمة لضمان حماية حقوقك وحل النزاعات بكفاءة. تواصل معنا اليوم للحصول على استشارة قانونية متخصصة ومناقشة تفاصيل قضيتك مع فريقنا من الخبراء.
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                    </div>
+
+                  </div>
+                )}
               </div>
             </div>
 
@@ -693,40 +993,69 @@ export default function CaseDetailsTab({ caseData, onUpdateCaseData }: CaseDetai
                   <div className="space-y-2">
                     <span className="text-slate-400 text-[10px] font-black block">الورثة المسجلون وتوزيع حصصهم من التركة:</span>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      {results.heirsShares.map((hs) => {
-                        const originalHeir = caseData.heirs.find(h => h.id === hs.id);
+                      {caseData.heirs.map((heir) => {
+                        const hs = results.heirsShares.find(item => item.id === heir.id);
+                        const isSelected = heir.selected !== false;
                         return (
-                          <div key={hs.id} className="bg-slate-950 p-3 rounded-xl border border-slate-850 flex items-center justify-between text-xs hover:border-emerald-500/20 transition-all">
-                            <div className="text-right space-y-1 flex-1">
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-white font-black">{hs.name}</span>
-                                <span className="text-[9px] bg-slate-900 border border-slate-850 text-slate-400 px-1.5 py-0.5 rounded">
-                                  {originalHeir?.relationship === 'son' && 'ابن'}
-                                  {originalHeir?.relationship === 'daughter' && 'ابنة'}
-                                  {originalHeir?.relationship === 'wife' && 'زوجة'}
-                                  {originalHeir?.relationship === 'husband' && 'زوج'}
-                                  {originalHeir?.relationship === 'father' && 'أب'}
-                                  {originalHeir?.relationship === 'mother' && 'أم'}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2 text-[10px] font-semibold text-slate-400">
-                                <span className="text-emerald-400 font-black">{hs.sharePercent.toFixed(2)}%</span>
-                                <span>•</span>
-                                <span className="text-slate-500">{hs.shareFraction}</span>
-                              </div>
-                              <div className="text-[11px] font-mono font-bold text-amber-400">
-                                {hs.shareValue.toLocaleString('ar-EG')} ج.م
+                          <div 
+                            key={heir.id} 
+                            className={`p-3 rounded-xl border flex items-center justify-between text-xs transition-all ${
+                              isSelected 
+                                ? 'bg-slate-950 border-slate-850 hover:border-emerald-500/20' 
+                                : 'bg-slate-950/40 border-slate-900/40 opacity-60'
+                            }`}
+                          >
+                            <div className="flex items-start gap-2.5 flex-1">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => {
+                                  onUpdateCaseData({
+                                    heirs: caseData.heirs.map(h => h.id === heir.id ? { ...h, selected: !isSelected } : h)
+                                  });
+                                  triggerToast(!isSelected ? `✓ تم إدراج الوارث ${heir.name} في حساب الأنصبة` : `⏳ تم استبعاد الوارث ${heir.name} مؤقتاً`, !isSelected ? 'success' : 'warning');
+                                }}
+                                className="w-4 h-4 rounded border-slate-800 text-emerald-500 focus:ring-emerald-500 bg-slate-950 shrink-0 cursor-pointer mt-0.5"
+                              />
+                              <div className="text-right space-y-1">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className={`font-black ${isSelected ? 'text-white' : 'text-slate-500 line-through'}`}>{heir.name}</span>
+                                  <span className="text-[9px] bg-slate-900 border border-slate-850 text-slate-400 px-1.5 py-0.5 rounded">
+                                    {heir.relationship === 'son' && 'ابن'}
+                                    {heir.relationship === 'daughter' && 'ابنة'}
+                                    {heir.relationship === 'wife' && 'زوجة'}
+                                    {heir.relationship === 'husband' && 'زوج'}
+                                    {heir.relationship === 'father' && 'أب'}
+                                    {heir.relationship === 'mother' && 'أم'}
+                                  </span>
+                                </div>
+                                {isSelected && hs ? (
+                                  <>
+                                    <div className="flex items-center gap-2 text-[10px] font-semibold text-slate-400">
+                                      <span className="text-emerald-400 font-black">{hs.sharePercent.toFixed(2)}%</span>
+                                      <span>•</span>
+                                      <span className="text-slate-500">{hs.shareFraction}</span>
+                                    </div>
+                                    <div className="text-[11px] font-mono font-bold text-amber-400">
+                                      {hs.shareValue.toLocaleString('ar-EG')} ج.م
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div className="text-[10px] text-slate-500 font-bold">
+                                    (مستبعد من الحساب الشرعي)
+                                  </div>
+                                )}
                               </div>
                             </div>
                             <button
                               type="button"
                               onClick={() => {
                                 onUpdateCaseData({
-                                  heirs: caseData.heirs.filter(h => h.id !== hs.id)
+                                  heirs: caseData.heirs.filter(h => h.id !== heir.id)
                                 });
                                 triggerToast('🗑️ تم استبعاد الوارث وإعادة تصفية الحسابات', 'info');
                               }}
-                              className="text-slate-500 hover:text-red-400 p-1.5 hover:bg-slate-900 rounded-lg transition-all"
+                              className="text-slate-500 hover:text-red-400 p-1.5 hover:bg-slate-900 rounded-lg transition-all self-start"
                             >
                               <Trash2 className="w-4.5 h-4.5" />
                             </button>
@@ -1014,6 +1343,68 @@ export default function CaseDetailsTab({ caseData, onUpdateCaseData }: CaseDetai
           </div>
 
         </div>
+
+        {/* تغيير موقع العقار القضائي (انتقلت هنا بناء على طلب المستخدم) */}
+        <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 shadow-xl space-y-4">
+          <h3 className="text-white text-sm font-black flex items-center gap-2 border-b border-slate-800 pb-3">
+            <MapPin className="w-4 h-4 text-amber-500" />
+            <span>تغيير موقع العقار القضائي (قاعدة البيانات)</span>
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {SAMPLE_LOCATIONS.map((loc, idx) => {
+              const isSelected = caseData.location === loc.name;
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    const lat = loc.lat;
+                    const lng = loc.lng;
+                    const finalScannedArea = Math.round(350 + (Math.abs(Math.sin(lat * 800) * Math.cos(lng * 800)) * 280));
+                    const finalComplianceScore = Math.max(70, Math.min(100, Math.round(100 - (Math.abs(lat - 29.9912) + Math.abs(lng - 31.1425)) * 1200)));
+
+                    onUpdateCaseData({
+                      latitude: lat,
+                      longitude: lng,
+                      location: loc.name,
+                      scannedArea: finalScannedArea,
+                      complianceScore: finalComplianceScore
+                    });
+                    triggerToast('📍 تم تحديث موقع العقار القضائي بنجاح!', 'success');
+                  }}
+                  className={`text-right p-3.5 rounded-xl border transition-all flex flex-col gap-1.5 cursor-pointer ${
+                    isSelected 
+                      ? 'bg-amber-500/10 border-amber-500/50 shadow-md shadow-amber-500/5' 
+                      : 'bg-slate-950/40 border-slate-800/85 hover:bg-slate-800/50 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <span className={`text-xs font-black ${isSelected ? 'text-amber-400' : 'text-slate-200'}`}>
+                      {loc.name.split(' - ')[0]}
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-500">
+                      {loc.lat.toFixed(2)}°N, {loc.lng.toFixed(2)}°E
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 font-semibold leading-relaxed line-clamp-2">
+                    {loc.desc}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* تحليل مطابقة الكود المصري واشتراطات البناء (انتقلت هنا بناء على طلب المستخدم) */}
+        <ComplianceTrends caseData={caseData} theme={theme || 'dark'} />
+
+        {/* منصة الإدارة والفرز الذكي (انتقلت هنا بناء على طلب المستخدم) */}
+        <AreaRegistry 
+          caseData={caseData} 
+          theme={theme || 'dark'} 
+          onMaximize={() => {}} 
+        />
+        </>
       )}
 
     </div>

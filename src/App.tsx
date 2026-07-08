@@ -18,6 +18,7 @@ import ComplianceTrends from './components/ComplianceTrends';
 import AreaRegistry from './components/AreaRegistry';
 import MindMapTab from './components/MindMapTab';
 import CourtTab from './components/CourtTab';
+import InquiriesPage from './components/InquiriesPage';
 import { triggerToast } from './lib/toast';
 
 import { 
@@ -87,7 +88,7 @@ export default function App() {
     return SAMPLE_CASES[0];
   });
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'details' | 'map' | 'agents' | 'report' | 'files' | 'mindmap' | 'heirs_hub' | 'court'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'details' | 'map' | 'agents' | 'report' | 'files' | 'mindmap' | 'heirs_hub' | 'court' | 'inquiries'>('dashboard');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
@@ -324,8 +325,8 @@ export default function App() {
   }
 
   return (
-    <div className={`min-h-screen p-3 sm:p-5 md:p-6 lg:p-8 font-sans select-none antialiased relative overflow-x-hidden transition-all duration-300 ${
-      theme === 'paper' ? 'theme-paper' : 'bg-gradient-to-br from-[#05050a] via-[#090918] to-[#0f112c] text-zinc-100'
+    <div className={`min-h-screen px-1 sm:px-2 md:px-3 lg:px-4 py-3 sm:py-5 md:py-6 lg:py-8 font-sans select-none antialiased relative overflow-x-hidden transition-all duration-300 ${
+      theme === 'paper' ? 'theme-paper' : 'bg-gradient-to-br from-[#f1f5f9] via-[#e2e8f0] to-[#dbeafe] text-[#1e293b]'
     }`}>
       {/* 3D-like Glowing Interactive Ambience Grid Background */}
       {theme === 'dark' && (
@@ -437,7 +438,7 @@ export default function App() {
         </div>
 
         {/* MIDDLE Column: Main Dynamic Content Area (الشاشة الوسطى) */}
-        <main className={`${(activeTab === 'files' || activeTab === 'mindmap' || activeTab === 'court') ? 'lg:col-span-9' : 'lg:col-span-6'} space-y-6 order-2 lg:order-none`}>
+        <main className={`${(activeTab === 'files' || activeTab === 'mindmap' || activeTab === 'court' || activeTab === 'inquiries') ? 'lg:col-span-9' : 'lg:col-span-6'} space-y-6 order-2 lg:order-none`}>
           
           {activeTab === 'dashboard' && (
             <div className="space-y-6 animate-in fade-in duration-200">
@@ -497,84 +498,6 @@ export default function App() {
                   </div>
                 </div>
 
-              </div>
-
-              {/* Recharts dynamic D3 real estate valuation trend */}
-              <ValuationTrends results={results} theme={theme} />
-
-              {/* Compliance score trends compared against industry standards */}
-              <ComplianceTrends caseData={caseData} theme={theme} />
-
-              {/* Custom Area Record & verification registry */}
-              <AreaRegistry 
-                caseData={caseData} 
-                theme={theme} 
-                onMaximize={(panelId) => setMaximizedPanel(panelId)}
-              />
-
-              {/* Central Information Desk */}
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-                <h3 className="text-white text-sm font-black flex items-center gap-2 border-b border-slate-800 pb-3">
-                  <Scale className="w-4.5 h-4.5 text-amber-500" />
-                  <span>موجز مذكرات الخصومة القضائية والنزاع</span>
-                </h3>
-                
-                <div className="space-y-3.5 leading-relaxed text-slate-300 text-xs font-semibold">
-                  <div className="flex items-start gap-3 bg-slate-950/60 p-4 rounded-xl border border-slate-850">
-                    <span className="text-amber-500 text-sm mt-0.5">⚖️</span>
-                    <div className="space-y-1">
-                      <span className="text-white font-extrabold text-xs block">ملاحظات وقرارات المحكمة التوجيهية للخبرة:</span>
-                      <p className="text-slate-400 leading-relaxed font-semibold">
-                        {caseData.dispute.hasDispute ? caseData.dispute.details : 'العقار خالي من النزاعات والحدود الجغرافية سليمة تماماً وموثقة في السجلات.'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-                    <div className="bg-slate-950/40 p-4 rounded-xl border border-slate-850/80 space-y-2">
-                      <span className="text-amber-500 text-xs font-black block">تشخيصات القيمة الأرضية:</span>
-                      <ul className="space-y-1.5 text-slate-400 text-[11px] font-semibold">
-                        <li className="flex justify-between">
-                          <span>قيمة الأرض الفردية:</span>
-                          <span className="text-white font-mono">{results.landValue.toLocaleString('ar-EG')} ج</span>
-                        </li>
-                        <li className="flex justify-between">
-                          <span>نصيب فدان/قيراط/سهم:</span>
-                          <span className="text-white font-mono">{results.faddan}ف / {results.qirat}ق / {results.sahm}س</span>
-                        </li>
-                      </ul>
-                    </div>
-
-                    <div className="bg-slate-950/40 p-4 rounded-xl border border-slate-850/80 space-y-2">
-                      <span className="text-amber-500 text-xs font-black block">تشخيصات المنشأ والمباني:</span>
-                      <ul className="space-y-1.5 text-slate-400 text-[11px] font-semibold">
-                        <li className="flex justify-between">
-                          <span>تكلفة التأسيس والتشطيب:</span>
-                          <span className="text-white font-mono">{results.constructionCost.toLocaleString('ar-EG')} ج</span>
-                        </li>
-                        <li className="flex justify-between">
-                          <span>بعد الاستهلاك والتقادم:</span>
-                          <span className="text-white font-mono">{results.depreciatedBuildingValue.toLocaleString('ar-EG')} ج</span>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 pt-3">
-                  <button 
-                    onClick={() => setActiveTab('details')}
-                    className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs px-4 py-2.5 rounded-xl transition-all shadow-md shadow-amber-500/10 cursor-pointer"
-                  >
-                    تعديل مواصفات القضية
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab('agents')}
-                    className="bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-extrabold text-xs px-4 py-2.5 rounded-xl transition-all cursor-pointer"
-                  >
-                    استعراض محاكاة الوكلاء
-                  </button>
-                </div>
               </div>
 
               {/* Case Archives & Persistence Console (أرشيف القضايا الموثق ونظام الحفظ) */}
@@ -817,6 +740,7 @@ export default function App() {
               <CaseDetailsTab 
                 caseData={caseData} 
                 onUpdateCaseData={handleUpdateCaseData} 
+                theme={theme}
               />
             </div>
           )}
@@ -907,10 +831,16 @@ export default function App() {
             </div>
           )}
 
+          {activeTab === 'inquiries' && (
+            <div className="animate-in fade-in duration-200">
+              <InquiriesPage />
+            </div>
+          )}
+
         </main>
 
         {/* LEFT Column: Maps and Images (شمال الشاشة) - Hidden on files, mindmap, and court tabs as they are fully integrated or need full width there */}
-        {activeTab !== 'files' && activeTab !== 'mindmap' && activeTab !== 'court' && (
+        {activeTab !== 'files' && activeTab !== 'mindmap' && activeTab !== 'court' && activeTab !== 'inquiries' && (
           <div className="lg:col-span-3 space-y-6 order-3 lg:order-none">
             <MapTab 
               caseData={caseData} 
@@ -918,14 +848,7 @@ export default function App() {
               onUpdateCoordinates={handleUpdateCoordinates} 
               startWithVirtualCourt={startWithVirtualCourt}
               onClearStartWithVirtualCourt={() => setStartWithVirtualCourt(false)}
-            />
-            <FieldReferencesPanel 
-              caseData={caseData}
-              onUpdateCaseData={handleUpdateCaseData}
-              onMaximize={(panelId) => {
-                setMaximizedPanel(panelId);
-                setMaximizedSection(panelId === 'gallery' ? 'gallery' : 'references');
-              }}
+              theme={theme}
             />
           </div>
         )}
@@ -1225,6 +1148,90 @@ export default function App() {
                       <span>إضافة قضية جديدة</span>
                     </button>
                   </div>
+
+                  {/* 📊 لوحة بيانات المحفظة الاستثمارية العقارية المصغرة (Dashboard Widget) */}
+                  {(() => {
+                    const totalAssetsCount = casesArchive.length;
+                    const totalPortfolioValue = casesArchive.reduce((acc, sc) => {
+                      const val = sc.estateValue || sc.transactionValue || (sc.landArea * 15000) || 500000;
+                      return acc + val;
+                    }, 0);
+
+                    // Group by dispute type
+                    const disputeCounts = casesArchive.reduce((acc, sc) => {
+                      const type = sc.dispute?.type || 'none';
+                      acc[type] = (acc[type] || 0) + 1;
+                      return acc;
+                    }, {} as Record<string, number>);
+
+                    const disputeTypesData = [
+                      { id: 'inheritance', name: 'مواريث وتركات', count: disputeCounts['inheritance'] || 0, color: 'bg-amber-500', barColor: '#f59e0b' },
+                      { id: 'contract', name: 'نزاع عقدي وإخلاء', count: disputeCounts['contract'] || 0, color: 'bg-emerald-500', barColor: '#10b981' },
+                      { id: 'boundary', name: 'تداخل حدود عقارية', count: disputeCounts['boundary'] || 0, color: 'bg-cyan-500', barColor: '#06b6d4' },
+                      { id: 'ownership', name: 'تقييم عقاري وتثبيت ملكية', count: (disputeCounts['ownership'] || 0) + (disputeCounts['none'] || 0), color: 'bg-purple-500', barColor: '#a855f7' }
+                    ];
+
+                    const totalDisputesWithCount = disputeTypesData.reduce((acc, d) => acc + d.count, 0) || 1;
+
+                    return (
+                      <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-5 grid grid-cols-1 lg:grid-cols-12 gap-6 select-none hover:border-amber-500/25 transition-all">
+                        <div className="lg:col-span-4 flex flex-col justify-between text-right space-y-4">
+                          <div>
+                            <div className="flex items-center gap-2 justify-end">
+                              <span className="text-slate-400 text-xs font-black">المحفظة الاستثمارية العقارية المأرشفة</span>
+                              <TrendingUp className="w-4 h-4 text-emerald-500" />
+                            </div>
+                            <h3 className="text-2xl md:text-3xl font-black text-white mt-1.5 font-mono tracking-tight">
+                              {totalPortfolioValue.toLocaleString('ar-EG')} <span className="text-xs font-black text-slate-400">ج.م</span>
+                            </h3>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 text-xs">
+                            <div className="bg-slate-950 p-3 text-right rounded-xl border border-slate-850">
+                              <span className="text-slate-500 text-[10px] font-bold block mb-1">الأصول المدرجة</span>
+                              <span className="text-white font-black text-sm font-mono">{totalAssetsCount} قضايا</span>
+                            </div>
+                            <div className="bg-slate-950 p-3 text-right rounded-xl border border-slate-850">
+                              <span className="text-slate-500 text-[10px] font-bold block mb-1">متوسط قيمة الأصول</span>
+                              <span className="text-emerald-400 font-black text-sm font-mono">
+                                {Math.round(totalPortfolioValue / (totalAssetsCount || 1)).toLocaleString('ar-EG')} ج
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="lg:col-span-8 border-t lg:border-t-0 lg:border-r border-slate-800/80 pt-4 lg:pt-0 lg:pr-6 flex flex-col justify-center space-y-3">
+                          <span className="text-slate-400 text-xs font-black text-right block">📊 توزيع أنواع النزاعات وحصصها في المحفظة الاستثمارية</span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {disputeTypesData.map((d) => {
+                              const pct = Math.round((d.count / totalDisputesWithCount) * 100);
+                              return (
+                                <div key={d.id} className="space-y-1">
+                                  <div className="flex justify-between items-center text-[10px] font-bold">
+                                    <span className="text-slate-500 font-mono">{pct}% ({d.count})</span>
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-slate-300">{d.name}</span>
+                                      <span className={`w-2 h-2 rounded-full ${d.color}`} />
+                                    </div>
+                                  </div>
+                                  <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-850">
+                                    <div 
+                                      className="h-full rounded-full transition-all duration-500"
+                                      style={{ 
+                                        width: `${pct}%`,
+                                        backgroundColor: d.barColor,
+                                        boxShadow: `0 0 4px ${d.barColor}80`
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {casesArchive.map((sc) => {
                       const isActive = sc.caseNumber === caseData.caseNumber;

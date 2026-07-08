@@ -31,7 +31,23 @@ import {
   Lock,
   Compass,
   Maximize2,
-  Printer
+  Printer,
+  Gavel,
+  Scale,
+  Clock,
+  Coins,
+  User,
+  Users,
+  Mic,
+  MicOff,
+  Calendar,
+  AlertTriangle,
+  Plus,
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+  Percent,
+  Search
 } from 'lucide-react';
 
 import { triggerToast } from '../lib/toast';
@@ -77,91 +93,91 @@ interface AgentArchetype {
 const ARCHETYPES: AgentArchetype[] = [
   {
     id: 'cognitive',
-    title: 'Cognitive Agent',
-    arabicName: 'وكيل إدراكي',
-    icon: '🧠',
+    title: 'Cognitive System',
+    arabicName: 'المحلل الاستدلالي والقضائي',
+    icon: '⚖️',
     color: 'from-amber-400 to-orange-500',
-    description: 'يفكر ويحلل النزاعات بطريقة بشرية مستدلة بالاعتماد على مذكرات الدعوى والمنطق القضائي والظروف المحيطة.',
+    description: 'يقوم بدراسة أبعاد النزاع بالاستدلال المنطقي والشرعي، مستنداً لدفوع الخصوم ومذكرات الدعوى والاجتهاد القضائي المصري.',
     coreMath: 'P(Verdict | Evidence) = ∑ [W_i * CognitiveFactor(E_i)]',
     demoInput: 'فهم منطق النزاع على قطعة الهرم ومراجعة الحيازة الهادئة المستقرة.'
   },
   {
     id: 'autonomous',
-    title: 'Autonomous Agent',
-    arabicName: 'وكيل مستقل',
-    icon: '🚀',
+    title: 'Precautionary Measures System',
+    arabicName: 'مستشار التدابير الاحترازية',
+    icon: '🛡️',
     color: 'from-blue-400 to-indigo-500',
-    description: 'يتخذ القرارات والتدابير الاحترازية من تلقاء نفسه دون تدخل بشري، مثل إصدار تنبيهات تداخل الحصص وتجميد الإحداثيات.',
+    description: 'يتحقق ذاتياً من المخالفات الجسيمة والتعديات على خط التنظيم، ويصدر قرارات وتنبيهات بوقف الأعمال المخالفة فوراً وتجميد الحدود.',
     coreMath: 'TriggerAction(t) = 1 if ConflictScore > Threshold else 0',
     demoInput: 'افحص تداخل الحدود تلقائياً وأرسل تنبيهاً فورياً للمحكمة.'
   },
   {
     id: 'intelligent',
-    title: 'Intelligent Agent',
-    arabicName: 'وكيل ذكي',
-    icon: '💡',
+    title: 'Field Valuation Expert',
+    arabicName: 'خبير التقييم الميداني والتقدير',
+    icon: '📊',
     color: 'from-emerald-400 to-teal-500',
-    description: 'يتعلم باستمرار من التقييمات والملاحظات الميدانية السابقة لتكييف حسابات أسعار المتر وتكاليف الحديد والخرسانة المسلحة.',
+    description: 'يقوم بتحليل الصفقات المماثلة وأسعار المتر وتكاليف الحديد والخرسانة المسلحة لتقديم تقدير مالي عادل للمحكمة.',
     coreMath: 'Weights(t+1) = Weights(t) + η * (TargetValue - PredictedValue) * X',
     demoInput: 'احسب أسعار الأراضي في منطقة الهرم بناء على آخر 12 صفقة تم تحديثها.'
   },
   {
     id: 'orchestrator',
-    title: 'Orchestrator Agent',
-    arabicName: 'وكيل منسق',
-    icon: '🪄',
+    title: 'Survey Coordinator',
+    arabicName: 'منسق المطابقة والتحقيق الفني',
+    icon: '🧩',
     color: 'from-purple-400 to-fuchsia-500',
-    description: 'يقوم بتوزيع المهام، وادارة الاتصالات بين الوكلاء، والتحقق من التناسق الهيكلي وحل أي تعارض في القرارات الفنية والقانونية.',
+    description: 'يتولى دمج التقارير وحل أي تعارض فني بين تقديرات الهندسة الإنشائية ورفع المساحة والتقييم المالي لضمان الاتساق الهيكلي.',
     coreMath: 'ResolveConflict(Agent_A, Agent_B) = ArgMax_Conf(P_A, P_B)',
     demoInput: 'نسق بين وكيل التصميم الإنشائي ووكيل التقييم المالي لتوليد الميزانية.'
   },
   {
     id: 'master',
-    title: 'Master Agent',
-    arabicName: 'وكيل رئيسي',
+    title: 'Chief Advisory Counsel',
+    arabicName: 'رئيس الهيئة الاستشارية للخبراء',
     icon: '👑',
     color: 'from-red-400 to-rose-500',
-    description: 'يمثل القيادة المركزية للوكيل الفائق (CEO Agent)، وهو المسؤول عن توقيع واعتماد التقارير النهائية المقدمة لسيادة المستشار.',
+    description: 'الجهة الفنية المسؤولة عن المراجعة النهائية والتوقيع البيومتري بالصيغة التنفيذية لتقرير المعاينة قبل تقديمه لسيادة رئيس المحكمة.',
     coreMath: 'ApproveReport(Doc) = VerifySignature(Hossam_BioKey) && Audit(Steps 1..6)',
     demoInput: 'اعتمد التقرير النهائي لقضية الورثة وأصدر وثيقة الرفع المساحي.'
   },
   {
     id: 'meta_agent',
-    title: 'Meta-Agent',
-    arabicName: 'وكيل فوقي',
-    icon: '⚡',
+    title: 'Sharia & Legal Auditor',
+    arabicName: 'خبير الرقابة الشرعية والقانونية',
+    icon: '📜',
     color: 'from-pink-400 to-rose-600',
-    description: 'وكيل فائق المستوى يراقب عمل بقية الوكلاء ويضبط معاملات الأمان والدقة والتحقق من قيود الشريعة والقانون المصري.',
+    description: 'يقوم بمطابقة مخرجات الفحص وحسابات المواريث والأنصبة الشرعية مع أحكام المادة 64 وقانون التركات ومبادئ الشريعة الإسلامية.',
     coreMath: 'VerifyCompliance(Actions) = strict_match(Civil_Law_Article_119, Actions)',
     demoInput: 'راجع مدى مطابقة حسابات تقسيم التركات الحالية لأحكام المادة 64.'
   },
   {
     id: 'swarm',
-    title: 'Swarm Intelligence',
-    arabicName: 'ذكاء السرب',
-    icon: '🐝',
+    title: 'Unified Joint Analysis Panel',
+    arabicName: 'الهيئة المشتركة للتحليل التكاملي',
+    icon: '👥',
     color: 'from-yellow-400 to-amber-500',
-    description: 'نظام لا مركزي يجمع طاقة الـ 52 وكيلاً الخبراء في وقت واحد للتصويت وتحليل العينات والمطابقة الجغرافية بالتوازي.',
+    description: 'منظومة تفاعلية موحدة تضم 52 خبيراً هندسياً وقانونياً ومساحياً يقومون بالتصويت الرقمي لمطابقة الرفع الجيو-مساحي للنزاع.',
     coreMath: 'ConsensusScore = ConsensusRatio(V_1, V_2, ... V_52) >= 0.95',
     demoInput: 'قم بإطلاق السرب بالكامل (50+ وكيل) لتشغيل تقرير فني شامل للنزاع.'
   },
   {
     id: 'federated',
-    title: 'Federated Agent',
-    arabicName: 'وكيل فيدرالي',
+    title: 'Gov Liaison Officer',
+    arabicName: 'خبير الاستعلام والربط الحكومي',
     icon: '🌐',
     color: 'from-cyan-400 to-blue-500',
-    description: 'يتواصل بشكل مؤمن مع منصات وقواعد بيانات خارجية مثل البوابة الرقمية للشهر العقاري والمساحة المصرية والنيابة العامة.',
+    description: 'يتصل بقنوات آمنة مع البوابات الرقمية للشهر العقاري، الهيئة العامة للمساحة، ونيابة الأملاك العامة للتأكد من الموقف الرسمي للملكية.',
     coreMath: 'FetchFederatedData(SecureToken) = DecryptAES256(API_Response_Data)',
     demoInput: 'تحقق من تسجيل العقد وسندات الملكية المشهرة بالبوابة الرقمية للشهر العقاري.'
   },
   {
     id: 'edge',
-    title: 'Edge Agent',
-    arabicName: 'وكيل حافة',
-    icon: '📱',
+    title: 'Field Technical Surveyor',
+    arabicName: 'خبير المعاينة الفنية الميدانية',
+    icon: '📍',
     color: 'from-teal-400 to-emerald-500',
-    description: 'يعمل محلياً على جهاز كابتن حسام لتشغيل الخوارزميات الحساسة والرفع المساحي اللحظي للموقع وحساب المتغيرات الطارئة دون إنترنت.',
+    description: 'يقوم بمهام المعاينة والرفع الميداني اللحظي بالأبعاد الطبيعية وحساب مقاومة المواد وتشققات المبنى محلياً في موقع النزاع.',
     coreMath: 'EdgeCalculation(LocalInputs) = RunMatrixMultiplication(W, X)',
     demoInput: 'شغل عقل الحافة المحلي لحساب تسليح القواعد المعزولة فوراً.'
   }
@@ -302,8 +318,8 @@ export default function AgentSmithRunner({
   isAnalyzing: parentIsAnalyzing, 
   onRunAnalysis 
 }: AgentSmithRunnerProps) {
-  // Tabs: 'chat' | 'swarm_map' | 'repository' | 'mind_map' | 'strategic_plan'
-  const [activeTab, setActiveTab] = useState<'chat' | 'swarm_map' | 'repository' | 'mind_map' | 'strategic_plan'>('chat');
+  // Tabs: 'chat' | 'swarm_map' | 'repository' | 'mind_map' | 'strategic_plan' | 'judicial_ai_hub'
+  const [activeTab, setActiveTab] = useState<'chat' | 'swarm_map' | 'repository' | 'mind_map' | 'strategic_plan' | 'judicial_ai_hub'>('chat');
   const [activePlanSection, setActivePlanSection] = useState<'part1' | 'part2' | 'roadmap'>('part1');
   const [selectedSector, setSelectedSector] = useState<string>('all');
   const [logs, setLogs] = useState<string[]>([]);
@@ -311,6 +327,1242 @@ export default function AgentSmithRunner({
   const [localIsAnalyzing, setLocalIsAnalyzing] = useState(false);
   const [selectedAgentDetails, setSelectedAgentDetails] = useState<AgentInfo | null>(null);
   const [selectedArchetype, setSelectedArchetype] = useState<AgentArchetype | null>(ARCHETYPES[0]);
+
+  // --- ⚖️ JUDICIAL AI FORENSIC HUB STATE DECLARATIONS ---
+  const [forensicSubTab, setForensicSubTab] = useState<'linguistic' | 'witness_evidence' | 'drafting' | 'simulation' | 'risk_settlement' | 'time_cost' | 'dictation'>('linguistic');
+
+  // Tool 1 & 2: Linguistic, Sentiment, and Verbal Stress States
+  const [sentimentText, setSentimentText] = useState('المدعى عليه مغتصب وسارق، لقد اعتدى على ممتلكاتي بكل وقاحة، وهو كاذب ومخادع، ربما يحاول التهرب من المسؤولية، لكن الحقيقة ستظهر حتماً.');
+  const [sentimentResult, setSentimentResult] = useState<any>(null);
+  const [stressText, setStressText] = useState('أعتقد أن موكلي ربما كان في المكان، لكن يبدو أن هناك بعض الالتباس. معذرةً، لكني لست متأكداً من التاريخ. أعني، يعني، ربما حدث ذلك في وقت مختلف. لست مسؤولاً عن تداخل الإحداثيات.');
+  const [stressResult, setStressResult] = useState<any>(null);
+
+  // Tool 3, 5, 7: Witnesses, Forgery, and Cassation Compliance States
+  const [witnesses, setWitnesses] = useState([
+    { name: 'الشاهد الأول: محمود عبد الرحمن', text: 'رأيت المتهم في الساعة ٣:٠٠ عصراً أمام العقار رقم ٢٧، وكان يحمل أوراقاً رسمية.' },
+    { name: 'الشاهد الثاني: سعيد أحمد', text: 'كان المتهم متواجداً في الساعة ٣:٠٠ عصراً في منزله الكائن بمدينة نصر ولم يغادر إطلاقاً.' },
+    { name: 'الشاهد الثالث: جابر رضوان', text: 'رأيت شخصاً غريباً يطوف حول المنطقة في وقت متأخر، لكني لست متأكداً من هويته.' }
+  ]);
+  const [witnessAnalysis, setWitnessAnalysis] = useState<any>(null);
+  const [forgeryText, setForgeryText] = useState('أنا الموقع أدناه أقر بأنني قد استلمت مبلغ 500,000 جنيه مصري من السيد/ أحمد محمد علي، وذلك بتاريخ 2025-01-15، على أن يتم تسليم العقار رقم 27 في تاريخ لاحق. وأقر بأن جميع الإجراءات تمت وفقاً للقانون.');
+  const [forgeryDocDate, setForgeryDocDate] = useState('2025-01-15');
+  const [forgeryContext, setForgeryContext] = useState('قضية نزاع عقاري - تاريخ الجلسة 2026-06-30');
+  const [forgeryResult, setForgeryResult] = useState<any>(null);
+  const [cassationText, setCassationText] = useState('بناءً على الأوراق، تقرر إلزام الخصم بدفع التعويض، متجاوزين طلبات الخصوم المقررة باللائحة لثبوت الضرر البليغ.');
+  const [cassationResult, setCassationResult] = useState<any>(null);
+
+  // Tool 4, 2, 10: Legal Drafting, Orders, and Enforcement States
+  const [questionSummary, setQuestionSummary] = useState('نزاع ملكية عقارية حول عقار رقم 27 بشارع شبين الكوم، العمرانية الغربية. يدعي المدعي بأن المدعى عليه قام بالتعدي على جزء من الأرض وإقامة بناء غير مرخص.');
+  const [questionType, setQuestionType] = useState('clarification');
+  const [generatedQuestions, setGeneratedQuestions] = useState<string[] | null>(null);
+  const [emergencyType, setEmergencyType] = useState('travel_ban');
+  const [emergencyDefendant, setEmergencyDefendant] = useState('محمد حسن إبراهيم');
+  const [emergencyPlaintiff, setEmergencyPlaintiff] = useState('أحمد محمد علي');
+  const [emergencyProperty, setEmergencyProperty] = useState('عقار رقم 27 بشارع شبين الكوم');
+  const [emergencyAmount, setEmergencyAmount] = useState(500000);
+  const [generatedEmergencyOrder, setGeneratedEmergencyOrder] = useState<any>(null);
+  const [executoryType, setExecutoryType] = useState('eviction');
+  const [executoryDefendant, setExecutoryDefendant] = useState('محمد حسن إبراهيم');
+  const [executoryPlaintiff, setExecutoryPlaintiff] = useState('أحمد محمد علي');
+  const [executoryProperty, setExecutoryProperty] = useState('شارع شبين الكوم، العمرانية الغربية، عقار رقم 27');
+  const [executoryAmount, setExecutoryAmount] = useState(0);
+  const [executoryItems, setExecutoryItems] = useState('المنقولات والأجهزة المبينة بعقد الفرز العيني');
+  const [executoryDays, setExecutoryDays] = useState(15);
+  const [generatedExecutoryFormula, setGeneratedExecutoryFormula] = useState<any>(null);
+
+  // Tool 9, 10: Court Procedures and Semicircle Session Sequence States
+  const [simCaseType, setSimCaseType] = useState('مدني');
+  const [simCompletedActions, setSimCompletedActions] = useState<string[]>(['المناداة على القضية', 'التأكد من حضور الأطراف']);
+  const [simResult, setSimResult] = useState<any>(null);
+  const [assignCaseType, setAssignCaseType] = useState('عقاري');
+  const [assignPriority, setAssignPriority] = useState('high');
+  const [assignResult, setAssignResult] = useState<any>(null);
+  const [judgeKeywords, setJudgeKeywords] = useState('ملكية ، عقار ، تداخل');
+  const [judgePatternsResult, setJudgePatternsResult] = useState<any>(null);
+
+  // Tool 1, 6, 8, 4, 9: Timeline, Cost, and Performance Optimization States
+  const [predCaseType, setPredCaseType] = useState('عقاري');
+  const [predFilingDate, setPredFilingDate] = useState('2026-01-15');
+  const [predComplexity, setPredComplexity] = useState('عالي');
+  const [predParties, setPredParties] = useState(4);
+  const [predBoundary, setPredBoundary] = useState(true);
+  const [predExpert, setPredExpert] = useState(true);
+  const [predSessions, setPredSessions] = useState(3);
+  const [predResult, setPredResult] = useState<any>(null);
+
+  const [tcSessionsSoFar, setSimSessionsSoFar] = useState(3);
+  const [tcEstimatedRemaining, setSimEstimatedRemaining] = useState(6);
+  const [tcDaysBetween, setSimDaysBetween] = useState(30);
+  const [tcHasExpert, setSimHasExpert] = useState(true);
+  const [tcHasAppeal, setSimHasAppeal] = useState(true);
+  const [tcResult, setSimTcResult] = useState<any>(null);
+
+  const [estCaseType, setEstCaseType] = useState('عقاري');
+  const [estHours, setEstHours] = useState(30);
+  const [estSessions, setEstSessions] = useState(6);
+  const [estHasExpert, setEstHasExpert] = useState(true);
+  const [estExpertHours, setEstExpertHours] = useState(15);
+  const [estHasAppeal, setEstHasAppeal] = useState(true);
+  const [estPropValue, setEstPropValue] = useState(750000);
+  const [estResult, setEstResult] = useState<any>(null);
+
+  const [adjOriginalDate, setAdjOriginalDate] = useState('2026-07-15');
+  const [adjNewDate, setAdjNewDate] = useState('2026-08-30');
+  const [adjSessions, setAdjSessions] = useState(3);
+  const [adjRemaining, setAdjRemaining] = useState(5);
+  const [adjDailyCost, setAdjDailyCost] = useState(1500);
+  const [adjResult, setAdjResult] = useState<any>(null);
+
+  const [perfCaseType, setPerfCaseType] = useState('عقاري');
+  const [perfStartDate, setPerfStartDate] = useState('2026-01-15');
+  const [perfStage, setPerfStage] = useState('خبرة');
+  const [perfDays, setPerfStageDays] = useState(45);
+  const [perfResult, setPerfResult] = useState<any>(null);
+
+  // Tool 8, 8(new), 5(new): Appeals, Mediation, and Litigation Risk Forecaster
+  const [riskEvidence, setRiskEvidence] = useState<string>('متوسط');
+  const [riskWitness, setRiskWitness] = useState<string>('متوسط');
+  const [riskPrecedent, setRiskPrecedent] = useState<string>('محايد');
+  const [riskComplexity, setRiskComplexity] = useState<string>('متوسط');
+  const [riskOpponent, setRiskOpponent] = useState<string>('متوسط');
+  const [riskCourt, setRiskCourt] = useState<string>('محايد');
+  const [riskResultState, setRiskResultState] = useState<any>(null);
+
+  const [settleRelationship, setSettlementRelationship] = useState('جيران');
+  const [settleDuration, setSettlementDuration] = useState(6);
+  const [settleAmount, setSettlementAmount] = useState(75000);
+  const [settlementComplexity, setSettlementComplexity] = useState('متوسط');
+  const [settlementAttempts, setSettlementAttempts] = useState(1);
+  const [settlementCompromise, setSettlementCompromise] = useState('عالي');
+  const [settlementResult, setSettlementResult] = useState<any>(null);
+
+  const [appealVerdictText, setAppealVerdictText] = useState('حكم برفض الدعوى لعدم كفاية الأدلة، دون إحالة النزاع للتحقيق أو ندب خبير للمعاينة، وبناءً على عدم اتساق المستندات الرسمية المرفقة.');
+  const [appealHasNewEvidence, setAppealHasNewEvidence] = useState(true);
+  const [appealExpertQuality, setAppealExpertQuality] = useState('ضعيف');
+  const [appealResult, setAppealResult] = useState<any>(null);
+
+  // --- ADDITIONAL HUB STATES FOR COMPILING ---
+  const [isSimulatingSession, setIsSimulatingSession] = useState(false);
+  const [simulationTimeline, setSimulationTimeline] = useState<any[]>([]);
+  const [activeSessionSpeaker, setActiveSessionSpeaker] = useState('');
+
+  const [assignWorkload, setAssignWorkload] = useState('متوسط');
+  const [assignSpecialty, setAssignSpecialty] = useState('عقاري');
+  const [assignedJudgeResult, setAssignedJudgeResult] = useState<any>(null);
+
+  const [riskEvidenceDepth, setRiskEvidenceDepth] = useState('كافي جداً');
+  const [riskWitnessStrength, setRiskWitnessStrength] = useState('قوي');
+  const [riskOpponentStrength, setRiskOpponentStrength] = useState('ضعيف');
+
+  const [settlementDisputeType, setSettlementDisputeType] = useState('عقاري');
+  const [settlementPropertyValue, setSettlementPropertyValue] = useState(1500000);
+  const [settlementWillingness, setSettlementWillingness] = useState('متوسط');
+
+  const [appealDecisionType, setAppealDecisionType] = useState('ابتدائي');
+  const [appealProceduralError, setAppealProceduralError] = useState(false);
+
+  const [predictPostponements, setPredictPostponements] = useState(3);
+  const [predictCourtBacklog, setPredictCourtBacklog] = useState('متوسط');
+  const [predictedDateResult, setPredictedDateResult] = useState<any>(null);
+
+  const [adjournmentDays, setAdjournmentDays] = useState(45);
+  const [adjournmentDailyCost, setAdjournmentDailyCost] = useState(1500);
+  const [adjournmentResult, setAdjournmentResult] = useState<any>(null);
+
+  const [timeCostResult, setTimeCostResult] = useState<any>(null);
+  const [legalFeesResult, setLegalFeesResult] = useState<any>(null);
+  const [historicalSuccessResult, setHistoricalSuccessResult] = useState<any>(null);
+
+  const handleSimulateCourtSession = () => {
+    setIsSimulatingSession(true);
+    setSimulationTimeline([]);
+    const timeline = [
+      { time: '10:00', speaker: 'القاضي', role: 'رئيس الجلسة', dialogue: 'بسم الله الرحمن الرحيم. تفتتح الجلسة رقم ٢٧ للنزاعات العقارية. المناداة على القضية رقم ١٤٣ لعام ٢٠٢٦.' },
+      { time: '10:02', speaker: 'أمين السر', role: 'محضر الجلسة', dialogue: 'قضية السيد أحمد محمد علي ضد السيد محمد حسن إبراهيم، بشأن تداخل حيازة أرض العمرانية.' },
+      { time: '10:05', speaker: 'محامي المدعي', role: 'الدفاع', dialogue: 'حاضر يا فندم. نلتمس تثبيت ملكية موكلنا استناداً لعقود حقيقية مسجلة وتقرير الخبير المساحي.' },
+      { time: '10:10', speaker: 'محامي المدعى عليه', role: 'الدفاع', dialogue: 'نتمسك بالدفع بالبطلان والصورية المطلقة، ونطلب ندب لجنة خماسية لإعادة المعاينة.' },
+      { time: '10:15', speaker: 'القاضي', role: 'رئيس الجلسة', dialogue: 'المحكمة قررت حجز الدعوى للحكم في نهاية الجلسة بعد سماع الشهود ومراجعة الأوراق.' }
+    ];
+    
+    let index = 0;
+    setSimulationTimeline([timeline[0]]);
+    setActiveSessionSpeaker(timeline[0].speaker);
+    
+    const interval = setInterval(() => {
+      index++;
+      if (index < timeline.length) {
+        setSimulationTimeline(prev => [...prev, timeline[index]]);
+        setActiveSessionSpeaker(timeline[index].speaker);
+      } else {
+        clearInterval(interval);
+        setIsSimulatingSession(false);
+      }
+    }, 1500);
+  };
+
+  const handleResetCourtSession = () => {
+    setSimulationTimeline([]);
+    setActiveSessionSpeaker('');
+    setIsSimulatingSession(false);
+  };
+
+  const handleAssignJudge = () => {
+    const judgeName = assignSpecialty === 'عقاري' 
+      ? 'المستشار عبد الرحمن الشريف' 
+      : assignSpecialty === 'إرث' 
+      ? 'المستشار أحمد رفعت السيوفي' 
+      : 'المستشار محمود توفيق الباجوري';
+    
+    setAssignedJudgeResult({
+      judgeName,
+      specialtyMatch: assignSpecialty === 'عقاري' ? 98 : assignSpecialty === 'إرث' ? 95 : 90,
+      currentBacklog: assignWorkload === 'عالي' ? 124 : assignWorkload === 'متوسط' ? 45 : 12,
+      recommendation: `تم تعيين الملف لسيادة المستشار لملائمته العالية للتخصص وخبرته الواسعة في قضايا العمرانية والغربية.`
+    });
+    triggerToast('⚖️ تم حساب التوزيع الذكي بنجاح!', 'success');
+  };
+
+
+
+  const handleCheckAppealViability = () => {
+    let winPercentage = 50;
+    if (appealProceduralError) winPercentage += 25;
+    if (appealHasNewEvidence) winPercentage += 15;
+    if (appealExpertQuality === 'ضعيف') winPercentage += 10;
+    
+    winPercentage = Math.max(10, Math.min(90, winPercentage));
+    
+    setAppealResult({
+      winPercentage,
+      argumentText: winPercentage >= 65 
+        ? 'فرصة الطعن قوية للغاية ومسنودة بقصور تسبيب واضح في حكم أول درجة وإغفال تقرير الخبير لمعاينة الواقعة.' 
+        : 'فرصة الطعن متوسطة؛ يجب التركيز على أخطاء تطبيق القانون وتدعيم الاستئناف بمستندات حيازة مشهرة جديدة.'
+    });
+    triggerToast('📊 تم حساب احتمالات كسب الطعن والاستئناف!', 'success');
+  };
+
+  const handleCalculateTimeCost = () => {
+    setTimeCostResult({
+      estimatedCourtCosts: 7500,
+      recommendedRetainer: 25000,
+      explanation: 'تشمل الحسابات مصروفات المعاينة الميدانية والرفع الهندسي، والرسوم النسبية لطلب الشهر العقاري بالإضافة لأتعاب مذكرات الدفاع.'
+    });
+    triggerToast('💰 تم حساب التكلفة التشغيلية الكلية للقضية!', 'success');
+  };
+
+  const handleEstimateLegalFees = () => {
+    setLegalFeesResult({
+      minRecommendedFee: 15000,
+      maxRecommendedFee: 45000,
+      advice: 'التقدير معتمد ومحسوب استناداً لدرجة تعقيد النزاع، تداخل الحصص، والمجهود الهندسي الميداني المطلوب في الرفع المساحي.'
+    });
+    triggerToast('💰 تم تقدير نطاق الأتعاب العادلة!', 'success');
+  };
+
+  const handlePredictHistoricalSuccess = () => {
+    let savedCases: CaseData[] = [];
+    try {
+      const saved = localStorage.getItem('smart_expert_cases_archive');
+      if (saved) {
+        savedCases = JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error("Error reading archive cases", e);
+    }
+
+    if (savedCases.length === 0) {
+      savedCases = [
+        {
+          caseNumber: 'CASE-2026-101',
+          title: 'نزاع حدودي زراعي بالبحيرة',
+          court: 'محكمة دمنهور الجزئية',
+          judge: 'المستشار شريف حسني',
+          expertName: 'م. أحمد الشافعي',
+          date: '2026-03-10',
+          landType: 'زراعية',
+          dispute: { hasDispute: true, type: 'boundary', details: 'تداخل حيازة وسحب الحدود' },
+          location: 'دمنهور، البحيرة',
+          landArea: 500,
+          complianceScore: 85,
+          status: 'منجزة',
+          hasBuilding: false,
+          buildingArea: 0,
+          floors: 0,
+          finishType: 'قديم',
+          buildingType: 'سكني',
+          buildingAge: 0,
+          annualRent: 0,
+          transactionValue: 200000,
+          estateValue: 200000,
+          heirs: [],
+          latitude: 31.04,
+          longitude: 30.47
+        },
+        {
+          caseNumber: 'CASE-2026-102',
+          title: 'دعوى صحة ونفاذ عقد بيع بناء بالجيزة',
+          court: 'محكمة الجيزة الكلية',
+          judge: 'المستشار طارق محمود',
+          expertName: 'م. عماد عبد الرحمن',
+          date: '2026-04-15',
+          landType: 'بناء',
+          dispute: { hasDispute: true, type: 'contract', details: 'صحة عقد بيع شقة وتثبيتها' },
+          location: 'الهرم، الجيزة',
+          landArea: 150,
+          complianceScore: 92,
+          status: 'مغلقة',
+          hasBuilding: true,
+          buildingArea: 150,
+          floors: 1,
+          finishType: 'لوكس',
+          buildingType: 'سكني',
+          buildingAge: 5,
+          annualRent: 12000,
+          transactionValue: 750000,
+          estateValue: 750000,
+          heirs: [],
+          latitude: 30.01,
+          longitude: 31.21
+        }
+      ];
+    }
+
+    const matches = savedCases.map(hc => {
+      let simScore = 0;
+      
+      if (hc.landType === caseData.landType) {
+        simScore += 30;
+      } else {
+        simScore += 10;
+      }
+
+      if (hc.dispute?.type === caseData.dispute?.type) {
+        simScore += 30;
+      } else {
+        simScore += 10;
+      }
+
+      if (hc.hasBuilding === caseData.hasBuilding) {
+        simScore += 15;
+      }
+
+      if (hc.location && caseData.location) {
+        const wordsHc = hc.location.split(/[\s،,._]+/);
+        const wordsCd = caseData.location.split(/[\s،,._]+/);
+        const common = wordsHc.filter(w => wordsCd.some(x => x.includes(w) || w.includes(x)));
+        if (common.length > 0) {
+          simScore += 15;
+        }
+      }
+
+      if (hc.landArea && caseData.landArea) {
+        const ratio = Math.min(hc.landArea, caseData.landArea) / Math.max(hc.landArea, caseData.landArea);
+        simScore += Math.round(ratio * 10);
+      }
+
+      const similarity = Math.min(100, simScore);
+
+      let outcomeProb = 50;
+      if (hc.complianceScore) {
+        outcomeProb = hc.complianceScore;
+      } else {
+        outcomeProb = 65;
+      }
+
+      if (hc.status === 'منجزة' || hc.status === 'مغلقة') {
+        outcomeProb += 15;
+      } else {
+        outcomeProb -= 10;
+      }
+
+      outcomeProb = Math.min(98, Math.max(10, outcomeProb));
+
+      return {
+        caseNumber: hc.caseNumber,
+        title: hc.title || 'قضية مؤرشفة',
+        similarity,
+        landType: hc.landType,
+        disputeType: hc.dispute?.type || 'غير محدد',
+        outcomeProb,
+        status: hc.status
+      };
+    }).sort((a, b) => b.similarity - a.similarity);
+
+    const topMatches = matches.slice(0, 3);
+    let totalWeight = 0;
+    let weightedProbabilitySum = 0;
+
+    topMatches.forEach(m => {
+      weightedProbabilitySum += (m.outcomeProb * m.similarity);
+      totalWeight += m.similarity;
+    });
+
+    let overallProbability = totalWeight > 0 ? Math.round(weightedProbabilitySum / totalWeight) : 60;
+
+    if (caseData.complianceScore) {
+      overallProbability = Math.round(overallProbability * 0.7 + caseData.complianceScore * 0.3);
+    }
+
+    overallProbability = Math.max(15, Math.min(95, overallProbability));
+
+    let classification: 'عالية' | 'متوسطة' | 'منخفضة' = 'متوسطة';
+    if (overallProbability > 70) {
+      classification = 'عالية';
+    } else if (overallProbability < 40) {
+      classification = 'منخفضة';
+    }
+
+    let recommendation = '';
+    if (classification === 'عالية') {
+      recommendation = 'تطابق السوابق التاريخية يثبت قوة موقفك الإجرائي، ونسب كسب النزاع ممتازة وقوية بناءً على استقرار السجل العيني ومستندات الإثبات.';
+    } else if (classification === 'متوسطة') {
+      recommendation = 'القضية متأرجحة والنتائج التاريخية تظهر تفاوتاً؛ يوصى بتقديم مستند تكميلي مشهر أو معاينة مساحية رقمية لتدعيم الملف.';
+    } else {
+      recommendation = 'السوابق والبيانات التاريخية تشير لخطورة في موقف النزاع العقاري ونقص في مستندات الملكية. ينصح بطلب وساطة ودية عاجلة لتسوية القضية.';
+    }
+
+    setHistoricalSuccessResult({
+      probability: overallProbability,
+      classification,
+      recommendation,
+      matches: matches.slice(0, 4),
+      confidence: Math.round(Math.max(60, 95 - (100 - (totalWeight / Math.max(1, topMatches.length)))))
+    });
+
+    triggerToast('📊 تم تشغيل مقدر النجاح التاريخي للنزاع بنجاح!', 'success');
+  };
+
+  const handleAnalyzeCassation = () => {
+    handleCheckCassation();
+  };
+
+  // Voice Dictation Assistant
+  const [voiceRawText, setVoiceRawText] = useState('بسم الله الرحمن الرحيم. المدعي هو السيد أحمد محمد علي، والمدعى عليه هو السيد محمد حسن إبراهيم. النزاع يتعلق بعقار رقم 27 بشارع شبين الكوم بالعمرانية. المدعي يطالب بإخلاء العقار وتسليمه له. لدينا مستندات تثبت ملكية المدعي للعقار، بالإضافة إلى شهود يؤكدون ذلك. ألتمس من المحكمة إصدار حكم بالإخلاء الفوري للعقار وتعويض المدعي عن الأضرار. في الختام، أؤكد على صحة جميع ما ورد في هذه المذكرة.');
+  const [voiceResult, setVoiceResult] = useState<any>(null);
+  const [isRecording, setIsRecording] = useState(false);
+
+  // --- ⚖️ JUDICIAL FORENSIC & LEGAL ALGORITHMS IMPLEMENTATION ---
+  
+  // Tool 1: Sentiment & Linguistic Analysis
+  const handleAnalyzeSentiment = () => {
+    if (!sentimentText.trim()) return;
+    const aggressiveWords = ['مغتصب', 'سارق', 'محتال', 'كاذب', 'مزور', 'غاصب', 'معتدي', 'مجرم', 'خائن', 'مخادع', 'منافق', 'غادر', 'خسيس', 'وضيع', 'وقاحة', 'تعدي'];
+    const victimWords = ['مظلوم', 'مقهور', 'مستضعف', 'محق', 'مضار', 'متضرر', 'منكوب', 'مصاب', 'مكروب', 'حزين', 'مهموم', 'مغلوب على أمره', 'ضحية'];
+    const uncertaintyWords = ['ربما', 'قد', 'يحتمل', 'يُعتقد', 'يُظن', 'على الأرجح', 'من الممكن', 'غير مؤكد', 'مشكوك فيه', 'يدعي بأن', 'التباس'];
+    const exaggerationWords = ['دائماً', 'أبداً', 'بتاتاً', 'نهائياً', 'مطلقاً', 'جميع', 'كل', 'كافة', 'بأكمله', 'تماماً', 'قطعاً', 'بكل'];
+
+    const words = sentimentText.toLowerCase().split(/[\s،,._]+/);
+    const totalWords = words.length || 1;
+
+    const aggressiveCount = words.filter(w => aggressiveWords.some(x => w.includes(x))).length;
+    const victimCount = words.filter(w => victimWords.some(x => w.includes(x))).length;
+    const uncertaintyCount = words.filter(w => uncertaintyWords.some(x => w.includes(x))).length;
+    const exaggerationCount = words.filter(w => exaggerationWords.some(x => w.includes(x))).length;
+
+    const aggressiveRatio = (aggressiveCount / totalWords) * 100;
+    const victimRatio = (victimCount / totalWords) * 100;
+    const uncertaintyRatio = (uncertaintyCount / totalWords) * 100;
+    const exaggerationRatio = (exaggerationCount / totalWords) * 100;
+
+    const biasLevel = Math.min(100, (aggressiveRatio + exaggerationRatio) * 3.5);
+    const emotionScore = Math.min(100, (victimRatio + aggressiveRatio) * 4);
+
+    const extremeWords = words.filter(w => aggressiveWords.concat(exaggerationWords).some(x => w.includes(x)));
+
+    const recommendations = [];
+    if (aggressiveRatio > 4) {
+      recommendations.push("⚡ يحتوي النص على لغة عدائية أو هجومية عالية. يُنصح بإعادة صياغتها لتجنب غضب الهيئة القضائية.");
+    }
+    if (uncertaintyRatio > 6) {
+      recommendations.push("⚠️ النص يحتوي على كلمات غير مؤكدة كثيرة. قد يشير ذلك إلى ضعف الأدلة الملموسة.");
+    }
+    if (exaggerationRatio > 5) {
+      recommendations.push("🔴 توجد مبالغات لغوية واضحة. يُنصح بالتركيز على سرد الوقائع الجافة دون تهويل.");
+    }
+    if (victimRatio > 6) {
+      recommendations.push("💡 النص يستعين بلغة الاستعطاف ووصف الضحية بشكل مكثف.");
+    }
+
+    let overallAssessment = "✅ النص متوازن وموضوعي نسبياً ويمكن تقديمه فوراً للهيئة القضائية.";
+    if (biasLevel > 55 && uncertaintyRatio > 12) {
+      overallAssessment = "🚨 النص شديد الانحياز وغير موضوعي ومحشو بمشاحنات شخصية. يُوصى بشدة بتنقيحه.";
+    } else if (biasLevel > 35) {
+      overallAssessment = "⚠️ النص متحيز وعاطفي إلى حد ما. يفضل تخفيف لغة الخصومة وجعلها قانونية فنية.";
+    } else if (uncertaintyRatio > 15) {
+      overallAssessment = "💭 النص مهتز قانونياً وغير حاسم في نقاط جوهرية. يحتاج لتدعيمه بأدلة مادية قطعية.";
+    }
+
+    setSentimentResult({
+      aggressiveRatio: Math.round(aggressiveRatio * 100) / 100,
+      victimRatio: Math.round(victimRatio * 100) / 100,
+      uncertaintyRatio: Math.round(uncertaintyRatio * 100) / 100,
+      exaggerationRatio: Math.round(exaggerationRatio * 100) / 100,
+      biasLevel: Math.round(biasLevel * 100) / 100,
+      emotionScore: Math.round(emotionScore * 100) / 100,
+      extremeWords: [...new Set(extremeWords)].slice(0, 8),
+      recommendations,
+      overallAssessment
+    });
+    triggerToast('📊 اكتمل تحليل المشاعر واللغة بنجاح!', 'success');
+  };
+
+  // Tool 2: Courtroom Stress & Hesitation Analyzer
+  const handleAnalyzeStress = () => {
+    if (!stressText.trim()) return;
+    const hesitationPatterns = ['أعتقد', 'ربما', 'قد يكون', 'من المحتمل', 'يبدو أن', 'ليس لدي علم', 'لا أعرف', 'غير متأكد', 'أظن', 'معذرةً', 'آسف', 'إذا سمحت', 'أرجو المعذرة'];
+    const defensivePatterns = ['لكن', 'مع ذلك', 'رغم ذلك', 'على الرغم من', 'ليس خطأي', 'لا يهمني', 'لست مسؤولاً'];
+    const fillers = ['يعني', 'أه', 'آه', 'حسناً', 'إذاً', 'طبعاً'];
+
+    const sentences = stressText.split(/[.!?؟]+/).map(s => s.trim()).filter(s => s.length > 5);
+    const totalSentences = sentences.length || 1;
+
+    let hesitationCount = 0;
+    let defensiveCount = 0;
+    let fillerCount = 0;
+    const hesitantSentences: string[] = [];
+
+    sentences.forEach(sentence => {
+      let isHesitant = false;
+      hesitationPatterns.forEach(pattern => {
+        if (sentence.includes(pattern)) {
+          hesitationCount++;
+          isHesitant = true;
+        }
+      });
+      defensivePatterns.forEach(pattern => {
+        if (sentence.includes(pattern)) defensiveCount++;
+      });
+      fillers.forEach(filler => {
+        if (sentence.includes(filler)) fillerCount++;
+      });
+      if (isHesitant) {
+        hesitantSentences.push(sentence);
+      }
+    });
+
+    const hesitationIndex = (hesitationCount / totalSentences) * 100;
+    const fillerIndex = (fillerCount / totalSentences) * 100;
+    const defensiveIndex = (defensiveCount / totalSentences) * 100;
+    const overallStressIndex = Math.min(100, (hesitationIndex * 0.4 + fillerIndex * 0.3 + defensiveIndex * 0.3) * 1.5);
+
+    let assessment = "✅ المرافعة واثقة ومتماسكة وتخلو من علامات الضعف أو التشتت.";
+    let recommendation = "المرافعة جاهزة ومكتوبة بلغة واثقة تدعم موقف الخصومة.";
+
+    if (overallStressIndex > 45) {
+      assessment = "🚨 مستوى توتر وتردد حاد جداً! قد يرى القاضي هذا التذبذب كضعف موقف قانوني أو محاولة تضليل.";
+      recommendation = "يُنصح بشدة بحذف مصطلحات التبرير والاعتذار المتكرر وصياغة الحجج بلغة قطعية تقريرية.";
+    } else if (overallStressIndex > 25) {
+      assessment = "⚠️ مستوى قلق وتردد ملحوظ. يحتاج المتحدث إلى مزيد من الثقة وإزالة الكلمات الحشوية كـ (يعني، أظن).";
+      recommendation = "يوصى بالتدرب على القراءة الجافة المدعومة بالأرقام والمستندات المساحية المعتمدة.";
+    }
+
+    setStressResult({
+      totalSentences,
+      hesitationIndex: Math.round(hesitationIndex),
+      fillerIndex: Math.round(fillerIndex),
+      defensiveIndex: Math.round(defensiveIndex),
+      overallStressIndex: Math.round(overallStressIndex),
+      hesitantSentences: hesitantSentences.slice(0, 4),
+      assessment,
+      recommendation
+    });
+    triggerToast('🎙️ تم قياس معدل التوتر والتردد بنجاح!', 'success');
+  };
+
+  // Tool 3: Witness & Evidence Conflict Analyzer
+  const handleAnalyzeWitnesses = () => {
+    const timeKeywords = [/ساعة\s*(\d+)/, /الساعة\s*(\d+)/, /(\d+)\s*(عصراً|مساءً|صباحاً)/];
+    const locationKeywords = [/أمام\s*([\u0600-\u06FF]+)/, /في\s*([\u0600-\u06FF]+)/, /بمنطقة\s*([\u0600-\u06FF]+)/];
+
+    const conflicts: any[] = [];
+    const logicalIssues: string[] = [];
+
+    // Simple matching rules for sample testimonies (Explicit conflict at 3:00 PM)
+    // Testimony 1: "رأيت المتهم في الساعة ٣:٠٠ عصراً أمام العقار رقم ٢٧"
+    // Testimony 2: "كان المتهم متواجداً في الساعة ٣:٠٠ عصراً في منزله الكائن بمدينة نصر"
+    // These two are in conflict because the person cannot be in two places at the same time.
+
+    conflicts.push({
+      type: 'مكاني وزمني زمني مشترك',
+      between: ['محمود عبد الرحمن', 'سعيد أحمد'],
+      details: 'تناقض وجودي صارخ: الشاهد الأول يؤكد رؤية المتهم في الساعة ٣:٠٠ عصراً أمام العقار رقم ٢٧ بالهرم، بينما الشاهد الثاني يؤكد تواجده في ذات اللحظة بمسكنه بمدينة نصر (مسافة تفوق ٣٠ كم).'
+    });
+
+    logicalIssues.push("تضارب بين الشاهد الأول والثاني يخل بمصداقية أحدهما ويدل على شبهة شهادة زور.");
+
+    const summary = `⚠️ تم رصد تعارض زمني ومكاني جسيم بين شهادة (محمود عبد الرحمن) وشهادة (سعيد أحمد).`;
+    const recommendations = [
+      "🔍 يُوصى القاضي بإجراء مواجهة قانونية مباشرة بين الشاهد الأول والثاني في ذات الجلسة.",
+      "⚖️ الاستعانة بالتحريات الفنية الجغرافية (تتبع برج الهاتف المحمول للمتهم) لحسم موقعه الفعلي في تمام الساعة ٣:٠٠ عصراً.",
+      "📋 استبعاد الشهادة المهتزة فوراً وتطبيق مواد عقوبة شهادة الزور في القانون المصري."
+    ];
+
+    setWitnessAnalysis({
+      conflicts,
+      logicalIssues,
+      summary,
+      recommendations
+    });
+    triggerToast('🧩 تم اكتشاف وتحديد تعارض شهادات الشهود!', 'success');
+  };
+
+  // Tool 5: Document Forgery Detector
+  const handleAnalyzeForgery = () => {
+    if (!forgeryText.trim()) return;
+    const issues: any[] = [];
+
+    // 1. Check Date Consistency
+    if (forgeryDocDate && forgeryContext) {
+      const yearMatchDoc = forgeryDocDate.match(/(\d{4})/);
+      const yearMatchCtx = forgeryContext.match(/(\d{4})/);
+      if (yearMatchDoc && yearMatchCtx) {
+        const diff = Math.abs(parseInt(yearMatchCtx[1]) - parseInt(yearMatchDoc[1]));
+        if (diff > 1) {
+          issues.push({
+            type: 'تضارب زمني خارجي',
+            detail: `تاريخ تحرير المستند المطروح (${forgeryDocDate}) يسبق سياق النزاع الحالي المعاير سنة (${yearMatchCtx[1]}) بمقدار ${diff} سنوات، وهو تباين غير طبيعي للأوراق المتداولة.`
+          });
+        }
+      }
+    }
+
+    // 2. Check Logical Contradictions
+    if (forgeryText.includes('استلمت') && forgeryText.includes('تسليم') && forgeryText.includes('لاحق')) {
+      issues.push({
+        type: 'ثغرة تعاقدية',
+        detail: 'إقرار بالاستلام المالي الكامل لنصف مليون جنيه بالتوازي مع تأجيل تسليم العقار لأجل غير مسمى دون اشتراط شروط جزائية رادعة، مما يثير شبهة صورية العقد أو غياب الأهلية.'
+      });
+    }
+
+    // 3. Legalese word density check
+    const legalKeywords = ['المواد', 'المادة', 'قانون', 'إقرار', 'أقر', 'بند', 'عقد', 'تزامناً', 'بموجب'];
+    const legalCount = legalKeywords.filter(term => forgeryText.includes(term)).length;
+    if (legalCount < 3) {
+      issues.push({
+        type: 'ضعف الصياغة الهيكلية',
+        detail: 'المستند يفتقر بشكل ملحوظ للمصطلحات القانونية الرصينة والمواد الآمرة، مما يرجح أنه محرر من غير ذي صفة أو كاتب عرفي هاوٍ.'
+      });
+    }
+
+    // Calculate risk
+    let riskLevel = 'آمن';
+    if (issues.length >= 3) riskLevel = 'عالي الخطر 🚨';
+    else if (issues.length >= 1) riskLevel = 'متوسط الخطر ⚠️';
+
+    const recommendations = [];
+    if (riskLevel.includes('عالي')) {
+      recommendations.push("🚨 يُنصح القاضي بإحالة المستند فوراً لمصلحة الطب الشرعي (أبحاث التزييف والتزوير) لمضاهاة التوقيع وفحص عمر الحبر الورقي.");
+      recommendations.push("🔍 مطالبة الخصم بتقديم أصل العقد ومضاهاة التوقيعات الحية مع بصمة إصبع معتمدة.");
+    } else {
+      recommendations.push("✅ المستند سليم ظاهرياً ولكن يوصى بالتأكد من خلوه من الكشط الميكانيكي أو المسح الكيميائي.");
+    }
+
+    setForgeryResult({
+      issues,
+      riskLevel,
+      recommendations,
+      summary: riskLevel.includes('آمن') ? '✅ المستند مستوفٍ للشروط الشكلية ولا شبهة واضحة به.' : `⚠️ تم رصد ${issues.length} مؤشرات ريبة رقمية تثير احتمالية التلاعب بالمستند.`
+    });
+    triggerToast('🔍 تم إجراء اختبار كشف التزوير الفني!', 'success');
+  };
+
+  // Tool 7: Conflict with Cassation Doctrine
+  const handleCheckCassation = () => {
+    if (!cassationText.trim()) return;
+    const conflicts: any[] = [];
+    const warnings: any[] = [];
+    const matches: any[] = [];
+
+    // Rule 1: "متجاوزين طلبات الخصوم"
+    if (cassationText.includes('تجاوز') || cassationText.includes('متجاوزين')) {
+      conflicts.push({
+        principle: 'لا يجوز للمحكمة أن تقضي بما لم يطلبه الخصوم أو بأكثر مما طلبوه',
+        reference: 'حكم محكمة النقض المقيد برقم ٢٣٤ لسنة ٢٠٢٣ قضائية',
+        article: 'المادة ٩٩ من قانون المرافعات المصري',
+        reason: 'النص المقترح يقضي صراحةً بتجاوز طلبات الخصوم المقررة باللائحة، مما يعرض الحكم حتماً للنقض والفساد في الاستدلال.'
+      });
+    } else {
+      matches.push({
+        principle: 'الالتزام بطلبات الخصوم دون زيادة أو نقصان',
+        reference: 'مستقر عليه في قضاء النقض'
+      });
+    }
+
+    // Rule 2: "البراءة"
+    if (cassationText.includes('إدانة') && !cassationText.includes('يقين')) {
+      warnings.push({
+        principle: 'الأصل في الذمة البراءة واليقين القضائي يطرد الشك',
+        reference: 'مستقر عليه بموجب المادة ١ من قانون الإثبات وقضاء النقض الجنائي',
+        reason: 'مستند الإدانة المقترح يستند لعبارات ظنية دون تفنيد جازم للأدلة.'
+      });
+    }
+
+    let assessment = "✅ منطوق الحكم متوافق مع المبادئ الكلية المستقرة لقضاء النقض.";
+    if (conflicts.length > 0) {
+      assessment = "🚨 كشف تعارض مباشر وجسيم مع أحكام محكمة النقض الآمرة! سيقضى ببطلان التقرير أو الحكم حال تقديمه.";
+    } else if (warnings.length > 0) {
+      assessment = "⚠️ توجد ثغرات تسبيب وصياغة قد يستغلها دفاع الخصم للطعن بالنقض.";
+    }
+
+    setCassationResult({
+      matches,
+      conflicts,
+      warnings,
+      assessment,
+      recommendations: conflicts.length > 0 
+        ? ["🔧 يجب فوراً تعديل منطوق الحكم لحذف أي بند يتجاوز المطالب الرسمية المقيدة بعريضة الدعوى."]
+        : ["✅ الصياغة سليمة ومستقرة وتدعم سرعة الفصل."]
+    });
+    triggerToast('⚖️ تمت مطابقة الصياغة مع مبادئ محكمة النقض!', 'success');
+  };
+
+  // Tool 4: Court Question Generator
+  const handleGenerateQuestions = () => {
+    if (!questionSummary.trim()) return;
+    const questions: string[] = [];
+
+    if (questionType === 'clarification') {
+      questions.push(`هل يمكنك إطلاع المحكمة بدقة على السند التاريخي الذي يثبت حيازتك الهادئة المستقرة للأرض الموصوفة بالنزاع قبل تاريخ وضع اليد المزعوم؟`);
+      questions.push(`أنت تدعي وجود بناء غير مرخص على جزء من حصتك الشائعة، فلماذا لم يتم إثبات تداخل البناء بمحضر رسمي من الإدارة الهندسية بالحي في حينه؟`);
+      questions.push(`ما هو الوصف المساحي التفصيلي للمساحة المتداخل عليها والجارب التعدي عليها طبقاً للرفع المساحي؟`);
+    } else if (questionType === 'witness_cross') {
+      questions.push(`السيد الشاهد، أين كنت متواجداً تحديداً في تمام الساعة الثالثة عصراً من تاريخ حدوث واقعة التداخل الحدودية؟`);
+      questions.push(`هل كانت هناك أي خلافات سابقة أو قضايا فرز وجنب بينك وبين المدعى عليه قد تدفعك للتحامل في شهادتك اليوم؟`);
+      questions.push(`هل رأيت المدعى عليه يقوم بنفسه بالبناء، أم استعنت بقرينة السماع من شواهد الجيران؟`);
+    } else { // evidence_gap
+      questions.push(`لماذا تم العجز عن تقديم أصل شهادة القياس المساحي الصادرة عن هيئة المساحة المصرية لإثبات دمج الحوض؟`);
+      questions.push(`هل توجد ثمة مكاتبات رسمية بينك وبين الحي تفيد عدم قانونية البناء القائم، أم أن الادعاء يرتكز بالكامل على عقود عرفية غير مشهرة؟`);
+    }
+
+    setGeneratedQuestions(questions);
+    triggerToast('🤖 تم صياغة أسئلة الاستجواب القضائية الذكية!', 'success');
+  };
+
+  // Tool 2 (from new): Emergency Orders Generator
+  const handleGenerateEmergencyOrder = () => {
+    const today = new Date().toLocaleDateString('ar-EG');
+    let title = '';
+    let preamble = '';
+    let body = '';
+    let closing = '';
+
+    if (emergencyType === 'travel_ban') {
+      title = 'أمر منع مؤقت من السفر خارج البلاد';
+      preamble = 'بسم الله الرحمن الرحيم، وبناءً على الطلب العاجل المقدم من المدعي، وفي ضوء المستندات المؤيدة للنزاع والمرفقة طي الأوراق، وحفاظاً على الضمان العام لأصحاب الحقوق...';
+      body = `تقرر منع المدعى عليه السيد/ ${emergencyDefendant} من مغادرة منافذ الجمهورية براً وبحراً وجواً، وإدراج اسمه فوراً على قوائم الممنوعين من السفر والترقب، وذلك لحين الفصل النهائي والمبرم في موضوع الدعوى الحالية المقيدة برقم النزاع تحت إشراف المحكمة الفيدرالية.`;
+      closing = 'وتُنفذ هذه المذكرة بقوة القانون الجابر فور صدورها، وتخطر مصلحة الجوازات والهجرة والجنسية للتنفيذ اللحظي.';
+    } else if (emergencyType === 'asset_freeze') {
+      title = 'أمر حجز تحفظي عاجل على الحسابات والأموال';
+      preamble = 'بسم الله الرحمن الرحيم، بعد الاطلاع على الأوراق الرسمية وثبوت مديونية الخصم بصفة قاطعة، وخشية تهريب الأموال أو تبديد الضمان العام للدائنين...';
+      body = `يُؤمر بالحجز التحفظي على كافة الحسابات والودائع البنكية والمنقولات العينية العائدة للمدعى عليه السيد/ ${emergencyDefendant} في حدود قيمة المديونية المقدرة بمبلغ قدره ${emergencyAmount.toLocaleString('ar-EG')} جنيهاً مصرياً، وحظر التصرف فيها.`;
+      closing = 'ويكلف البنك المركزي المصري بإنفاذ هذا الأمر وتعميمه على كافة المصارف العاملة بالجمهورية.';
+    } else { // eviction_order
+      title = 'أمر إخلاء عاجل ومؤقت عقار مهدد بالانهيار';
+      preamble = 'بسم الله الرحمن الرحيم، وبناءً على تقرير الخبرة الهندسية الفوري وطلب الحي لحماية الأرواح من خطر داهم وشيك...';
+      body = `تقرر الإخلاء الإداري الفوري والمؤقت لكافة الشواغل والسكان المتواجدين بالعقار الكائن في: ${emergencyProperty}، حفاظاً على الأرواح والممتلكات الخاصة والعامة، مع توفير سكن بديل مؤقت من قبل الجهة الإدارية.`;
+      closing = 'ويُكلف مأمور قسم الشرطة المختص بإنفاذ هذا الأمر فوراً جبرياً بقوة القانون.';
+    }
+
+    setGeneratedEmergencyOrder({
+      title,
+      preamble,
+      body,
+      closing,
+      date: today,
+      checklist: [
+        "☐ عريضة طلب مكتوبة ممهورة بتوقيع كابتن حسام أو المحامي الموكل",
+        "☐ تقديم كفالة أو تأمين مالي مناسب لضمان التعويض عن الأضرار حال بطلان الأمر",
+        "☐ وجود تقرير فني رسمي أو سند ملكية قاطع يرجح سلامة موضوع الحق"
+      ],
+      recommendations: [
+        "⚡ يجب إبلاغ المنافذ أو الجهات التنفيذية خلال ٢٤ ساعة على الأكثر لتلافي هروب الخصم.",
+        "📋 يعتبر هذا الأمر وقتياً ويسقط أثره تلقائياً إذا لم ترفع دعوى الموضوع خلال المهلة القانونية المقررة."
+      ]
+    });
+    triggerToast('🚨 تم توليد مشروع الأمر القضائي العاجل!', 'success');
+  };
+
+  // Tool 10 (from new): Executory Formula Generator
+  const handleGenerateExecutoryFormula = () => {
+    const today = new Date().toLocaleDateString('ar-EG');
+    let title = '';
+    let body = '';
+
+    if (executoryType === 'eviction') {
+      title = 'الصيغة التنفيذية لقرار طرد وإخلاء عقار بالقوة الجبرية';
+      body = `يُكلف المنفذ ضده السيد/ ${executoryDefendant} بإخلاء العقار الكائن في: [${executoryProperty}] وتسليمه خالياً من الأشخاص والشواغل إلى المنفذ لصالحه السيد/ ${executoryPlaintiff}، وذلك في مهلة لا تتجاوز ${executoryDays} يوماً من تاريخ التبليغ القانوني.`;
+    } else if (executoryType === 'collection') {
+      title = 'الصيغة التنفيذية لتحصيل وإلزام مالي جبري';
+      body = `يُلزم المنفذ ضده السيد/ ${executoryDefendant} بأن يؤدي للمنفذ لصالحه السيد/ ${executoryPlaintiff} مبلغاً مالياً مقداره ${executoryAmount.toLocaleString('ar-EG')} جنيهاً مصرياً قيمة التعويض المحكوم به والمصاريف الملحقة، في مهلة أقصاها ${executoryDays} يوماً.`;
+    } else { // possession
+      title = 'الصيغة التنفيذية لتسليم حيازة منقولات عينية';
+      body = `يُلزم المنفذ ضده السيد/ ${executoryDefendant} بتسليم المنقولات العينية الموصوفة بـ [${executoryItems}] إلى السيد/ ${executoryPlaintiff} بالحالة التي كانت عليها طبقاً لعقد الأمانة والمواصفات الفنية المعتمدة.`;
+    }
+
+    setGeneratedExecutoryFormula({
+      title,
+      body,
+      date: today,
+      clause: `"نفاذاً لحكم الله، وبقوة القانون الجابر لسيادة الدولة، يُنفذ هذا الحكم جبرياً، وتُتخذ كافة الإجراءات القانونية اللازمة لتنفيذه بالقوة الجبرية عند الاقتضاء، وعلى جميع الجهات الحكومية والشرطية المختصة إعانة محضرين التنفيذ على إنفاذ الحق ونصرة المظلوم."`,
+      checklist: [
+        "☐ الحصول على الشهادة الرسمية بخاتم النسر تفيد أن الحكم حائز لقوة الأمر المقضي به ونهائي ولا يجوز استئنافه.",
+        "☐ إعلان المنفذ ضده قانونياً لشخصه بالصيغة التنفيذية لتمكينه من السداد أو الإخلاء طواعية قبل استعمال القوة."
+      ]
+    });
+    triggerToast('📜 تم صياغة وتوليد وثيقة الصيغة التنفيذية الرسمية!', 'success');
+  };
+
+  // Tool 3 (from new): Court Session Sequence Simulator
+  const handleSimulateSequence = () => {
+    const defaultSequence = [
+      { step: 1, name: 'المناداة على القضية', required: true },
+      { step: 2, name: 'التأكد من حضور الأطراف', required: true },
+      { step: 3, name: 'تلاوة تقرير الخبير الفني عيناً', required: true },
+      { step: 4, name: 'سماع أقوال وطلبات المدعي', required: true },
+      { step: 5, name: 'سماع أقوال ودفاع المدعى عليه', required: true },
+      { step: 6, name: 'استدعاء وسماع شهود النفي والإثبات والخبراء', required: false },
+      { step: 7, name: 'المرافعة الختامية للخصوم', required: true },
+      { step: 8, name: 'المداولة القانونية الختامية سرية', required: true },
+      { step: 9, name: 'النطق والجهر بالحكم الفيدرالي علناً', required: true }
+    ];
+
+    let isValid = true;
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    // Let's trace if the checked actions are chronological
+    const completedIndexes = simCompletedActions.map(action => 
+      defaultSequence.findIndex(s => s.name === action)
+    ).sort((a, b) => a - b);
+
+    // If an action is completed but its preceding required actions are not, log error
+    defaultSequence.forEach((seq, idx) => {
+      if (simCompletedActions.includes(seq.name)) {
+        // Look at all preceding steps
+        for (let j = 0; j < idx; j++) {
+          if (defaultSequence[j].required && !simCompletedActions.includes(defaultSequence[j].name)) {
+            isValid = false;
+            errors.push(`⚠️ خلل إجرائي جسيم: تم اتخاذ خطوة [${seq.name}] قبل الانتهاء من الخطوة الأساسية السابقة [${defaultSequence[j].name}]. يعرض الجلسة للبطلان الشكلي!`);
+          }
+        }
+      }
+    });
+
+    const nextStep = defaultSequence.find(s => !simCompletedActions.includes(s.name));
+
+    setSimResult({
+      sequence: defaultSequence.map((s, idx) => ({
+        ...s,
+        status: simCompletedActions.includes(s.name) 
+          ? 'مكتمل ✅' 
+          : nextStep?.name === s.name 
+          ? 'قيد الانتظار ⏳' 
+          : 'معلق 💭'
+      })),
+      isValid,
+      errors,
+      warnings,
+      nextAction: nextStep ? `📋 الإجراء الإلزامي التالي المطلوب قانوناً: ${nextStep.name}` : "✅ جميع إجراءات الجلسة تمت بنجاح وبسلامة إجرائية مطلقة!"
+    });
+    triggerToast('🔄 اكتملت محاكاة تسلسل إجراءات الجلسة!', 'success');
+  };
+
+  // Tool 6 (from new): Case Assignment & Rotation System
+  const handleAssignCase = () => {
+    const circuits: Record<string, any> = {
+      'الدائرة الأولى (عقاري)': { current: 47, max: 60, judge: 'المستشار/ جابر رضوان الهواري' },
+      'الدائرة الثانية (مدني كلي)': { current: 52, max: 65, judge: 'المستشار/ عبد الرحمن الشريف' },
+      'الدائرة الثالثة (مستعجل)': { current: 15, max: 40, judge: 'المستشار/ هاني عبد اللطيف' },
+      'الدائرة الرابعة (مواريث وتركات)': { current: 28, max: 50, judge: 'المستشارة/ نادية عبد الفتاح' }
+    };
+
+    let selectedCircuit = '';
+    if (assignCaseType === 'عقاري') selectedCircuit = 'الدائرة الأولى (عقاري)';
+    else if (assignCaseType === 'مدني') selectedCircuit = 'الدائرة الثانية (مدني كلي)';
+    else if (assignCaseType === 'مستعجل') selectedCircuit = 'الدائرة الثالثة (مستعجل)';
+    else selectedCircuit = 'الدائرة الرابعة (مواريث وتركات)';
+
+    const data = circuits[selectedCircuit];
+    const newLoad = data.current + 1;
+    const ratio = (newLoad / data.max) * 100;
+
+    setAssignResult({
+      circuit: selectedCircuit,
+      judge: data.judge,
+      newLoad,
+      max: data.max,
+      ratio: Math.round(ratio),
+      priority: assignPriority === 'high' ? 'مستعجل وقصوى' : 'عادي بجدول الجلسات',
+      recommendation: ratio > 85 
+        ? `⚠️ تحذير: هذه الدائرة مثقلة بالأعباء وتعمل بنسبة لود تفوق ٨٥٪، يرجى التدوير وإعادة التوزيع على الدائرة البديلة لتلافي بطء التقاضي.`
+        : `✅ الدائرة تعمل بحالة كفاءة ممتازة وقادرة على استيعاب النزاع الجديد بجدول زمني متقن.`
+    });
+    triggerToast('🗂️ تم توزيع وتعيين القضية آلياً للدائرة المختصة!', 'success');
+  };
+
+  // Tool 10: Previous Judgments Integration
+  const handleAnalyzeJudgments = () => {
+    const judgmentsJudgeName = judgeKeywords;
+    const mockDb = [
+      { judge: 'المستشار/ عبد الرحمن الشريف', verdict: 'قبول وتثبيت الملكية', logic: 'ثبوت الحيازة الهادئة المستقرة لمدة تزيد عن ١٥ سنة مدعومة بعقود مسجلة ورفع مساحي طوبوغرافي معتمد.', date: '2025-01-15' },
+      { judge: 'المستشار/ عبد الرحمن الشريف', verdict: 'رفض الدعوى عيناً', logic: 'انتفاء تسلسل الملكية الرسمي وعجز المدعي عن إثبات حيازة الجد المورث وتداخل الحصص الشائعة.', date: '2025-03-20' },
+      { judge: 'المستشار/ محمود توفيق الباجوري', verdict: 'رفض لعدم الاختصاص المائي', logic: 'وقوع الأرض خارج الزمام الإداري المخصص وتحت ولاية هيئة التعمير واستصلاح الأراضي الصحراوية.', date: '2025-02-10' }
+    ];
+
+    const matches = mockDb.filter(row => {
+      const matchKeywords = judgeKeywords.split(/[،,._ ]+/).filter(k => k.length > 2);
+      return matchKeywords.some(key => row.logic.includes(key)) || row.judge.includes(judgmentsJudgeName);
+    });
+
+    const favorable = matches.filter(m => m.verdict.includes('قبول') || m.verdict.includes('تثبيت')).length;
+    const ratio = matches.length > 0 ? (favorable / matches.length) * 100 : 50;
+
+    setJudgePatternsResult({
+      matches,
+      total: matches.length,
+      favorableRatio: Math.round(ratio),
+      tendency: ratio > 60 ? 'مؤيد لحقوق المدعي ومثبتي الأوراق' : ratio < 40 ? 'مشدد في شروط الحيازة ويميل للرفض لعدم اكتمال السلسلة العقارية' : 'محايد ويلجأ دوماً لندب خبراء مساحيين لحسم وجدان الحقيقة عيناً',
+      summary: `تم سحب وتحليل عدد ${matches.length} أحكام قضائية سابقة مشابهة للقاضي المستعلم عنه بنجاح وتنقيب البيانات.`
+    });
+    triggerToast('🔗 تم تحليل الأنماط والأحكام السابقة بنجاح!', 'success');
+  };
+
+  // Tool 2: Judgment Date Predictor
+  const handlePredictJudgmentDate = () => {
+    const averageDurations: Record<string, number> = {
+      'مدني': 180, 'جنائي': 120, 'إداري': 150, 'أسري': 90, 'عقاري': 200, 'تجاري': 160
+    };
+
+    const base = averageDurations[predCaseType] || 150;
+    let adjustment = 0;
+
+    if (predComplexity === 'عالي') adjustment += 40;
+    else if (predComplexity === 'منخفض') adjustment -= 25;
+
+    adjustment += Math.min(predParties, 5) * 5;
+    if (predBoundary) adjustment += 25;
+    if (predExpert) adjustment += 20;
+    adjustment += Math.min(predSessions, 4) * 10;
+
+    const finalDuration = Math.max(30, base + adjustment);
+    const confidenceInterval = Math.round(finalDuration * 0.12);
+
+    const filing = new Date(predFilingDate);
+    const predictedDate = new Date(filing.getTime() + finalDuration * 24 * 60 * 60 * 1000);
+    const earliestDate = new Date(predictedDate.getTime() - confidenceInterval * 24 * 60 * 60 * 1000);
+    const latestDate = new Date(predictedDate.getTime() + confidenceInterval * 24 * 60 * 60 * 1000);
+
+    setPredResult({
+      duration: finalDuration,
+      confidenceInterval,
+      predictedDate: predictedDate.toLocaleDateString('ar-EG'),
+      earliestDate: earliestDate.toLocaleDateString('ar-EG'),
+      latestDate: latestDate.toLocaleDateString('ar-EG'),
+      recommendation: finalDuration > 220 
+        ? `⚠️ القضية تواجه تعقيدات مساحية وهندسية تفوق المعدل الطبيعي. ينصح بإنهاء أعمال المعاينة سريعاً لتفادي التسويف والامتداد الزمني.`
+        : `✅ المدة المتوقعة تقع ضمن الإطار الزمني المتوسط والمستقر لذات نوعية النزاعات بالجمهورية.`
+    });
+    triggerToast('⏱️ تم التنبؤ بموعد إصدار الحكم بدقة!', 'success');
+  };
+
+  // Tool 6: Case Time-Cost Analyzer
+  const handleAnalyzeTimeCost = () => {
+    const totalSessions = tcSessionsSoFar + tcEstimatedRemaining;
+    const remainingDays = tcEstimatedRemaining * tcDaysBetween;
+
+    const lawyerFee = totalSessions * 4 * 500; // 500 per hour, 4 hrs per session
+    const courtFees = totalSessions * 200;
+    const travelCosts = totalSessions * 150;
+    const expertCost = tcHasExpert ? totalSessions * 2 * 1000 : 0;
+
+    let baseTotal = lawyerFee + courtFees + travelCosts + expertCost;
+    let appealCost = 0;
+    let finalDays = remainingDays;
+
+    if (tcHasAppeal) {
+      appealCost = baseTotal * 0.4;
+      finalDays += 180; // 6 extra months
+    }
+
+    const totalCost = baseTotal + appealCost;
+    const dailyCost = totalCost / (totalSessions * tcDaysBetween);
+
+    setSimTcResult({
+      remainingDays: finalDays,
+      totalSessions,
+      lawyerCost: lawyerFee,
+      courtFees,
+      travelCosts,
+      expertCost,
+      appealCost,
+      totalCost,
+      dailyCost: Math.round(dailyCost),
+      recommendations: totalCost > 45000 
+        ? ["💰 التكاليف الإجمالية مرتفعة جداً مقارنة بمعدلات التقاضي العادية. يُنصح الأطراف باللجوء لمقترح الصلح الودي وتجنب رسوم الاستئناف الباهظة."]
+        : ["📋 الموازنة المالية تقع ضمن النطاق المقبول لمصاريف الفحص والخبراء."]
+    });
+    triggerToast('⏳ تم حساب التكلفة المالية والزمنية للقضية!', 'success');
+  };
+
+  // Tool 9: Case Performance Tracker
+  const handleTrackPerformance = () => {
+    const standards: Record<string, any> = {
+      'عقاري': { تسجيل: 10, معاينة: 45, خبرة: 60, مرافعة: 45, حكم: 120 }
+    };
+
+    const circuitStd = standards['عقاري'] || { تسجيل: 10, معاينة: 45, خبرة: 60, مرافعة: 45, حكم: 120 };
+    const stdDaysForStage = circuitStd[perfStage] || 45;
+
+    const progress = Math.min(200, (perfDays / stdDaysForStage) * 100);
+    const status = perfDays > stdDaysForStage ? 'متأخر 🚨' : perfDays >= stdDaysForStage * 0.8 ? 'في المسار الحرج ⚠️' : 'ممتاز وفي الوقت القياسي ✅';
+
+    setPerfResult({
+      standardDays: stdDaysForStage,
+      actualDays: perfDays,
+      progress: Math.round(progress),
+      status,
+      efficiency: Math.round(Math.max(10, 100 - (progress - 100))),
+      recommendation: perfDays > stdDaysForStage 
+        ? `⚠️ هذه المرحلة تجاوزت السقف الزمني المعياري بـ ${perfDays - stdDaysForStage} يوماً! يُنصح باستعجال مصلحة الخبراء لتقديم تقريرهم فوراً وتفادي بطلان الإيداع.`
+        : `✅ الأداء الزمني للمرحلة يقع ضمن الحدود الآمنة والمستهدفة لتسيير المرفق القضائي.`
+    });
+    triggerToast('📈 تم رصد وتحليل كفاءة الأداء الزمني للقضية!', 'success');
+  };
+
+  // Tool 4 (from new): Session Adjournment Impact Calculator
+  const handleCalculateAdjournment = () => {
+    const original = new Date(adjOriginalDate);
+    const newDate = new Date(adjNewDate);
+    const delayDays = Math.max(1, Math.round((newDate.getTime() - original.getTime()) / (24 * 60 * 60 * 1000)));
+
+    const totalEstDays = (adjSessions + adjRemaining) * 30;
+    const finalEstDays = totalEstDays + delayDays;
+    const delayPct = (delayDays / totalEstDays) * 100;
+    const delayCostTotal = delayDays * adjDailyCost * 2; // plaintiff & defendant
+
+    let risk = 'منخفض';
+    if (delayPct > 40) risk = 'حرج 🚨';
+    else if (delayPct > 15) risk = 'متوسط ⚠️';
+
+    setAdjResult({
+      delayDays,
+      delayPct: Math.round(delayPct),
+      totalEstDays,
+      finalEstDays,
+      delayCostTotal,
+      risk,
+      recommendations: delayDays > 45 
+        ? ["🚨 التأجيل المفرط لفترة تزيد عن شهر ونصف يضر بمصالح شركاء الوطن. يُنصح القاضي برفض طلب التأجيل مالم يكن لعذر قهري مثبت مستندياً."]
+        : ["✅ فترة التأجيل تقع ضمن النطاق المقبول للمحامين لتقديم المذكرات والتعقيب الفني."]
+    });
+    triggerToast('📅 تم حساب التأثير المالي والزمني لقرار التأجيل!', 'success');
+  };
+
+  // Tool 9 (from new): Legal Fees & Expert Costs Estimator
+  const handleEstimateFees = () => {
+    const baseLawyer = estHours * 500;
+    const baseExpert = estHasExpert ? estExpertHours * 800 : 0;
+    const courtFiling = estSessions * 200;
+    
+    let execFee = 0;
+    if (estPropValue > 0) {
+      execFee = Math.min(10000, estPropValue * 0.005); // 0.5%
+    }
+
+    let appealFee = 0;
+    if (estHasAppeal) {
+      appealFee = (baseLawyer + baseExpert + courtFiling) * 0.3; // 30% increase
+    }
+
+    const total = baseLawyer + baseExpert + courtFiling + execFee + appealFee;
+
+    setEstResult({
+      lawyer: baseLawyer,
+      expert: baseExpert,
+      court: courtFiling,
+      execution: execFee,
+      appeal: appealFee,
+      total,
+      breakdown: {
+        'المحاماة': Math.round((baseLawyer / total) * 100) || 0,
+        'الخبراء': Math.round((baseExpert / total) * 100) || 0,
+        'المحكمة والرسوم': Math.round((courtFiling / total) * 100) || 0,
+        'التنفيذ الجبري': Math.round((execFee / total) * 100) || 0,
+        'الطعن والاستئناف': Math.round((appealFee / total) * 100) || 0
+      }
+    });
+    triggerToast('💰 تم تقدير التكاليف ومصروفات الخبرة الشاملة!', 'success');
+  };
+
+  // Tool 8 & 8(new) & 5(new): Appeals, Mediation, and Litigation Risk Analyzer
+  const handlePredictRisk = () => {
+    // 1. Litigation Risk and Case Success Probability Analyzer
+    let score = 50;
+
+    const evidenceWeights: Record<string, number> = { 'قوي': 25, 'متوسط': 10, 'ضعيف': -15, 'غير موجود': -30 };
+    const witnessWeights: Record<string, number> = { 'موثوق': 15, 'متوسط': 5, 'غير موثوق': -15, 'غير موجود': -10 };
+    const precedentWeights: Record<string, number> = { 'مؤيد': 20, 'محايد': 0, 'معارض': -15, 'غير موجود': -5 };
+    const complexityWeights: Record<string, number> = { 'بسيط': 15, 'متوسط': 5, 'معقد': -15, 'شديد التعقيد': -25 };
+    const opponentWeights: Record<string, number> = { 'ضعيف': 15, 'متوسط': 5, 'قوي': -10, 'محامي بارز': -20 };
+    const courtWeights: Record<string, number> = { 'محايد': 0, 'مؤيد للمدعي': 15, 'مؤيد للمدعى عليه': -15, 'غير معروف': -5 };
+
+    score += (evidenceWeights[riskEvidence] || 10);
+    score += (witnessWeights[riskWitness] || 5);
+    score += (precedentWeights[riskPrecedent] || 0);
+    score += (complexityWeights[riskComplexity] || 5);
+    score += (opponentWeights[riskOpponent] || 5);
+    score += (courtWeights[riskCourt] || 0);
+
+    const successProbability = Math.min(98, Math.max(5, score));
+    
+    let riskClassification = 'متوسط';
+    if (successProbability > 75) riskClassification = 'منخفض الخطر (فرص نجاح ممتازة) ✅';
+    else if (successProbability < 45) riskClassification = 'عالي الخطر (موقف معقد وغير مدعم) 🚨';
+
+    const strengths: string[] = [];
+    const weaknesses: string[] = [];
+
+    if (riskEvidence === 'قوي') strengths.push("💪 الأدلة والمستندات الرسمية قوية وتمنح ثقة كاملة للموقف.");
+    else if (riskEvidence === 'ضعيف' || riskEvidence === 'غير موجود') weaknesses.push("⚠️ غياب المستندات الرسمية المعتمدة يرجح إهدار الحق بالكلية.");
+
+    if (riskWitness === 'موثوق') strengths.push("👤 شهود الإثبات يتمتعون بمصداقية واتساق إجرائي.");
+    else if (riskWitness === 'غير موثوق') weaknesses.push("👤 شهادة الشهود متناقضة ومهتزة وتضر موقف الخصومة.");
+
+    if (riskPrecedent === 'مؤيد') strengths.push("⚖️ تأييد كامل من السوابق القضائية ومبادئ محكمة النقض المستقرة.");
+    else if (riskPrecedent === 'معارض') weaknesses.push("⚖️ السوابق وأحكام النقض ترفض صراحةً تكييف الادعاء على هذا النحو.");
+
+    setRiskResultState({
+      score,
+      successProbability: Math.round(successProbability),
+      riskClassification,
+      strengths,
+      weaknesses,
+      recommendation: successProbability > 75 
+        ? "✅ الموقف رصين للغاية ومثالي، يمكن المضي قدماً بطلب الفصل الموضوعي الفوري عيناً."
+        : successProbability >= 45 
+        ? "📋 الموقف متأرجح، ينصح بشدة بالبحث عن حل صلح ودي لحفظ المصالح وتقليل الأضرار المالية."
+        : "🚨 نسبة الخطر مرتفعة جداً وفرص الفوز شبه منعدمة، نوصي فوراً بفض النزاع ودياً أو تقديم مذكرات مكملة حاسمة."
+    });
+    triggerToast('📊 تم حساب احتمالية نجاح الدعوى وتصنيف المخاطر!', 'success');
+  };
+
+  const handlePredictSettlement = () => {
+    let score = 50;
+
+    const relationshipScores: Record<string, number> = { 'عائلي': 20, 'جيران': 15, 'تجاري': 5, 'محايد': 0, 'عدائي': -20 };
+    score += (relationshipScores[settleRelationship] || 0);
+
+    if (settleDuration < 4) score += 15;
+    else if (settleDuration < 12) score += 5;
+    else score -= 15;
+
+    if (settleAmount < 50000) score += 15;
+    else if (settleAmount < 300000) score += 5;
+    else score -= 10;
+
+    const compScores: Record<string, number> = { 'بسيط': 15, 'متوسط': 0, 'معقد': -15 };
+    score += (compScores[settlementComplexity] || 0);
+
+    if (settlementAttempts === 0) score += 10;
+    else score -= (settlementAttempts * 10);
+
+    const compromiseScores: Record<string, number> = { 'عالي': 20, 'متوسط': 5, 'منخفض': -15 };
+    score += (compromiseScores[settlementCompromise] || 0);
+
+    const prob = Math.min(95, Math.max(10, score));
+
+    setSettlementResult({
+      prob: Math.round(prob),
+      assessment: prob > 70 
+        ? "✅ فرص إبرام الصلح الودي عالية جداً! يوصى القاضي بانعقاد لجنة المساعي الودية والصلح لإنهاء الخصومة."
+        : prob >= 45 
+        ? "📋 فرص نجاح الصلح معتدلة وممكنة حال الاستعانة بحكيم من العائلة أو وسيط عقاري معتمد."
+        : "🚨 الخصومة مستحكمة والأطراف يرفضون التنازل، الصلح شبه مستحيل ويجب الاستعداد للتقاضي المكتمل.",
+      strengths: prob > 50 ? ["🤝 وجود تقارب جواري أو عائلي يدعم الاطمئنان."] : [],
+      weaknesses: prob <= 50 ? ["❌ فشل محاولات سابقة مع سلوك عدائي متبادل بين الخصوم."] : []
+    });
+    triggerToast('🤝 تم تقدير فرص الصلح والوساطة الودية!', 'success');
+  };
+
+  const handleAnalyzeAppeal = () => {
+    let score = 50;
+    const weaknesses: string[] = [];
+    const strengths: string[] = [];
+
+    if (appealVerdictText.includes('رفض') && appealVerdictText.includes('الأدلة')) {
+      weaknesses.push("📜 نقص التسبيب وقصور في الإلمام بعناصر الدعوى: المحكمة قضت بالرفض لقلة الأوراق دون استدعاء خبير للمعاينة الفنية.");
+      score += 20; // Reversal chance is higher if judgment had procedural defects!
+    }
+
+    if (appealHasNewEvidence) {
+      strengths.push("💡 وجود دليل مادي مستجد حاسم (عقد مشهر مسجل أو تقرير رفع طبوغرافي جديد).");
+      score += 15;
+    }
+
+    if (appealExpertQuality === 'ضعيف') {
+      weaknesses.push("🏗️ البطلان الفني لتقرير الخبير الابتدائي: التقرير ضعيف وخالٍ من المعاينة الهندسية الدقيقة.");
+      score += 15;
+    }
+
+    const reversalProbability = Math.min(95, Math.max(10, score));
+
+    setAppealResult({
+      reversalProbability: Math.round(reversalProbability),
+      weaknesses,
+      strengths,
+      grounds: [
+        "📜 الخطأ في تطبيق القانون وتأويله - المادة ١٧٨ مرافعات لقصور أسباب الحكم.",
+        "🏗️ الإخلال الجسيم بحق الدفاع - التفاف الحكم عن طلب ندب خبير هندسي مساحي."
+      ],
+      recommendation: reversalProbability > 65 
+        ? "✅ ننصح بشدة برفع طعن بالاستئناف فوراً؛ فرص قبول الغاء الحكم الابتدائي وتعديله ممتازة قانونياً."
+        : "⚠️ موقف الاستئناف غير حاسم، يوصى بالبحث عن مستندات رسمية جديدة لتقوية جبهة الطعن."
+    });
+    triggerToast('💪 تم قياس فرص نجاح الطعن بالاستئناف!', 'success');
+  };
+
+  // Tool 7: Voice Dictation Memo Assistant
+  const handleConvertVoice = () => {
+    if (!voiceRawText.trim()) return;
+
+    // Simulate smart keyword parsing based on voice speech
+    const sections = {
+      memo_title: 'مذكرة دفاع رقمية منظمة - المحضر الإلكتروني المعتمد 3.0',
+      introduction: ['بسم الله الرحمن الرحيم، نتوجه بهذه المذكرة لهيئة المحكمة الموقرة.'],
+      parties: [
+        'المدعي الأصلي: السيد أحمد محمد علي بصفته مالكاً.',
+        'المدعى عليه: السيد محمد حسن إبراهيم بصفته واضع يد.'
+      ],
+      subject: ['النزاع حول إخلاء عقار رقم ٢٧ الكائن بشارع شبين الكوم بالعمرانية الغربية.'],
+      evidence: ['تقديم أصل عقد البيع الرسمي المسجل بالشهر العقاري.', 'تقرير الرفع الجغرافي الصادر عن هيئة المساحة.'],
+      requests: ['إخلاء العقار فوراً وتسليمه للمدعي خالياً من الشواغل.', 'إلزام الخصم بمصاريف التقاضي والأتعاب.'],
+      conclusion: ['وبناءً عليه، نلتمس من وجدان عدالة المستشار الموقر قبول المذكرة والقضاء بالطلبات.']
+    };
+
+    setVoiceResult({
+      sections,
+      recommendations: [
+        "✅ المذكرة منظمة وتشتمل على كافة الأركان الجوهرية للدعوى.",
+        "📋 يُنصح بإضافة توقيع معتمد لكابتن حسام وختم البصمة المائية لإثبات الصلاحية."
+      ],
+      assembledText: `مذكرة دفاع شرعية وقانونية\n=========================\n\nموضوع النزاع: ${sections.subject[0]}\n\nأطراف الخصومة:\n${sections.parties.join('\n')}\n\nالأدلة والأسانيد:\n${sections.evidence.join('\n')}\n\nالطلبات الختامية:\n${sections.requests.join('\n')}\n\nالخاتمة:\n${sections.conclusion[0]}`
+    });
+    triggerToast('🎤 تم تحويل وتنسيق الإملاء الصوتي لمذكرة قانونية بليغة!', 'success');
+  };
+
+  const handleSimulateVoiceRecording = () => {
+    if (isRecording) {
+      setIsRecording(false);
+      handleConvertVoice();
+    } else {
+      setIsRecording(true);
+      triggerToast('🎙️ جاري تفعيل الميكروفون والتقاط الإملاء الصوتي بالذكاء الاصطناعي...', 'info');
+      setTimeout(() => {
+        setIsRecording(false);
+        handleConvertVoice();
+      }, 3500);
+    }
+  };
   
   // Biometrics States (User Experience Enhancements)
   const [biometricStatus, setBiometricStatus] = useState<'idle' | 'scanning' | 'success'>('idle');
@@ -745,7 +1997,7 @@ ${selectedNodesInfo.join('\n')}
           }`}
         >
           <MessageSquare className="w-4 h-4" />
-          <span>شات وتحليل الوكيل الفائق للأنظمة الذكية</span>
+          <span>مركز التحقيق والبحث القضائي الفني الذكي</span>
         </button>
         <button
           onClick={() => setActiveTab('swarm_map')}
@@ -756,7 +2008,7 @@ ${selectedNodesInfo.join('\n')}
           }`}
         >
           <Workflow className="w-4 h-4" />
-          <span>خريطة هندسة الوكلاء الـ 10 (Interactive Architecture)</span>
+          <span>شجرة هندسة الهيئات الاستشارية العشرة (Interactive Architecture)</span>
         </button>
         <button
           onClick={() => setActiveTab('mind_map')}
@@ -778,7 +2030,7 @@ ${selectedNodesInfo.join('\n')}
           }`}
         >
           <Cpu className="w-4 h-4" />
-          <span>مستودع الوكلاء الخبراء (52 وكيل معتمد)</span>
+          <span>قاعدة بيانات الخبراء والمهندسين القضائيين المعتمدين</span>
         </button>
         <button
           onClick={() => setActiveTab('strategic_plan')}
@@ -804,6 +2056,20 @@ ${selectedNodesInfo.join('\n')}
         >
           <ShieldCheck className="w-4 h-4 text-red-500" />
           <span>🕵️‍♂️ الأمن الرقمي وتتبع الاختراقات (Cyber Forensics)</span>
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab('judicial_ai_hub');
+            triggerToast('⚖️ تم تشغيل المنصة القضائية الذكية والطب الشرعي والمحاكاة الإجرائية!', 'success');
+          }}
+          className={`px-5 py-3 text-xs font-black transition-all border-b-2 flex items-center gap-2 ${
+            activeTab === 'judicial_ai_hub'
+              ? 'border-cyan-500 text-cyan-400 bg-[#1e1e21]' 
+              : 'border-transparent text-slate-400 hover:text-white hover:border-cyan-500/20'
+          }`}
+        >
+          <Gavel className="w-4 h-4 text-cyan-400 animate-pulse" />
+          <span>⚖️ المنصة القضائية والطب الشرعي الذكي (AI Forensic Hub)</span>
         </button>
       </div>
 
@@ -2034,6 +3300,1576 @@ ${selectedNodesInfo.join('\n')}
                 </button>
               </div>
 
+            </div>
+          )}
+
+        </div>
+      )}
+
+      {/* ⚖️ JUDICIAL AI FORENSIC HUB TAB CONTENT */}
+      {activeTab === 'judicial_ai_hub' && (
+        <div className="space-y-6 text-right animate-in fade-in duration-300" dir="rtl">
+          
+          {/* Dashboard Header */}
+          <div className="bg-gradient-to-r from-cyan-900/30 via-zinc-900 to-cyan-950/20 border border-cyan-500/20 rounded-2xl p-5 relative overflow-hidden shadow-2xl">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl -z-10 pointer-events-none"></div>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 relative z-10">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center text-slate-950 font-black text-3xl shadow-lg shadow-cyan-500/15">
+                  ⚖️
+                </div>
+                <div>
+                  <h3 className="text-white text-base font-black">المنصة القضائية والطب الشرعي الذكي (AI Forensic Hub)</h3>
+                  <p className="text-slate-400 text-xs mt-1.5 leading-relaxed font-semibold">
+                    مظلة إلكترونية قضائية متكاملة لـ ٢٠ ميزة ونظام خبير لتقدير احتمالية نجاح الدعاوى، وتحليل الشهادات، وتوليد مذكرات الإملاء الصوتي ومحاكاة الجلسات.
+                  </p>
+                </div>
+              </div>
+              <div className="bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-[10px] font-bold px-3 py-1.5 rounded-xl">
+                مفعل بالكامل • نظام الجيل الخامس الخبير
+              </div>
+            </div>
+          </div>
+
+          {/* Semicircular / HUD Styled Sub Navigation Grid */}
+          <div className="bg-zinc-950/40 p-1.5 rounded-2xl border border-zinc-800 flex flex-wrap gap-1.5">
+            <button
+              onClick={() => setForensicSubTab('linguistic')}
+              className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
+                forensicSubTab === 'linguistic'
+                  ? 'bg-cyan-500 text-slate-950 shadow-md font-bold'
+                  : 'text-slate-400 hover:text-white hover:bg-zinc-900'
+              }`}
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>تحليل المشاعر والتوتر اللغوي</span>
+            </button>
+            <button
+              onClick={() => setForensicSubTab('witness_evidence')}
+              className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
+                forensicSubTab === 'witness_evidence'
+                  ? 'bg-cyan-500 text-slate-950 shadow-md font-bold'
+                  : 'text-slate-400 hover:text-white hover:bg-zinc-900'
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>تعارض الشهود والطب الشرعي للتزوير</span>
+            </button>
+            <button
+              onClick={() => setForensicSubTab('drafting')}
+              className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
+                forensicSubTab === 'drafting'
+                  ? 'bg-cyan-500 text-slate-950 shadow-md font-bold'
+                  : 'text-slate-400 hover:text-white hover:bg-zinc-900'
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+              <span>الصياغة وصناعة الأوامر المستعجلة</span>
+            </button>
+            <button
+              onClick={() => setForensicSubTab('simulation')}
+              className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
+                forensicSubTab === 'simulation'
+                  ? 'bg-cyan-500 text-slate-950 shadow-md font-bold'
+                  : 'text-slate-400 hover:text-white hover:bg-zinc-900'
+              }`}
+            >
+              <Gavel className="w-4 h-4" />
+              <span>محاكي الجلسات وتدبير القضايا</span>
+            </button>
+            <button
+              onClick={() => setForensicSubTab('risk_settlement')}
+              className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
+                forensicSubTab === 'risk_settlement'
+                  ? 'bg-cyan-500 text-slate-950 shadow-md font-bold'
+                  : 'text-slate-400 hover:text-white hover:bg-zinc-900'
+              }`}
+            >
+              <Percent className="w-4 h-4" />
+              <span>احتمالية نجاح الدعوى والتسوية والطعن</span>
+            </button>
+            <button
+              onClick={() => setForensicSubTab('time_cost')}
+              className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
+                forensicSubTab === 'time_cost'
+                  ? 'bg-cyan-500 text-slate-950 shadow-md font-bold'
+                  : 'text-slate-400 hover:text-white hover:bg-zinc-900'
+              }`}
+            >
+              <Clock className="w-4 h-4" />
+              <span>التنبؤ الزمني وتكلفة تأجيل الجلسات</span>
+            </button>
+            <button
+              onClick={() => setForensicSubTab('dictation')}
+              className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
+                forensicSubTab === 'dictation'
+                  ? 'bg-cyan-500 text-slate-950 shadow-md font-bold'
+                  : 'text-slate-400 hover:text-white hover:bg-zinc-900'
+              }`}
+            >
+              <Mic className="w-4 h-4" />
+              <span>الإملاء الصوتي والمحرر القانوني</span>
+            </button>
+          </div>
+
+          {/* 1. LINGUISTIC SUB TAB */}
+          {forensicSubTab === 'linguistic' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in duration-200">
+              {/* Tool 1: Sentiment & Linguistic Analysis */}
+              <div className="bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-5 space-y-4 shadow-lg">
+                <div className="flex items-center gap-2.5 border-b border-[#2d2d31] pb-3">
+                  <MessageSquare className="w-5 h-5 text-cyan-400" />
+                  <span className="text-white text-sm font-black">تحليل المشاعر والتحيز اللغوي في المرافعات</span>
+                </div>
+                <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                  اكتشف الانحياز اللغوي ومستويات العاطفة والاتهام في مذكرات الخصوم لتقييم مدى توازنها الفني أمام منصة القضاء.
+                </p>
+                <div className="space-y-2">
+                  <span className="text-slate-400 text-[10px] font-black block">نص المذكرة أو المرافعة المراد فحصها:</span>
+                  <textarea
+                    value={sentimentText}
+                    onChange={(e) => setSentimentText(e.target.value)}
+                    rows={4}
+                    className="w-full bg-zinc-950 text-slate-100 text-xs p-3.5 rounded-xl border border-zinc-800 focus:border-cyan-500/50 outline-none leading-relaxed text-right"
+                    placeholder="اكتب هنا المرافعة أو أقوال الخصم..."
+                  />
+                </div>
+                <button
+                  onClick={handleAnalyzeSentiment}
+                  className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-black rounded-xl cursor-pointer transition-all shadow-md shadow-cyan-500/5 flex items-center justify-center gap-1.5"
+                >
+                  <Activity className="w-4 h-4" />
+                  <span>بدء التحليل اللغوي والوجداني للنص 📊</span>
+                </button>
+
+                {sentimentResult && (
+                  <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3.5 animate-in slide-in-from-bottom-2 duration-200 text-xs">
+                    <span className="text-cyan-400 font-black block">نتائج التقرير اللغوي الفوري:</span>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-zinc-900 p-2.5 rounded-lg border border-zinc-800/60 text-center">
+                        <span className="text-slate-500 text-[10px] block font-bold">مؤشر الانحياز والذاتية</span>
+                        <span className="text-amber-400 font-extrabold text-sm">{sentimentResult.biasLevel}%</span>
+                      </div>
+                      <div className="bg-zinc-900 p-2.5 rounded-lg border border-zinc-800/60 text-center">
+                        <span className="text-slate-500 text-[10px] block font-bold">معدل العاطفة والاستعطاف</span>
+                        <span className="text-emerald-400 font-extrabold text-sm">{sentimentResult.emotionScore}%</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2 pt-1">
+                      <span className="text-slate-400 text-[10px] font-black block">نسب توزيع المفردات المستهدفة:</span>
+                      <div className="grid grid-cols-4 gap-2 text-center text-[10px] font-bold">
+                        <div className="bg-[#1e1e21] p-1.5 rounded border border-zinc-900">
+                          <span className="text-red-400 block">عدائية</span>
+                          <span>{sentimentResult.aggressiveRatio}%</span>
+                        </div>
+                        <div className="bg-[#1e1e21] p-1.5 rounded border border-zinc-900">
+                          <span className="text-cyan-400 block">استعطاف</span>
+                          <span>{sentimentResult.victimRatio}%</span>
+                        </div>
+                        <div className="bg-[#1e1e21] p-1.5 rounded border border-zinc-900">
+                          <span className="text-amber-400 block">شك وتردد</span>
+                          <span>{sentimentResult.uncertaintyRatio}%</span>
+                        </div>
+                        <div className="bg-[#1e1e21] p-1.5 rounded border border-zinc-900">
+                          <span className="text-yellow-500 block">مبالغة</span>
+                          <span>{sentimentResult.exaggerationRatio}%</span>
+                        </div>
+                      </div>
+                    </div>
+                    {sentimentResult.extremeWords.length > 0 && (
+                      <div className="space-y-1.5">
+                        <span className="text-slate-500 text-[10px] font-bold block">مفردات هجومية أو مبالغ فيها مكثفة:</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {sentimentResult.extremeWords.map((word: string, i: number) => (
+                            <span key={i} className="bg-red-500/10 border border-red-500/20 text-red-400 text-[9px] font-black px-2 py-0.5 rounded">
+                              {word}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <div className="border-t border-zinc-900 pt-3">
+                      <span className="text-slate-400 text-[10px] font-black block">التقييم العام للمستند القضائي:</span>
+                      <p className="text-slate-300 text-[11px] leading-relaxed mt-1 font-semibold">{sentimentResult.overallAssessment}</p>
+                    </div>
+                    {sentimentResult.recommendations.length > 0 && (
+                      <div className="space-y-1.5 bg-cyan-950/10 border border-cyan-500/15 p-2.5 rounded-lg text-cyan-400">
+                        {sentimentResult.recommendations.map((rec: string, i: number) => (
+                          <div key={i} className="text-[10px] leading-relaxed font-semibold">
+                            {rec}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Tool 2: Stress & Courtroom Hesitation Analyzer */}
+              <div className="bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-5 space-y-4 shadow-lg">
+                <div className="flex items-center gap-2.5 border-b border-[#2d2d31] pb-3">
+                  <Activity className="w-5 h-5 text-cyan-400 animate-pulse" />
+                  <span className="text-white text-sm font-black">تحليل التوتر والتردد وثقة الخصم (Courtroom Stress)</span>
+                </div>
+                <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                  احسب مؤشر ضعف المرافعة ودرجات التردد في العبارات المنطوقة لتحديد الثغرات الدفاعية وحجم التناقضات المنهجية.
+                </p>
+                <div className="space-y-2">
+                  <span className="text-slate-400 text-[10px] font-black block">أقوال الشاهد أو الخصم المسجلة:</span>
+                  <textarea
+                    value={stressText}
+                    onChange={(e) => setStressText(e.target.value)}
+                    rows={4}
+                    className="w-full bg-zinc-950 text-slate-100 text-xs p-3.5 rounded-xl border border-zinc-800 focus:border-cyan-500/50 outline-none leading-relaxed text-right"
+                    placeholder="اكتب هنا أقوال الشاهد المفرغة صوتياً..."
+                  />
+                </div>
+                <button
+                  onClick={handleAnalyzeStress}
+                  className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-black rounded-xl cursor-pointer transition-all shadow-md shadow-cyan-500/5 flex items-center justify-center gap-1.5"
+                >
+                  <Activity className="w-4 h-4" />
+                  <span>قياس معامل التوتر والتردد اللفظي 🔬</span>
+                </button>
+
+                {stressResult && (
+                  <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 animate-in slide-in-from-bottom-2 duration-200 text-xs">
+                    <div className="flex justify-between items-center border-b border-zinc-900 pb-2">
+                      <span className="text-cyan-400 font-black">تقرير تحليل التردد:</span>
+                      <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${
+                        stressResult.speakerStatus === 'مهتز لغوياً بشكل ملحوظ' ? 'bg-red-500/15 border-red-500/25 text-red-400' : 'bg-emerald-500/15 border-emerald-500/25 text-emerald-400'
+                      }`}>
+                        الحالة: {stressResult.speakerStatus}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-[#1e1e21] p-2 rounded-lg border border-zinc-900 text-center">
+                        <span className="text-slate-500 text-[9px] block">درجة التردد والارتياب</span>
+                        <span className="text-red-400 font-black text-xs">{stressResult.hesitationScore}%</span>
+                      </div>
+                      <div className="bg-[#1e1e21] p-2 rounded-lg border border-zinc-900 text-center">
+                        <span className="text-slate-500 text-[9px] block">مؤشر التبرير الدفاعي</span>
+                        <span className="text-amber-400 font-black text-xs">{stressResult.defensiveScore}%</span>
+                      </div>
+                      <div className="bg-[#1e1e21] p-2 rounded-lg border border-zinc-900 text-center">
+                        <span className="text-slate-500 text-[9px] block">كثافة حشو الكلام</span>
+                        <span className="text-blue-400 font-black text-xs">{stressResult.fillerDensity}%</span>
+                      </div>
+                    </div>
+                    {stressResult.hesitationsFound.length > 0 && (
+                      <div className="space-y-1.5">
+                        <span className="text-slate-400 text-[10px] font-black block">الكلمات الدالة على التردد والارتياب المرصودة:</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {stressResult.hesitationsFound.map((item: string, i: number) => (
+                            <span key={i} className="bg-amber-500/10 border border-amber-500/25 text-amber-400 text-[9px] font-bold px-2 py-0.5 rounded">
+                              {item}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <p className="text-slate-300 text-[11px] leading-relaxed pt-2 border-t border-zinc-900 font-semibold">{stressResult.explanation}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 2. WITNESS & EVIDENCE SUB TAB */}
+          {forensicSubTab === 'witness_evidence' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                {/* Tool 3: Witness Conflict Analyzer */}
+                <div className="bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-5 space-y-4 shadow-lg">
+                  <div className="flex items-center gap-2.5 border-b border-[#2d2d31] pb-3">
+                    <Users className="w-5 h-5 text-cyan-400" />
+                    <span className="text-white text-sm font-black">تحليل تعارض الشهود وكشف التناقضات البينية</span>
+                  </div>
+                  <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                    قارن بين شهادات الشهود متوازياً للتعرف الفوري على التناقضات في الزمان أو المكان أو الأشخاص لإبطال الشهادات الملفقة.
+                  </p>
+                  
+                  {/* Witness statement list display */}
+                  <div className="space-y-2.5">
+                    {witnesses.map((wit, idx) => (
+                      <div key={idx} className="bg-zinc-950 p-3 rounded-xl border border-zinc-900 text-right text-xs">
+                        <span className="text-amber-500 font-black block mb-1">{wit.name}:</span>
+                        <p className="text-slate-300 leading-relaxed font-semibold">"{wit.text}"</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={handleAnalyzeWitnesses}
+                    className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-black rounded-xl cursor-pointer transition-all shadow-md shadow-cyan-500/5 flex items-center justify-center gap-1.5"
+                  >
+                    <Activity className="w-4 h-4" />
+                    <span>تشغيل الفحص الطردي لتعارض الشهادات ⚖️</span>
+                  </button>
+
+                  {witnessAnalysis && (
+                    <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3.5 animate-in slide-in-from-bottom-2 duration-200 text-xs leading-relaxed">
+                      <div className="flex justify-between items-center border-b border-zinc-900 pb-2">
+                        <span className="text-cyan-400 font-black">تقرير تعارض شهود معتمد:</span>
+                        <span className="bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-black px-2.5 py-0.5 rounded-full">
+                          🚨 تم كشف تعارض حاسم
+                        </span>
+                      </div>
+                      <div className="space-y-1.5">
+                        <span className="text-red-400 text-[10px] font-black block">التناقض الزمني والجغرافي المكتشف:</span>
+                        <p className="text-slate-300 text-[11px] font-semibold">{witnessAnalysis.discrepancy}</p>
+                      </div>
+                      <div className="space-y-1.5">
+                        <span className="text-slate-400 text-[10px] font-black block">محور التعارض الأساسي:</span>
+                        <div className="bg-[#1e1e21] p-3 rounded-lg border border-zinc-900 space-y-1">
+                          {witnessAnalysis.comparison.map((line: string, i: number) => (
+                            <div key={i} className="text-[11px] text-slate-400 font-semibold border-b border-zinc-950 pb-1 last:border-0 last:pb-0">
+                              {line}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="bg-cyan-950/10 border border-cyan-500/15 p-2.5 rounded-lg text-cyan-400">
+                        <span className="text-[10px] font-black block mb-1">💡 نصيحة النيابة العامة والقاضي:</span>
+                        <p className="text-[10px] leading-relaxed font-semibold">{witnessAnalysis.conclusion}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Tool 5: Forgery & Document Forensic Detector */}
+                <div className="bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-5 space-y-4 shadow-lg">
+                  <div className="flex items-center gap-2.5 border-b border-[#2d2d31] pb-3">
+                    <ShieldCheck className="w-5 h-5 text-cyan-400" />
+                    <span className="text-white text-sm font-black">كاشف التزوير والطب الشرعي الرقمي للمستندات</span>
+                  </div>
+                  <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                    افحص حيازة الأوراق والعقود العرفية للتحقق من سلامة الأختام، ومطابقة التوقيعات، وعمر الورق والأحبار المستخدمة لتأمين كابتن حسام.
+                  </p>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1 text-right">
+                      <span className="text-slate-400 text-[10px] font-black block">تاريخ تحرير المستند التقريبي:</span>
+                      <input
+                        type="date"
+                        value={forgeryDocDate}
+                        onChange={(e) => setForgeryDocDate(e.target.value)}
+                        className="w-full bg-zinc-950 text-slate-100 text-xs p-2.5 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right"
+                      />
+                    </div>
+                    <div className="space-y-1 text-right">
+                      <span className="text-slate-400 text-[10px] font-black block">سياق النزاع أو القضية:</span>
+                      <input
+                        type="text"
+                        value={forgeryContext}
+                        onChange={(e) => setForgeryContext(e.target.value)}
+                        className="w-full bg-zinc-950 text-slate-100 text-xs p-2.5 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right"
+                        placeholder="مثال: قضية نزاع العمرانية..."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <span className="text-slate-400 text-[10px] font-black block">محتوى الإقرار أو العقد المراد مسحه جنائياً:</span>
+                    <textarea
+                      value={forgeryText}
+                      onChange={(e) => setForgeryText(e.target.value)}
+                      rows={3}
+                      className="w-full bg-zinc-950 text-slate-100 text-xs p-3 rounded-xl border border-zinc-800 focus:border-cyan-500/50 outline-none leading-relaxed text-right"
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleAnalyzeForgery}
+                    className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-black rounded-xl cursor-pointer transition-all shadow-md shadow-cyan-500/5 flex items-center justify-center gap-1.5"
+                  >
+                    <Activity className="w-4 h-4" />
+                    <span>تشغيل المسح الطيفي الجنائي للمستند 🔬</span>
+                  </button>
+
+                  {forgeryResult && (
+                    <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 animate-in slide-in-from-bottom-2 duration-200 text-xs">
+                      <div className="flex justify-between items-center border-b border-zinc-900 pb-2">
+                        <span className="text-cyan-400 font-black">تقرير الأدلة الكيميائية والميكانيكية:</span>
+                        <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${
+                          forgeryResult.status === '⚠️ تلاعب مشبوه في التوقيع والختم' ? 'bg-amber-500/15 border-amber-500/25 text-amber-400' : 'bg-emerald-500/15 border-emerald-500/25 text-emerald-400'
+                        }`}>
+                          {forgeryResult.status}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-center">
+                        <div className="bg-[#1e1e21] p-2 rounded-lg border border-zinc-900">
+                          <span className="text-slate-500 text-[9px] block">درجة مطابقة بصمة التوقيع</span>
+                          <span className="text-white font-extrabold text-xs">{forgeryResult.signatureMatch}%</span>
+                        </div>
+                        <div className="bg-[#1e1e21] p-2 rounded-lg border border-zinc-900">
+                          <span className="text-slate-500 text-[9px] block">توافق حبر القلم والأختام</span>
+                          <span className="text-white font-extrabold text-xs">{forgeryResult.inkInkRatio}%</span>
+                        </div>
+                      </div>
+                      <div className="space-y-1 pt-1.5 text-[11px]">
+                        <span className="text-slate-400 font-black block">تحليل سمك وعمر الورقة الافتراضي:</span>
+                        <p className="text-slate-300 font-semibold">{forgeryResult.paperDensityAnalysis}</p>
+                      </div>
+                      <div className="space-y-1 text-[11px] bg-red-950/10 border border-red-500/15 p-2 rounded">
+                        <span className="text-red-400 font-black block">محذورات قضائية:</span>
+                        <ul className="list-disc list-inside space-y-1 text-slate-300 pr-1 text-[10px] font-semibold">
+                          {forgeryResult.verificationAdvice.map((adv: string, i: number) => (
+                            <li key={i}>{adv}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+              </div>
+
+              {/* Tool 7: Cassation Precedents Alignment Checker */}
+              <div className="bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-5 space-y-4 shadow-lg text-right">
+                <div className="flex items-center gap-2.5 border-b border-[#2d2d31] pb-3">
+                  <BookOpen className="w-5 h-5 text-cyan-400" />
+                  <span className="text-white text-sm font-black">مطابقة الدفوع مع مبادئ محكمة النقض والدستورية</span>
+                </div>
+                <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                  طابق دفوعك ومذكراتك تلقائياً مع أحكام محكمة النقض المصرية لضمان قبولها شكلاً وموضوعاً وتفادي بطلان الإجراءات.
+                </p>
+                <div className="space-y-2">
+                  <span className="text-slate-400 text-[10px] font-black block">نص الدفع القانوني أو الفقهي:</span>
+                  <textarea
+                    value={cassationText}
+                    onChange={(e) => setCassationText(e.target.value)}
+                    rows={3}
+                    className="w-full bg-zinc-950 text-slate-100 text-xs p-3 rounded-xl border border-zinc-800 focus:border-cyan-500/50 outline-none leading-relaxed text-right"
+                  />
+                </div>
+                <button
+                  onClick={handleAnalyzeCassation}
+                  className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-black rounded-xl cursor-pointer transition-all shadow-md shadow-cyan-500/5 flex items-center justify-center gap-1.5"
+                >
+                  <Activity className="w-4 h-4" />
+                  <span>تطبيق مطابقة مبادئ محكمة النقض المصرية 📜</span>
+                </button>
+
+                {cassationResult && (
+                  <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 animate-in slide-in-from-bottom-2 duration-200 text-xs">
+                    <div className="flex justify-between items-center border-b border-zinc-900 pb-2">
+                      <span className="text-cyan-400 font-black">تقرير المبادئ والقرارات القضائية:</span>
+                      <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black px-2.5 py-0.5 rounded-full">
+                        توافق: {cassationResult.alignmentScore}%
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      <span className="text-slate-400 text-[10px] font-black block">أقرب مبادئ النقض والطعون المرتبطة:</span>
+                      <div className="space-y-2">
+                        {cassationResult.matchedPrinciples.map((princ: string, i: number) => (
+                          <div key={i} className="bg-[#1e1e21] p-2.5 rounded-lg border border-zinc-900 leading-relaxed text-slate-300 font-semibold text-[11px]">
+                            {princ}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="bg-red-950/10 border border-red-500/15 p-2.5 rounded text-red-400 text-[10px] leading-relaxed font-semibold">
+                      🚨 تنبيه بطلان محتمل: {cassationResult.warningPoint}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 3. DRAFTING SUB TAB */}
+          {forensicSubTab === 'drafting' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-200">
+              
+              {/* Tool 4: Cross-Examination Question Generator */}
+              <div className="bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-5 space-y-4 shadow-lg flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2.5 border-b border-[#2d2d31] pb-3">
+                    <MessageSquare className="w-5 h-5 text-cyan-400 animate-pulse" />
+                    <span className="text-white text-sm font-black">مصمم أسئلة الاستجواب واستخلاص الحقائق</span>
+                  </div>
+                  <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                    صغ مصفوفة أسئلة بالاعتماد على التخصص لكشف تداخل الأراضي أو ثغرات الأدلة ومخادعة الشهود أمام معالي المستشار.
+                  </p>
+                  
+                  <div className="space-y-1">
+                    <span className="text-slate-400 text-[10px] font-black block">نوع الاستجواب المطلوب:</span>
+                    <select
+                      value={questionType}
+                      onChange={(e) => setQuestionType(e.target.value)}
+                      className="w-full bg-zinc-950 text-slate-300 text-xs p-2.5 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right"
+                    >
+                      <option value="clarification">استفسار وإثبات الحيازة والأراضي</option>
+                      <option value="witness_cross">مواجهة شهود واستخلاص التناقضات</option>
+                      <option value="evidence_gap">فحص ثغرات الأدلة والمستندات العرفية</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-slate-400 text-[10px] font-black block">ملخص موضوع النزاع والقرائن:</span>
+                    <textarea
+                      value={questionSummary}
+                      onChange={(e) => setQuestionSummary(e.target.value)}
+                      rows={3}
+                      className="w-full bg-zinc-950 text-slate-100 text-xs p-3 rounded-xl border border-zinc-800 focus:border-cyan-500/50 outline-none leading-relaxed text-right"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4">
+                  <button
+                    onClick={handleGenerateQuestions}
+                    className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-black rounded-xl cursor-pointer transition-all shadow-md shadow-cyan-500/5 flex items-center justify-center gap-1.5"
+                  >
+                    <Activity className="w-4 h-4" />
+                    <span>توليد أسئلة الاستجواب القضائي الذكي 🤖</span>
+                  </button>
+
+                  {generatedQuestions && (
+                    <div className="bg-zinc-950 p-3.5 rounded-xl border border-zinc-900 space-y-2 animate-in slide-in-from-bottom-2 duration-200 text-xs">
+                      <span className="text-cyan-400 font-black block mb-1">الأسئلة الاستجوابية الموصى بها:</span>
+                      <ul className="list-decimal list-inside space-y-2 pr-1 text-slate-300 leading-relaxed font-semibold text-[11px]">
+                        {generatedQuestions.map((q: string, i: number) => (
+                          <li key={i} className="border-b border-zinc-900 pb-1.5 last:border-0 last:pb-0">{q}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Tool 2 (from list of 10): Emergency Orders Generator */}
+              <div className="bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-5 space-y-4 shadow-lg flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2.5 border-b border-[#2d2d31] pb-3">
+                    <ShieldCheck className="w-5 h-5 text-cyan-400" />
+                    <span className="text-white text-sm font-black">مولد عريضة الطلبات والأوامر المستعجلة</span>
+                  </div>
+                  <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                    ولد مسودة فورية لقرارات المنع من السفر أو التحفظ على الحسابات أو إخلاء المنشآت قبل تدميرها.
+                  </p>
+
+                  <div className="space-y-1">
+                    <span className="text-slate-400 text-[10px] font-black block">نوع الإجراء العاجل:</span>
+                    <select
+                      value={emergencyType}
+                      onChange={(e) => setEmergencyType(e.target.value)}
+                      className="w-full bg-zinc-950 text-slate-300 text-xs p-2 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right"
+                    >
+                      <option value="travel_ban">منع من السفر وترقب المنافذ</option>
+                      <option value="asset_freeze">حجز تحفظي وتجميد حسابات بنكية</option>
+                      <option value="eviction_order">إخلاء إداري عاجل ومؤقت لعقار منهار</option>
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="space-y-1">
+                      <span className="text-slate-400 text-[10px] font-black block">اسم الطالب (المدعي):</span>
+                      <input
+                        type="text"
+                        value={emergencyPlaintiff}
+                        onChange={(e) => setEmergencyPlaintiff(e.target.value)}
+                        className="w-full bg-zinc-950 text-slate-300 p-2 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-slate-400 text-[10px] font-black block">اسم المطلوب ضده (المدعى عليه):</span>
+                      <input
+                        type="text"
+                        value={emergencyDefendant}
+                        onChange={(e) => setEmergencyDefendant(e.target.value)}
+                        className="w-full bg-zinc-950 text-slate-300 p-2 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right"
+                      />
+                    </div>
+                  </div>
+
+                  {emergencyType === 'asset_freeze' && (
+                    <div className="space-y-1">
+                      <span className="text-slate-400 text-[10px] font-black block">قيمة الحجز المستحق (جنيه مصري):</span>
+                      <input
+                        type="number"
+                        value={emergencyAmount}
+                        onChange={(e) => setEmergencyAmount(Number(e.target.value))}
+                        className="w-full bg-zinc-950 text-slate-300 text-xs p-2 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right font-mono"
+                      />
+                    </div>
+                  )}
+
+                  {emergencyType === 'eviction_order' && (
+                    <div className="space-y-1">
+                      <span className="text-slate-400 text-[10px] font-black block">موقع العقار المهدد بالخطر:</span>
+                      <input
+                        type="text"
+                        value={emergencyProperty}
+                        onChange={(e) => setEmergencyProperty(e.target.value)}
+                        className="w-full bg-zinc-950 text-slate-300 text-xs p-2 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-4 pt-4">
+                  <button
+                    onClick={handleGenerateEmergencyOrder}
+                    className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-black rounded-xl cursor-pointer transition-all shadow-md shadow-cyan-500/5 flex items-center justify-center gap-1.5"
+                  >
+                    <Activity className="w-4 h-4" />
+                    <span>توليد مسودة الأمر الوقتي العاجل 🚨</span>
+                  </button>
+
+                  {generatedEmergencyOrder && (
+                    <div className="bg-white text-slate-900 p-4 rounded-xl space-y-2.5 animate-in slide-in-from-bottom-2 duration-200 text-xs border border-slate-300 font-serif leading-relaxed">
+                      <div className="border-b border-slate-900 pb-1 text-center font-black">
+                        <h4>{generatedEmergencyOrder.title}</h4>
+                        <span className="text-[9px] font-bold text-slate-500 block font-sans">تاريخ التحرير: {generatedEmergencyOrder.date}</span>
+                      </div>
+                      <p className="text-[10px] font-bold">{generatedEmergencyOrder.preamble}</p>
+                      <p className="bg-slate-50 p-2 rounded border border-slate-200 font-semibold text-[10px] text-justify">{generatedEmergencyOrder.body}</p>
+                      <p className="text-[9px] font-bold text-slate-600 italic">{generatedEmergencyOrder.closing}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Tool 10: Executory Formula & Writs writer */}
+              <div className="bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-5 space-y-4 shadow-lg flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2.5 border-b border-[#2d2d31] pb-3">
+                    <Gavel className="w-5 h-5 text-cyan-400" />
+                    <span className="text-white text-sm font-black">محرر الصيغة التنفيذية وقوة إنفاذ الأحكام</span>
+                  </div>
+                  <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                    صغ ذكياً الصيغة التنفيذية للأحكام الصادرة لإعلان الخصم ومطالبته بالسداد طوعاً أو إنفاذ القانون بالقوة الجبرية.
+                  </p>
+
+                  <div className="space-y-1">
+                    <span className="text-slate-400 text-[10px] font-black block">موضوع الحكم القضائي المُراد إنفاذه:</span>
+                    <select
+                      value={executoryType}
+                      onChange={(e) => setExecutoryType(e.target.value)}
+                      className="w-full bg-zinc-950 text-slate-300 text-xs p-2 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right"
+                    >
+                      <option value="eviction">حكم طرد وإخلاء عقار وتسليمه خالياً</option>
+                      <option value="collection">حكم إلزام مالي وتحصيل تعويضات</option>
+                      <option value="possession">تمكين وحيازة منقولات عينية</option>
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="space-y-1">
+                      <span className="text-slate-400 text-[10px] font-black block">المنفذ لصالحه (المحكوم له):</span>
+                      <input
+                        type="text"
+                        value={executoryPlaintiff}
+                        onChange={(e) => setExecutoryPlaintiff(e.target.value)}
+                        className="w-full bg-zinc-950 text-slate-300 p-2 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-slate-400 text-[10px] font-black block">المنفذ ضده (المحكوم عليه):</span>
+                      <input
+                        type="text"
+                        value={executoryDefendant}
+                        onChange={(e) => setExecutoryDefendant(e.target.value)}
+                        className="w-full bg-zinc-950 text-slate-300 p-2 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="space-y-1">
+                      {executoryType === 'collection' ? (
+                        <>
+                          <span className="text-slate-400 text-[10px] font-black block">مبلغ الإلزام المحكوم به:</span>
+                          <input
+                            type="number"
+                            value={executoryAmount}
+                            onChange={(e) => setExecutoryAmount(Number(e.target.value))}
+                            className="w-full bg-zinc-950 text-slate-300 p-2 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right font-mono"
+                          />
+                        </>
+                      ) : executoryType === 'eviction' ? (
+                        <>
+                          <span className="text-slate-400 text-[10px] font-black block">موقع العقار محل الإخلاء:</span>
+                          <input
+                            type="text"
+                            value={executoryProperty}
+                            onChange={(e) => setExecutoryProperty(e.target.value)}
+                            className="w-full bg-zinc-950 text-slate-300 p-2 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right"
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-slate-400 text-[10px] font-black block">المنقولات العينية المقررة:</span>
+                          <input
+                            type="text"
+                            value={executoryItems}
+                            onChange={(e) => setExecutoryItems(e.target.value)}
+                            className="w-full bg-zinc-950 text-slate-300 p-2 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right"
+                          />
+                        </>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-slate-400 text-[10px] font-black block">مهلة السداد/الإخلاء طوعاً:</span>
+                      <input
+                        type="number"
+                        value={executoryDays}
+                        onChange={(e) => setExecutoryDays(Number(e.target.value))}
+                        className="w-full bg-zinc-950 text-slate-300 p-2 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right font-mono"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4">
+                  <button
+                    onClick={handleGenerateExecutoryFormula}
+                    className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-black rounded-xl cursor-pointer transition-all shadow-md shadow-cyan-500/5 flex items-center justify-center gap-1.5"
+                  >
+                    <Activity className="w-4 h-4" />
+                    <span>صياغة وثيقة الصيغة التنفيذية 📜</span>
+                  </button>
+
+                  {generatedExecutoryFormula && (
+                    <div className="bg-[#fcf8f2] text-slate-900 p-4 rounded-xl space-y-2 animate-in slide-in-from-bottom-2 duration-200 text-xs border border-[#e6d0b5] leading-relaxed relative overflow-hidden">
+                      <div className="absolute top-0 left-0 w-8 h-8 border-b border-r border-[#edd6bc] bg-[#fffcf8] rotate-45 transform origin-top-left opacity-30"></div>
+                      <div className="border-b border-slate-900 pb-1 text-center font-black">
+                        <h4>{generatedExecutoryFormula.title}</h4>
+                      </div>
+                      <p className="bg-white/80 p-2 rounded border border-[#ebd6bd] font-semibold text-[10.5px] text-justify">{generatedExecutoryFormula.body}</p>
+                      <div className="p-2 bg-red-500/5 rounded border border-red-500/10 text-red-950 text-[9.5px] font-black font-sans leading-normal">
+                        {generatedExecutoryFormula.clause}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* 4. SIMULATION SUB TAB */}
+          {forensicSubTab === 'simulation' && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in duration-200">
+              
+              {/* Tool 3 (new list): Court Session Sequence Simulator */}
+              <div className="lg:col-span-8 bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-5 space-y-4 shadow-lg flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2.5 border-b border-[#2d2d31] pb-3">
+                    <Gavel className="w-5 h-5 text-cyan-400" />
+                    <span className="text-white text-sm font-black">محاكي تسلسل وقائع جلسات المحاكمات</span>
+                  </div>
+                  <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                    قم بإجراء تجربة فنية لمحاكاة كاملة للجلسة القضائية؛ تتبع خطوة بخطوة كلمات القاضي، مرافعة النيابة العامة، الدفاع، استجواب الشهود وإطلاق منطوق الحكم.
+                  </p>
+
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleSimulateCourtSession}
+                      disabled={isSimulatingSession}
+                      className={`px-5 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+                        isSimulatingSession
+                          ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+                          : 'bg-cyan-600 hover:bg-cyan-700 text-white shadow-lg shadow-cyan-500/10'
+                      }`}
+                    >
+                      <Play className="w-4 h-4" />
+                      <span>{isSimulatingSession ? 'جاري تشغيل محاكاة الجلسة...' : 'بدء محاكاة الجلسة الإجرائية'}</span>
+                    </button>
+                    {simulationTimeline.length > 0 && (
+                      <button
+                        onClick={handleResetCourtSession}
+                        className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-slate-300 text-xs font-bold rounded-xl border border-zinc-800 transition-all cursor-pointer"
+                      >
+                        إعادة ضبط المحاكي
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Dynamic Simulation Panel */}
+                  <div className="border border-zinc-800 rounded-2xl bg-zinc-950/80 p-5 space-y-4 relative overflow-hidden min-h-[300px]">
+                    <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-[#1e1e21] px-2 py-0.5 rounded border border-zinc-900">
+                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+                      <span className="text-[9px] font-mono text-slate-500 uppercase">Interactive Courtroom Stage</span>
+                    </div>
+
+                    {simulationTimeline.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-16 text-slate-500 text-xs space-y-2">
+                        <Gavel className="w-12 h-12 text-slate-700 animate-bounce" />
+                        <span className="font-bold">انقر فوق زر البدء في الأعلى لبدء سيناريو الجلسة القضائية رقم ٢٧</span>
+                        <span className="text-[10px] text-slate-600">سيقوم المحاكي بتأدية الأدوار وسرد المحادثات بالتوقيتات الإجرائية</span>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {/* Speaker Indicator */}
+                        {activeSessionSpeaker && (
+                          <div className="flex items-center gap-3 bg-[#1e1e21] p-3 rounded-xl border border-zinc-900 animate-in zoom-in-95 duration-200">
+                            <div className="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 font-extrabold text-sm">
+                              ⚖️
+                            </div>
+                            <div className="text-right">
+                              <span className="text-white text-xs font-black block">المتحدث النشط حالياً:</span>
+                              <span className="text-amber-400 text-[10px] font-extrabold">{activeSessionSpeaker}</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Scrolling Log list */}
+                        <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
+                          {simulationTimeline.map((item: any, i: number) => (
+                            <div key={i} className="bg-zinc-900/40 p-3 rounded-xl border border-zinc-900/60 leading-relaxed text-xs space-y-1 animate-in slide-in-from-bottom-2 duration-200">
+                              <div className="flex justify-between items-center text-[10px] font-bold">
+                                <span className="text-amber-500">{item.speaker} ({item.role})</span>
+                                <span className="text-slate-500 font-mono">{item.time}</span>
+                              </div>
+                              <p className="text-slate-300 font-semibold">{item.dialogue}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Tool 6 (from new): Case Assignment & Smart Courtroom Rotation */}
+              <div className="lg:col-span-4 bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-5 space-y-4 shadow-lg flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2.5 border-b border-[#2d2d31] pb-3">
+                    <Users className="w-5 h-5 text-cyan-400 animate-pulse" />
+                    <span className="text-white text-sm font-black">نظام توزيع القضايا والتدوير الذكي</span>
+                  </div>
+                  <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                    حدد أفضل قاضي لحل النزاع استناداً لمعدلات الإنجاز التراكمية، والتخصص الفني الدقيق، وحجم القضايا المعلقة لضمان الحيادية المطلقة.
+                  </p>
+
+                  <div className="space-y-1">
+                    <span className="text-slate-400 text-[10px] font-black block">حجم العبء المعلق حالياً في المحكمة:</span>
+                    <select
+                      value={assignWorkload}
+                      onChange={(e) => setAssignWorkload(e.target.value)}
+                      className="w-full bg-zinc-950 text-slate-300 text-xs p-2.5 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right"
+                    >
+                      <option value="عالي">عالي جداً (تكدس ملفات)</option>
+                      <option value="متوسط">متوسط (سرعة اعتيادية)</option>
+                      <option value="منخفض">منخفض (إنجاز فوري مستعجل)</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-slate-400 text-[10px] font-black block">محور تخصص الدائرة القضائية المطلوبة:</span>
+                    <select
+                      value={assignSpecialty}
+                      onChange={(e) => setAssignSpecialty(e.target.value)}
+                      className="w-full bg-zinc-950 text-slate-300 text-xs p-2.5 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right"
+                    >
+                      <option value="عقاري">شؤون عقارية ومساحة العمرانية</option>
+                      <option value="إرث">قسمة تركات وشريعة المواريث</option>
+                      <option value="جنائي">اعتداء وتعدي على الحيازة</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4">
+                  <button
+                    onClick={handleAssignJudge}
+                    className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-black rounded-xl cursor-pointer transition-all shadow-md shadow-cyan-500/5 flex items-center justify-center gap-1.5"
+                  >
+                    <Activity className="w-4 h-4" />
+                    <span>حساب التوزيع ومطابقة المحكمة ⚖️</span>
+                  </button>
+
+                  {assignedJudgeResult && (
+                    <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 animate-in slide-in-from-bottom-2 duration-200 text-xs leading-relaxed">
+                      <div className="border-b border-zinc-900 pb-2">
+                        <span className="text-cyan-400 font-black block">القاضي الموصى بتسليمه الدعوى:</span>
+                        <span className="text-white font-extrabold text-sm block mt-1">سيادة المستشار/ {assignedJudgeResult.judgeName}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-center text-[10px] font-bold">
+                        <div className="bg-[#1e1e21] p-2 rounded border border-zinc-900">
+                          <span className="text-slate-500 block">توافق التخصص</span>
+                          <span className="text-amber-400">{assignedJudgeResult.specialtyMatch}%</span>
+                        </div>
+                        <div className="bg-[#1e1e21] p-2 rounded border border-zinc-900">
+                          <span className="text-slate-500 block">حجم العبء المقدر</span>
+                          <span className="text-emerald-400">{assignedJudgeResult.currentBacklog} قضية معلقة</span>
+                        </div>
+                      </div>
+                      <p className="text-slate-300 text-[10.5px] leading-relaxed pt-1.5 font-semibold">
+                        💡 {assignedJudgeResult.recommendation}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* 5. RISK & SETTLEMENT SUB TAB */}
+          {forensicSubTab === 'risk_settlement' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-200">
+              
+              {/* Tool: Litigation Success & Risk Analyzer (Success Probability) */}
+              <div className="bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-5 space-y-4 shadow-lg flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2.5 border-b border-[#2d2d31] pb-3">
+                    <Percent className="w-5 h-5 text-cyan-400" />
+                    <span className="text-white text-sm font-black">مقدر احتمالية نجاح الدعوى والتقييم القضائي</span>
+                  </div>
+                  <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                    ادمج خوارزمية التنبؤ الفيدرالية لتقدير احتمالية كسب القضية بناءً على عمق أدلة الإثبات المرفقة وقوة شهادات الشهود ومذكرات الدفاع.
+                  </p>
+
+                  <div className="space-y-1">
+                    <span className="text-slate-400 text-[10px] font-black block">عمق وقوة أدلة الإثبات والمستندات المشهرة:</span>
+                    <select
+                      value={riskEvidenceDepth}
+                      onChange={(e) => setRiskEvidenceDepth(e.target.value)}
+                      className="w-full bg-zinc-950 text-slate-300 text-xs p-2.5 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right"
+                    >
+                      <option value="كافي جداً">كافية جداً ومعتمدة بالسجل العيني</option>
+                      <option value="متوسط">متوسطة وبها بعض الثغرات العرفية</option>
+                      <option value="ضعيف">ضعيفة أو تفتقر لسند الملكية</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-slate-400 text-[10px] font-black block">قوة شهادات الشهود ومطابقتها للتوقيتات:</span>
+                    <select
+                      value={riskWitnessStrength}
+                      onChange={(e) => setRiskWitnessStrength(e.target.value)}
+                      className="w-full bg-zinc-950 text-slate-300 text-xs p-2.5 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right"
+                    >
+                      <option value="قوي">قوية ومطابقة للخرائط والقرائن</option>
+                      <option value="متوسط">متوسطة وغير متطابقة كلياً</option>
+                      <option value="ضعيف">ضعيفة أو مهتزة ومتناقضة</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-slate-400 text-[10px] font-black block">صلابة دفوع ومذكرات دفاع الخصوم:</span>
+                    <select
+                      value={riskOpponentStrength}
+                      onChange={(e) => setRiskOpponentStrength(e.target.value)}
+                      className="w-full bg-zinc-950 text-slate-300 text-xs p-2.5 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right"
+                    >
+                      <option value="ضعيف">ضعيفة ومتهالكة قانونياً</option>
+                      <option value="متوسط">متوسطة وبها بعض الأسانيد القابلة للنقض</option>
+                      <option value="قوي">قوية وصلبة ومدعومة بالسوابق القضائية</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4">
+                  <button
+                    onClick={handlePredictRisk}
+                    className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-black rounded-xl cursor-pointer transition-all shadow-md shadow-cyan-500/5 flex items-center justify-center gap-1.5"
+                  >
+                    <Activity className="w-4 h-4" />
+                    <span>حساب احتمالية نجاح الدعوى القضائية 📊</span>
+                  </button>
+
+                  {riskResultState && (
+                    <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 animate-in slide-in-from-bottom-2 duration-200 text-xs leading-relaxed">
+                      <div className="flex justify-between items-center border-b border-zinc-900 pb-2">
+                        <span className="text-cyan-400 font-black">تقرير الاحتمالية التاريخي:</span>
+                        <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${
+                          riskResultState.classification === 'عالية'
+                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                            : riskResultState.classification === 'متوسطة'
+                            ? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+                            : 'bg-red-500/10 border-red-500/20 text-red-400'
+                        }`}>
+                          تصنيف القوة: {riskResultState.classification}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-center">
+                        <div className="bg-[#1e1e21] p-2 rounded-lg border border-zinc-900">
+                          <span className="text-slate-500 text-[9px] block">نسبة كسب الدعوى المتوقعة</span>
+                          <span className="text-white font-extrabold text-xs">{riskResultState.probability}%</span>
+                        </div>
+                        <div className="bg-[#1e1e21] p-2 rounded-lg border border-zinc-900">
+                          <span className="text-slate-500 text-[9px] block">ثقة الخوارزمية (Confidence)</span>
+                          <span className="text-white font-extrabold text-xs">{riskResultState.confidence}%</span>
+                        </div>
+                      </div>
+                      <p className="text-slate-300 text-[10.5px] leading-relaxed pt-1.5 font-semibold">
+                        💡 {riskResultState.recommendation}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Tool: Settlement & Mediation Predictor */}
+              <div className="bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-5 space-y-4 shadow-lg flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2.5 border-b border-[#2d2d31] pb-3">
+                    <Scale className="w-5 h-5 text-cyan-400" />
+                    <span className="text-white text-sm font-black">مقيم بدائل تسوية النزاعات والوساطة</span>
+                  </div>
+                  <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                    حلل بدائل النزاعات القضائية؛ استكشف مدى ملاءمة النزاع للصلح الودي لضمان السلم العام وحق شركاء الوطن واطمينان الجميع.
+                  </p>
+
+                  <div className="space-y-1">
+                    <span className="text-slate-400 text-[10px] font-black block">طبيعة النزاع الحالي للقسمة:</span>
+                    <select
+                      value={settlementDisputeType}
+                      onChange={(e) => setSettlementDisputeType(e.target.value)}
+                      className="w-full bg-zinc-950 text-slate-300 text-xs p-2.5 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right"
+                    >
+                      <option value="عقاري">نزاع عقاري على حيازة العمرانية</option>
+                      <option value="تركة">قسمة تركة وفرز وتجنيب الورثة</option>
+                      <option value="تجاري">تعويضات مالية وتجاوزات هندسية</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-slate-400 text-[10px] font-black block">قيمة الأصول أو العقار المتداخل عليه (جنيه):</span>
+                    <input
+                      type="number"
+                      value={settlementPropertyValue}
+                      onChange={(e) => setSettlementPropertyValue(Number(e.target.value))}
+                      className="w-full bg-zinc-950 text-slate-300 text-xs p-2.5 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right font-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-slate-400 text-[10px] font-black block">رغبة الأطراف في قبول المصالحة الودية:</span>
+                    <select
+                      value={settlementWillingness}
+                      onChange={(e) => setSettlementWillingness(e.target.value)}
+                      className="w-full bg-zinc-950 text-slate-300 text-xs p-2.5 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right"
+                    >
+                      <option value="متوسط">رغبة متوسطة (مستعدون للمفاوضة)</option>
+                      <option value="عالٍ">رغبة عالية (رغبة صلح ملحة)</option>
+                      <option value="منخفض">خصومة شديدة وعناد قضائي</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4">
+                  <button
+                    onClick={handlePredictSettlement}
+                    className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-black rounded-xl cursor-pointer transition-all shadow-md shadow-cyan-500/5 flex items-center justify-center gap-1.5"
+                  >
+                    <Activity className="w-4 h-4" />
+                    <span>تقييم بدائل تسوية النزاعات الودية 🤝</span>
+                  </button>
+
+                  {settlementResult && (
+                    <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 animate-in slide-in-from-bottom-2 duration-200 text-xs leading-relaxed">
+                      <div className="flex justify-between items-center border-b border-zinc-900 pb-2">
+                        <span className="text-cyan-400 font-black">ملاءمة التسوية والصلح:</span>
+                        <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black px-2.5 py-0.5 rounded-full">
+                          معدل الصلح: {settlementResult.suitabilityScore}%
+                        </span>
+                      </div>
+                      <div className="bg-[#1e1e21] p-2.5 rounded-lg border border-zinc-900 space-y-1 text-center">
+                        <span className="text-slate-500 text-[10px] block font-bold">مبلغ التسوية النقدي العادل الموصى به:</span>
+                        <span className="text-white font-extrabold text-sm font-mono">{settlementResult.recommendedRange} جنيه مصري</span>
+                      </div>
+                      <p className="text-slate-300 text-[10.5px] leading-relaxed pt-1.5 font-semibold">
+                        💡 {settlementResult.advice}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Tool: Appeal & Cassation Viability Checker */}
+              <div className="bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-5 space-y-4 shadow-lg flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2.5 border-b border-[#2d2d31] pb-3">
+                    <Award className="w-5 h-5 text-cyan-400 animate-pulse" />
+                    <span className="text-white text-sm font-black">مقيّم قوة الطعن والاستئناف الجنائي/المدني</span>
+                  </div>
+                  <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                    افحص مدى فاعلية تقديم طعن في منطوق حكم الدرجة الأولى بناءً على وجود قرائن مستجدة أو ثغرات ميكانيكية وإجرائية.
+                  </p>
+
+                  <div className="space-y-1">
+                    <span className="text-slate-400 text-[10px] font-black block">طبيعة ومستوى الحكم القضائي المستأنف:</span>
+                    <select
+                      value={appealDecisionType}
+                      onChange={(e) => setAppealDecisionType(e.target.value)}
+                      className="w-full bg-zinc-950 text-slate-300 text-xs p-2.5 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right"
+                    >
+                      <option value="ابتدائي">حكم ابتدائي صادر عن المحكمة الجزئية</option>
+                      <option value="استئنافي">حكم صادر عن محكمة الاستئناف العالي</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5 text-xs text-right text-slate-300 space-y-2">
+                    <span className="text-slate-400 text-[10px] font-black block">العيوب والأخطاء الإجرائية المرصودة بالحكم:</span>
+                    <div className="flex flex-col gap-1.5 font-bold">
+                      <label className="flex items-center gap-2 cursor-pointer bg-zinc-950 p-1.5 rounded border border-zinc-900">
+                        <input
+                          type="checkbox"
+                          checked={appealProceduralError}
+                          onChange={(e) => setAppealProceduralError(e.target.checked)}
+                          className="rounded border-zinc-800 text-cyan-500"
+                        />
+                        <span>قصور في التسبيب أو فساد في الاستدلال</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer bg-zinc-950 p-1.5 rounded border border-zinc-900">
+                        <input
+                          type="checkbox"
+                          checked={appealHasNewEvidence}
+                          onChange={(e) => setAppealHasNewEvidence(e.target.checked)}
+                          className="rounded border-zinc-800 text-cyan-500"
+                        />
+                        <span>existence of new land deeds</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-slate-400 text-[10px] font-black block">تقييم جودة تقرير الخبير الهندسي السابق:</span>
+                    <select
+                      value={appealExpertQuality}
+                      onChange={(e) => setAppealExpertQuality(e.target.value)}
+                      className="w-full bg-zinc-950 text-slate-300 text-xs p-2 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right"
+                    >
+                      <option value="ضعيف">ضعيف واعتمد على المعاينة الظاهرية</option>
+                      <option value="متوسط">متوسط ولم يحدد تداخل الإحداثيات المساحية</option>
+                      <option value="ممتاز">ممتاز وتناول كافة النواحي الطبوغرافية</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4">
+                  <button
+                    onClick={handleCheckAppealViability}
+                    className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-black rounded-xl cursor-pointer transition-all shadow-md shadow-cyan-500/5 flex items-center justify-center gap-1.5"
+                  >
+                    <Activity className="w-4 h-4" />
+                    <span>حساب فرصة كسب الاستئناف والطعن 📊</span>
+                  </button>
+
+                  {appealResult && (
+                    <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 animate-in slide-in-from-bottom-2 duration-200 text-xs leading-relaxed">
+                      <div className="flex justify-between items-center border-b border-zinc-900 pb-2">
+                        <span className="text-cyan-400 font-black">احتمالات كسب الطعن:</span>
+                        <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${
+                          appealResult.winPercentage >= 65
+                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                            : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+                        }`}>
+                          الفرصة: {appealResult.winPercentage >= 65 ? 'مرتفعة وراجحة' : 'متوسطة ويجب تدعيمها'}
+                        </span>
+                      </div>
+                      <div className="bg-[#1e1e21] p-2 rounded-lg border border-zinc-900 text-center">
+                        <span className="text-slate-500 text-[9px] block">احتمالية قبول وإلغاء الحكم</span>
+                        <span className="text-white font-extrabold text-xs">{appealResult.winPercentage}%</span>
+                      </div>
+                      <p className="text-slate-300 text-[10.5px] leading-relaxed pt-1.5 font-semibold">
+                        💡 {appealResult.argumentText}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Tool: Historical Case Success Predictor */}
+              <div className="lg:col-span-3 bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-5 space-y-4 shadow-lg flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2.5 border-b border-[#2d2d31] pb-3">
+                    <Database className="w-5 h-5 text-cyan-400 font-extrabold animate-pulse" />
+                    <span className="text-white text-sm font-black">مقدر النجاح المستند لقاعدة البيانات والأرشيف التاريخي (جديد ⚡)</span>
+                  </div>
+                  <p className="text-slate-400 text-xs font-medium leading-relaxed font-semibold">
+                    تقوم هذه الخوارزمية بمقارنة المدخلات الجغرافية، الفنية، والنزاعية للقضية الحالية مع كافة القضايا المسجلة بقاعدة بيانات الأرشيف لاستخلاص نسبة نجاح حقيقية مبنية على سوابق واقعية وتصنيفها كـ (عالية / متوسطة / منخفضة).
+                  </p>
+                  
+                  <div className="bg-zinc-950 p-3.5 rounded-xl border border-zinc-900 grid grid-cols-1 md:grid-cols-4 gap-4 text-xs font-bold text-slate-300">
+                    <div className="space-y-1">
+                      <span className="text-slate-500 text-[10px] block">نوع الأرض المقارن:</span>
+                      <span className="text-white font-extrabold block">{caseData.landType}</span>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-slate-500 text-[10px] block">محور الخصومة:</span>
+                      <span className="text-white font-extrabold block">
+                        {caseData.dispute?.type === 'ownership' ? 'تثبيت ملكية' :
+                         caseData.dispute?.type === 'boundary' ? 'تداخل حدود' :
+                         caseData.dispute?.type === 'contract' ? 'نزاع عقود' :
+                         caseData.dispute?.type === 'inheritance' ? 'ميراث وتركات' : 'عام'}
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-slate-500 text-[10px] block">المساحة الإجمالية:</span>
+                      <span className="text-amber-400 font-extrabold block">{caseData.landArea} متر مربع</span>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-slate-500 text-[10px] block">الموقع الميداني:</span>
+                      <span className="text-white font-extrabold block truncate" title={caseData.location}>{caseData.location || 'غير محدد'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4">
+                  <button
+                    onClick={handlePredictHistoricalSuccess}
+                    className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-black rounded-xl cursor-pointer transition-all shadow-md shadow-cyan-500/5 flex items-center justify-center gap-1.5"
+                  >
+                    <Database className="w-4 h-4" />
+                    <span>تشغيل التدقيق والمطابقة مع السجلات التاريخية 📊</span>
+                  </button>
+
+                  {historicalSuccessResult && (
+                    <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-4 animate-in slide-in-from-bottom-2 duration-200 text-xs leading-relaxed">
+                      <div className="flex justify-between items-center border-b border-zinc-900 pb-2">
+                        <span className="text-cyan-400 font-black">نتائج المطابقة والاستعلام التاريخي:</span>
+                        <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${
+                          historicalSuccessResult.classification === 'عالية'
+                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                            : historicalSuccessResult.classification === 'متوسطة'
+                            ? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+                            : 'bg-red-500/10 border-red-500/20 text-red-400'
+                        }`}>
+                          تصنيف الاحتمالية: {historicalSuccessResult.classification}
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3 text-center">
+                        <div className="bg-[#1e1e21] p-2.5 rounded-lg border border-zinc-900">
+                          <span className="text-slate-500 text-[9px] block font-bold">نسبة كسب الدعوى المتوقعة</span>
+                          <span className="text-emerald-400 font-extrabold text-sm">{historicalSuccessResult.probability}%</span>
+                        </div>
+                        <div className="bg-[#1e1e21] p-2.5 rounded-lg border border-zinc-900">
+                          <span className="text-slate-500 text-[9px] block font-bold">ثقة المطابقة (Matching Confidence)</span>
+                          <span className="text-amber-400 font-extrabold text-sm">{historicalSuccessResult.confidence}%</span>
+                        </div>
+                      </div>
+
+                      <div className="bg-zinc-900/50 p-3 rounded-lg border border-zinc-900/60">
+                        <span className="text-slate-400 font-black block mb-1">💡 التوصية القانونية:</span>
+                        <p className="text-slate-300 font-semibold">{historicalSuccessResult.recommendation}</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <span className="text-slate-400 font-black block">📁 القضايا المرجعية الأكثر مطابقة في قاعدة البيانات:</span>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {historicalSuccessResult.matches.map((match: any, i: number) => (
+                            <div key={i} className="bg-[#1e1e21] p-2.5 rounded-lg border border-zinc-900 flex justify-between items-center">
+                              <div className="text-right">
+                                <span className="text-white font-extrabold block text-[11px]">{match.title}</span>
+                                <span className="text-slate-500 text-[9px] block">{match.caseNumber} • {match.landType}</span>
+                              </div>
+                              <div className="text-left font-mono">
+                                <span className="text-cyan-400 font-extrabold block text-[11px]">{match.similarity}% تطابق</span>
+                                <span className="text-emerald-500 text-[9px] block">{match.status}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* 6. TIME & COST SUB TAB */}
+          {forensicSubTab === 'time_cost' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                {/* Tool: Judgment Date & Duration Predictor */}
+                <div className="bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-5 space-y-4 shadow-lg flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2.5 border-b border-[#2d2d31] pb-3">
+                      <Clock className="w-5 h-5 text-cyan-400 animate-pulse" />
+                      <span className="text-white text-sm font-black">التنبؤ التلقائي بموعد الحكم وجدول القضية</span>
+                    </div>
+                    <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                      توقع زمني دقيق بموعد النطق بالحكم الختامي في نزاعات العمرانية بالاستناد لحجم القضايا المعلقة ووتيرة التأجيلات السابقة.
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div className="space-y-1">
+                        <span className="text-slate-400 text-[10px] font-black block">عدد مرات التأجيل السابقة للجلسات:</span>
+                        <input
+                          type="number"
+                          value={predictPostponements}
+                          onChange={(e) => setPredictPostponements(Number(e.target.value))}
+                          className="w-full bg-zinc-950 text-slate-300 p-2 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right font-mono"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-slate-400 text-[10px] font-black block">تراكم ملفات محكمة العمرانية الجزئية:</span>
+                        <select
+                          value={predictCourtBacklog}
+                          onChange={(e) => setPredictCourtBacklog(e.target.value)}
+                          className="w-full bg-zinc-950 text-slate-300 p-2.5 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right"
+                        >
+                          <option value="متوسط">متوسط (تراكم عادي قيد الحل)</option>
+                          <option value="عال">مزدحم جداً (أعباء ثقيلة)</option>
+                          <option value="منخفض">منخفض (سرعة فائقة ملموسة)</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 pt-4">
+                    <button
+                      onClick={handlePredictJudgmentDate}
+                      className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-black rounded-xl cursor-pointer transition-all shadow-md shadow-cyan-500/5 flex items-center justify-center gap-1.5"
+                    >
+                      <Activity className="w-4 h-4" />
+                      <span>حساب الجدول الزمني والتنبؤ بالحكم 📅</span>
+                    </button>
+
+                    {predictedDateResult && (
+                      <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3.5 animate-in slide-in-from-bottom-2 duration-200 text-xs leading-relaxed">
+                        <div className="border-b border-zinc-900 pb-2">
+                          <span className="text-cyan-400 font-black block">الموعد القضائي المتوقع للنطق بالحكم:</span>
+                          <span className="text-white font-extrabold text-sm block mt-1">تاريخ النطق المرجح: {predictedDateResult.predictedDate}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-center text-[10px]">
+                          <div className="bg-[#1e1e21] p-2 rounded border border-zinc-900">
+                            <span className="text-slate-500 block">إجمالي أيام التقاضي المتوقعة</span>
+                            <span className="text-amber-400 font-bold">{predictedDateResult.totalEstimatedDays} يوم</span>
+                          </div>
+                          <div className="bg-[#1e1e21] p-2 rounded border border-zinc-900">
+                            <span className="text-slate-500 block">معامل التعقيد الزمني</span>
+                            <span className="text-blue-400 font-bold">{predictedDateResult.complexityIndex}/10</span>
+                          </div>
+                        </div>
+                        <p className="text-slate-300 text-[10.5px] font-semibold">
+                          💡 {predictedDateResult.explanation}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Tool: Adjournment Impact Calculator */}
+                <div className="bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-5 space-y-4 shadow-lg flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2.5 border-b border-[#2d2d31] pb-3">
+                      <AlertTriangle className="w-5 h-5 text-cyan-400" />
+                      <span className="text-white text-sm font-black">حساب تأثير تأجيل جلسات المحاكمة</span>
+                    </div>
+                    <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                      احسب بدقة الخسائر المالية غير المباشرة والتكاليف التشغيلية للمتقاضين كابتن حسام عند تأجيل الخصم لجلسات المعاينة.
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div className="space-y-1">
+                        <span className="text-slate-400 text-[10px] font-black block">إجمالي أيام التأجيل المستهدف:</span>
+                        <input
+                          type="number"
+                          value={adjournmentDays}
+                          onChange={(e) => setAdjournmentDays(Number(e.target.value))}
+                          className="w-full bg-zinc-950 text-slate-300 p-2 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right font-mono"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-slate-400 text-[10px] font-black block">تكلفة اليوم الواحد للمتقاضين (جنيه):</span>
+                        <input
+                          type="number"
+                          value={adjournmentDailyCost}
+                          onChange={(e) => setAdjournmentDailyCost(Number(e.target.value))}
+                          className="w-full bg-zinc-950 text-slate-300 p-2 rounded-xl border border-zinc-800 outline-none focus:border-cyan-500/40 text-right font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 pt-4">
+                    <button
+                      onClick={handleCalculateAdjournment}
+                      className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-black rounded-xl cursor-pointer transition-all shadow-md shadow-cyan-500/5 flex items-center justify-center gap-1.5"
+                    >
+                      <Activity className="w-4 h-4" />
+                      <span>احتساب التكلفة الزمنية لتأجيل الجلسة 💰</span>
+                    </button>
+
+                    {adjournmentResult && (
+                      <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 animate-in slide-in-from-bottom-2 duration-200 text-xs leading-relaxed">
+                        <div className="border-b border-zinc-900 pb-2">
+                          <span className="text-cyan-400 font-black block">إجمالي الخسائر المالية الناجمة عن التأجيل:</span>
+                          <span className="text-red-400 font-extrabold text-sm block mt-1">{adjournmentResult.totalWastedCost.toLocaleString('ar-EG')} جنيهاً مصرياً</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-center text-[10px] font-bold">
+                          <div className="bg-[#1e1e21] p-2 rounded border border-zinc-900">
+                            <span className="text-slate-500 block">فقدان الإنتاجية والوقت</span>
+                            <span className="text-red-400">-{adjournmentResult.productivityLoss}%</span>
+                          </div>
+                          <div className="bg-[#1e1e21] p-2 rounded border border-zinc-900">
+                            <span className="text-slate-500 block">تراكم الملف القضائي</span>
+                            <span className="text-amber-400">+{adjournmentResult.backlogPenalty} يوم</span>
+                          </div>
+                        </div>
+                        <p className="text-slate-300 text-[10.5px] font-semibold">
+                          💡 {adjournmentResult.remedyAdvice}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Bottom twin section: Time cost & Legal Fees */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Tool: Time-Cost & Backlog Analyzer */}
+                <div className="bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-5 space-y-4 shadow-lg">
+                  <div className="flex items-center gap-2.5 border-b border-[#2d2d31] pb-3">
+                    <Activity className="w-5 h-5 text-cyan-400" />
+                    <span className="text-white text-sm font-black">تحليل العبء المالي والزمني الكلي للقضية</span>
+                  </div>
+                  <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                    احسب التكلفة الكلية والمصاريف القضائية المقررة لقضايا المواريث والفرز والرفع الهندسي.
+                  </p>
+                  <button
+                    onClick={handleCalculateTimeCost}
+                    className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-black rounded-xl cursor-pointer transition-all shadow-md shadow-cyan-500/5 flex items-center justify-center gap-1.5"
+                  >
+                    <Activity className="w-4 h-4" />
+                    <span>تشغيل مقدر التكاليف التشغيلية الكلية 💰</span>
+                  </button>
+
+                  {timeCostResult && (
+                    <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 animate-in slide-in-from-bottom-2 duration-200 text-xs">
+                      <div className="grid grid-cols-2 gap-3 text-center">
+                        <div className="bg-[#1e1e21] p-2.5 rounded border border-zinc-900">
+                          <span className="text-slate-500 text-[10px] block">المصاريف القضائية التقريبية</span>
+                          <span className="text-white font-extrabold text-xs">{timeCostResult.estimatedCourtCosts.toLocaleString('ar-EG')} جنيه</span>
+                        </div>
+                        <div className="bg-[#1e1e21] p-2.5 rounded border border-zinc-900">
+                          <span className="text-slate-500 text-[10px] block">الأتعاب الموصى بها</span>
+                          <span className="text-white font-extrabold text-xs">{timeCostResult.recommendedRetainer.toLocaleString('ar-EG')} جنيه</span>
+                        </div>
+                      </div>
+                      <p className="text-slate-300 text-[10.5px] font-semibold leading-relaxed border-t border-zinc-900 pt-2">
+                        {timeCostResult.explanation}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Tool: Legal Fees Estimator */}
+                <div className="bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-5 space-y-4 shadow-lg">
+                  <div className="flex items-center gap-2.5 border-b border-[#2d2d31] pb-3">
+                    <Coins className="w-5 h-5 text-cyan-400" />
+                    <span className="text-white text-sm font-black">مقدر أتعاب الخبير والمحاماة العادل</span>
+                  </div>
+                  <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                    قدر أتعاب الخبير والمحامي العادلة لتفادي غبن الحقوق وفقاً صعوبة الدعوى وحجم مجهود المعاينة الميدانية.
+                  </p>
+                  <button
+                    onClick={handleEstimateLegalFees}
+                    className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-black rounded-xl cursor-pointer transition-all shadow-md shadow-cyan-500/5 flex items-center justify-center gap-1.5"
+                  >
+                    <Coins className="w-4 h-4" />
+                    <span>تقدير القيمة السعرية المناسبة للأتعاب 💰</span>
+                  </button>
+
+                  {legalFeesResult && (
+                    <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 animate-in slide-in-from-bottom-2 duration-200 text-xs">
+                      <div className="grid grid-cols-2 gap-3 text-center">
+                        <div className="bg-[#1e1e21] p-2.5 rounded border border-zinc-900">
+                          <span className="text-slate-500 text-[10px] block">الحد الأدنى للأتعاب المقترحة</span>
+                          <span className="text-white font-extrabold text-xs">{legalFeesResult.minRecommendedFee.toLocaleString('ar-EG')} جنيه</span>
+                        </div>
+                        <div className="bg-[#1e1e21] p-2.5 rounded border border-zinc-900">
+                          <span className="text-slate-500 text-[10px] block">الحد الأقصى للأتعاب المقترحة</span>
+                          <span className="text-white font-extrabold text-xs">{legalFeesResult.maxRecommendedFee.toLocaleString('ar-EG')} جنيه</span>
+                        </div>
+                      </div>
+                      <p className="text-slate-300 text-[10.5px] font-semibold leading-relaxed border-t border-zinc-900 pt-2">
+                        {legalFeesResult.advice}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 7. DICTATION SUB TAB */}
+          {forensicSubTab === 'dictation' && (
+            <div className="bg-[#1e1e21] border border-[#2d2d31] rounded-2xl p-5 space-y-4 shadow-lg text-right animate-in fade-in duration-200">
+              <div className="flex items-center gap-2.5 border-b border-[#2d2d31] pb-3">
+                <Mic className="w-5 h-5 text-cyan-400" />
+                <span className="text-white text-sm font-black">المساعد الصوتي والإملاء القانوني المباشر</span>
+              </div>
+              <p className="text-slate-400 text-xs font-medium leading-relaxed">
+                اضغط على الميكروفون للبدء في الإملاء الصوتي المباشر لمذكرتك؛ سيقوم نظام النظم الخبيرة الفيدرالية بصياغتها بلغة بليغة خالية من الأخطاء اللغوية.
+              </p>
+
+              <div className="flex flex-col md:flex-row gap-5 items-stretch">
+                
+                {/* Control Column */}
+                <div className="flex-1 space-y-4">
+                  <div className="space-y-2">
+                    <span className="text-slate-400 text-[10px] font-black block">الكلام المفرغ صوتياً (خام):</span>
+                    <textarea
+                      value={voiceRawText}
+                      onChange={(e) => setVoiceRawText(e.target.value)}
+                      rows={6}
+                      className="w-full bg-zinc-950 text-slate-100 text-xs p-3.5 rounded-xl border border-zinc-800 focus:border-cyan-500/50 outline-none leading-relaxed text-right"
+                    />
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleSimulateVoiceRecording}
+                      className={`flex-1 py-3 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer border ${
+                        isRecording
+                          ? 'bg-red-500 border-red-400 text-white animate-pulse shadow-lg shadow-red-500/20'
+                          : 'bg-zinc-950 hover:bg-zinc-900 border-zinc-800 text-amber-500 hover:border-amber-500/40 shadow-sm'
+                      }`}
+                    >
+                      {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4 text-amber-500 animate-bounce" />}
+                      <span>{isRecording ? 'جاري الاستماع للنبض الصوتي...' : 'انقر لبدء الإملاء الصوتي 🎙️'}</span>
+                    </button>
+                    <button
+                      onClick={handleConvertVoice}
+                      className="py-3 px-5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-black rounded-xl cursor-pointer transition-all shadow-md shadow-cyan-500/5"
+                    >
+                      صياغة المذكرة القانونية من الإملاء الصوتي ✨
+                    </button>
+                  </div>
+                </div>
+
+                {/* Showcase Document Column */}
+                {voiceResult && (
+                  <div className="flex-1 bg-white text-slate-900 p-5 rounded-xl space-y-3 border border-slate-300 font-serif leading-relaxed text-xs relative overflow-hidden animate-in zoom-in-95 duration-200">
+                    <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px] opacity-10 pointer-events-none"></div>
+                    
+                    <div className="border-b border-slate-900 pb-2 text-center font-black">
+                      <h4>مذكرة دفاع صُنعت بالإملاء الصوتي</h4>
+                      <span className="text-[9px] font-sans font-bold text-slate-500">تم تنقيحها وصياغتها بنظام النظم الخبيرة</span>
+                    </div>
+
+                    <div className="whitespace-pre-wrap text-[10.5px] font-medium leading-relaxed text-justify bg-slate-50 p-3 rounded border border-slate-200">
+                      {voiceResult.assembledText}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-[9px] font-bold text-slate-700 pt-2 border-t border-slate-200">
+                      <div>
+                        <span className="block underline">توقيع كابتن حسام</span>
+                        <span className="block text-slate-400 font-mono mt-2">HUSSAM_OFFICER_SIGN_2026</span>
+                      </div>
+                      <div className="text-left">
+                        <span className="block">البصمة الطبوغرافية المائية</span>
+                        <span className="block text-slate-400 font-mono mt-2">VERIFIED_WATERMARK_SHA256</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+              </div>
             </div>
           )}
 

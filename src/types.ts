@@ -7,11 +7,12 @@ export interface Heir {
   name: string;
   gender: 'male' | 'female';
   relationship: 'son' | 'daughter' | 'wife' | 'husband' | 'father' | 'mother';
+  selected?: boolean;
 }
 
 export interface Dispute {
   hasDispute: boolean;
-  type: 'none' | 'ownership' | 'boundary' | 'contract' | 'inheritance';
+  type: 'none' | 'ownership' | 'boundary' | 'contract' | 'inheritance' | 'rent' | 'construction';
   details: string;
 }
 

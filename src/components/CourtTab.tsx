@@ -23,7 +23,14 @@ import {
   Upload,
   Sliders,
   Award,
-  RotateCcw
+  RotateCcw,
+  Camera,
+  Mic,
+  Video,
+  Download,
+  Copy,
+  FolderOpen,
+  Zap
 } from 'lucide-react';
 import { CaseData, CalculationResults } from '../types';
 import CourtRoom3D from './VirtualCourt/CourtRoom3D';
@@ -37,9 +44,129 @@ interface CourtTabProps {
 }
 
 export default function CourtTab({ caseData, results, onUpdateCaseData }: CourtTabProps) {
-  const [activeSubTab, setActiveSubTab] = useState<'courtroom' | 'execution'>('courtroom');
+  const [activeSubTab, setActiveSubTab] = useState<'courtroom' | 'casefile'>('courtroom');
+  const [selectedViolationType, setSelectedViolationType] = useState<'unpaid_rent' | 'unauthorized_change' | 'structural_damage'>('unpaid_rent');
+
+  const getImmediateDecision = () => {
+    switch(selectedViolationType) {
+      case 'unpaid_rent':
+        return {
+          title: 'قرار فسخ فوري للتخلف عن سداد الأجرة والزيادات السنوية',
+          lawReference: 'طبقاً لأحكام المادة ١٨ فقرة (ب) من القانون رقم ١٣٦ لسنة ١٩٨١ والتعديلات اللاحقة بالقانون ١٠ لسنة ٢٠٢٢.',
+          actions: [
+            'توجيه إنذار رسمي على يد محضر خلال ١٥ يوماً من تاريخ استحقاق الأجرة الموثقة.',
+            'رفع دعوى مستعجلة بالطرد للغصب والامتناع عن السداد أمام قضاء الأمور المستعجلة.',
+            'تجميد الحيازة وعدم الاعتداد بأي ميزات خدمية لحين سداد كامل المتأخرات بفائدة تأخيرية قانونية ٤٪.'
+          ],
+          severity: 'حرجة وعاجلة'
+        };
+      case 'unauthorized_change':
+        return {
+          title: 'قرار استرداد العين لتغيير النشاط دون إذن كتابي من المالك',
+          lawReference: 'بموجب المادة ١٨ من القانون ١٣٦ لسنة ١٩٨١ والمادة ٥٨٠ من القانون المدني.',
+          actions: [
+            'الندب الفوري لخبير وزارة العدل لمعاينة إثبات الحالة وتغيير الهيكل التشغيلي للعين.',
+            'إصدار قرار فوري بغلق المحل أو العين المخالفة بالطريق الإداري وقوة قسم الشرطة المختص.',
+            'فسخ العقد تلقائياً بقوة القانون مع إلزام الشاغل بالتعويض المادي لجبر الأضرار الاستثمارية.'
+          ],
+          severity: 'فورية وغير قابلة للطعن'
+        };
+      case 'structural_damage':
+        return {
+          title: 'أمر إخلاء كلي للمحافظة على سلامة المبنى الإنشائية والأرواح',
+          lawReference: 'بناء على المادة ٤٩ من القانون رقم ١١٩ لسنة ٢٠٠٨ (قانون البناء الموحد).',
+          actions: [
+            'إصدار قرار إخلاء فوري مؤقت دون حاجة لحكم قضائي بقوة الضبطية القضائية لحي العمرانية.',
+            'تحميل المتسبب كافة تكاليف الصيانة والتدعيم الخرساني للهيكل الحامل.',
+            'تحرير محضر جنائي بتعريض حياة القاطنين للخطر والترميم المباشر تحت إشراف هندسي معتمد.'
+          ],
+          severity: 'قصوى - تدخل أمني فوري'
+        };
+    }
+  };
+
+  const currentDecision = getImmediateDecision();
+
   const [currentAgent, setCurrentAgent] = useState<string>('master');
   const [verdict, setVerdict] = useState<string>('');
+
+  // Digital Case File Builder States
+  const [caseFileTab, setCaseFileTab] = useState<'subject' | 'parties' | 'evidence' | 'procedure' | 'authorities'>('subject');
+  
+  // Interactive inputs for the case builder
+  const [subjectType, setSubjectType] = useState<string>('contract');
+  const [subjectDesc, setSubjectDesc] = useState<string>('');
+  const [subjectLink, setSubjectLink] = useState<string>('');
+  
+  const [partyFirst, setPartyFirst] = useState<string>('');
+  const [partySecond, setPartySecond] = useState<string>('');
+  const [partyBroker, setPartyBroker] = useState<string>('');
+  const [partiesContact, setPartiesContact] = useState<string>('');
+
+  const [evidenceType, setEvidenceType] = useState<string>('email');
+  const [evidenceContent, setEvidenceContent] = useState<string>('');
+  const [evidenceDate, setEvidenceDate] = useState<string>('');
+
+  const [procedureType, setProcedureType] = useState<string>('civil');
+  const [procedureDesc, setProcedureDesc] = useState<string>('');
+  const [procedureCourt, setProcedureCourt] = useState<string>('');
+
+  const [authorityCourt, setAuthorityCourt] = useState<string>('');
+  const [authorityProsecution, setAuthorityProsecution] = useState<string>('');
+  const [authorityExpert, setAuthorityExpert] = useState<string>('');
+  const [authorityContact, setAuthorityContact] = useState<string>('');
+
+  // Checklist of file attachments in Case Builder
+  const [checklistItems, setChecklistItems] = useState([
+    // Subject Tab
+    { id: 'sub_contract', label: 'العقد الإلكتروني موقع من جميع الأطراف', checked: true, tab: 'subject', alt: 'بديل: صور الرسائل والاتفاق المبدئي' },
+    { id: 'sub_transfers', label: 'سجلات التحويلات البنكية وإيصالات الاستلام', checked: false, tab: 'subject', alt: 'بديل: كشف حساب معتمد ومختوم' },
+    { id: 'sub_messages', label: 'الرسائل الإلكترونية أو مراسلات واتساب الموثقة', checked: true, tab: 'subject', alt: 'بديل: لقطات شاشة مع التاريخ' },
+    // Parties Tab
+    { id: 'party_id_seller', label: 'بطاقة الرقم القومي أو إثبات هوية البائع', checked: true, tab: 'parties', alt: 'بديل: جواز سفر أو رخصة قيادة' },
+    { id: 'party_id_buyer', label: 'بطاقة الرقم القومي أو إثبات هوية المشتري', checked: false, tab: 'parties', alt: 'بديل: جواز سفر أو رخصة قيادة' },
+    { id: 'party_broker_id', label: 'إثبات حساب المنصة أو عقد الوسيط الرقمي', checked: false, tab: 'parties', alt: 'بديل: صورة ملف التعريف الرقمي' },
+    // Evidence Tab
+    { id: 'ev_email', label: 'البريد الإلكتروني متضمناً الرأسية والتوقيت', checked: true, tab: 'evidence', alt: 'بديل: لقطة شاشة موثقة' },
+    { id: 'ev_whatsapp', label: 'رسائل واتساب كاملة مع التواريخ والمحتوى', checked: false, tab: 'evidence', alt: 'بديل: تقرير فحص من خبير معتمد' },
+    { id: 'ev_sig', label: 'التوقيع الإلكتروني المعتمد والمشفر بأداة التوثيق', checked: true, tab: 'evidence', alt: 'بديل: إقرار خطي أو شهادة شهر عقاري' },
+    // Procedure Tab
+    { id: 'proc_request', label: 'طلب رسمي للنيابة العامة لاستخراج الأدلة الرقمية', checked: false, tab: 'procedure', alt: 'بديل: طلب عاجل لهيئة المحكمة' },
+    { id: 'proc_report', label: 'تقرير الخبير الرقمي الأولي المساند للدعوى', checked: true, tab: 'procedure', alt: 'بديل: تقرير استشاري خاص' },
+    { id: 'proc_order', label: 'إذن قضائي رسمي بالاطلاع على السجلات التقنية', checked: false, tab: 'procedure', alt: 'بديل: تفويض كتابي من الأطراف' },
+    // Authorities Tab
+    { id: 'auth_court_notice', label: 'إخطار المحكمة المختصة بملف القضية الرقمي', checked: true, tab: 'authorities', alt: 'بديل: تقديم الطلب عبر منصة التقاضي الإلكتروني' },
+    { id: 'auth_pros', label: 'تكليف النيابة العامة ببدء التحقيق الفني في السجلات', checked: false, tab: 'authorities', alt: 'بديل: طلب ضم السجلات للخصومة المدنية' },
+    { id: 'auth_expert', label: 'قرار رسمي بتعيين خبير فني رقمي من وزارة العدل', checked: true, tab: 'authorities', alt: 'بديل: الاستعانة بخبير استشاري مسجل رسمياً' }
+  ]);
+
+  // Synchronize inputs with caseData when it changes
+  useEffect(() => {
+    if (caseData) {
+      setPartyFirst(caseData.title || '');
+      setPartySecond(caseData.defendant || 'المدعى عليه الفعلي');
+      setProcedureCourt(caseData.court || 'محكمة الجيزة الكلية');
+      setAuthorityCourt(caseData.court || 'محكمة الجيزة الكلية');
+      setAuthorityExpert(caseData.expertName || 'م. أحمد الشافعي');
+      setSubjectDesc(`نزاع عقاري بخصوص أرض مساحتها ${caseData.landArea || 150} متر مربع، بنوع حيازة ${caseData.landType || 'بناء'} في موقع ${caseData.location || 'غير محدد'}.`);
+    }
+  }, [caseData]);
+
+  // Toggle individual checklist item state
+  const handleToggleCaseFileChecklist = (id: string) => {
+    setChecklistItems(prev => prev.map(item => {
+      if (item.id === id) {
+        const nextState = !item.checked;
+        triggerToast(nextState ? `✓ تم استكمال مستند: ${item.label}` : `⏳ تم تعليق مستند: ${item.label}`, nextState ? 'success' : 'warning');
+        return { ...item, checked: nextState };
+      }
+      return item;
+    }));
+  };
+
+  // Calculate percentage of checked case-file checklist items
+  const checkedCount = checklistItems.filter(item => item.checked).length;
+  const caseFilePercent = Math.round((checkedCount / checklistItems.length) * 100);
 
   // Forensic Lab State
   const [labFile1, setLabFile1] = useState<string>('');
@@ -261,7 +388,7 @@ export default function CourtTab({ caseData, results, onUpdateCaseData }: CourtT
         </div>
 
         {/* Action switch buttons */}
-        <div className="flex items-center gap-2 bg-slate-950 p-1 rounded-xl border border-slate-805 self-start sm:self-center">
+        <div className="flex flex-wrap items-center gap-2 bg-slate-950 p-1.5 rounded-xl border border-slate-805 self-start sm:self-center">
           <button
             onClick={() => setActiveSubTab('courtroom')}
             className={`px-4 py-2 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
@@ -273,17 +400,17 @@ export default function CourtTab({ caseData, results, onUpdateCaseData }: CourtT
             <Gavel className="w-3.5 h-3.5" />
             <span>قاعة المحكمة 3D & الذكاء</span>
           </button>
-          
+
           <button
-            onClick={() => setActiveSubTab('execution')}
+            onClick={() => setActiveSubTab('casefile')}
             className={`px-4 py-2 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeSubTab === 'execution' 
+              activeSubTab === 'casefile' 
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/10' 
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
             }`}
           >
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>نظام المحضرين والتنفيذ</span>
+            <FolderOpen className="w-3.5 h-3.5" />
+            <span>ملف القضية الرقمية (جديد ⚡)</span>
           </button>
         </div>
       </div>
@@ -580,9 +707,671 @@ export default function CourtTab({ caseData, results, onUpdateCaseData }: CourtT
           </div>
 
         </div>
+      ) : activeSubTab === 'casefile' ? (
+        /* 📂 Case File Builder Tab (بناء ملف القضية الرقمية) */
+        <div className="space-y-6 w-full" style={{ direction: 'rtl' }}>
+          
+          {/* ===== 📋 Required Documents & Digital References: HORIZONTAL GRID LAYOUT ===== */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4 text-right w-full">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-3 gap-2">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-amber-500 animate-pulse" />
+                <h3 className="text-white text-sm font-black">📋 مراجع ومستندات الإثبات المطلوبة والبدائل المتاحة</h3>
+              </div>
+              <span className="text-[9px] bg-slate-950 border border-slate-800 px-3 py-1 rounded-full font-mono text-slate-400">
+                REQUIRED DOCUMENTS & PROPOSED ALTERNATIVES
+              </span>
+            </div>
+            
+            <p className="text-slate-400 text-xs font-semibold leading-relaxed">
+              قائمة المستندات المرجعية الأساسية لبناء ملف القضية، والجهات الرسمية المعنية بإصدارها، مع بدائل مرنة للوثائق المفقودة (معروضة أفقياً لتوفير المساحة وسهولة المطالعة).
+            </p>
+
+            {/* Horizontal Grid of Document Cards instead of vertical list */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+              {[
+                { name: 'العقد الإلكتروني / الرقمي', source: 'المنصة الرقمية / مزود الخدمة', alt: 'رسائل البريد والمراسلات المبدئية', status: 'مطلوب', statusColor: 'bg-red-500/10 text-red-400 border-red-500/20' },
+                { name: 'سجلات التحويلات البنكية', source: 'البنك المصرفي المعني', alt: 'إيصالات السداد وكشف حساب معتمد', status: 'مطلوب', statusColor: 'bg-red-500/10 text-red-400 border-red-500/20' },
+                { name: 'رسائل المراسلات (واتساب)', source: 'تطبيق واتساب / سجل الهاتف', alt: 'لقطات شاشة كاملة التوقيت', status: 'بديل مقبول', statusColor: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+                { name: 'التوقيع الإلكتروني المعتمد', source: 'الشركة الموثقة للتوقيع', alt: 'عقد مشهر بالشهر العقاري', status: 'بديل مقبول', statusColor: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+                { name: 'سجلات الخوادم (Server Logs)', source: 'مزود الاستضافة / الدعم الفني', alt: 'شهادة تقنية مصدقة من خبير', status: 'مطلوب', statusColor: 'bg-red-500/10 text-red-400 border-red-500/20' },
+                { name: 'تقرير الخبير الفني', source: 'وزارة العدل / خبير مسجل', alt: 'تقرير فحص فني استشاري معتمد', status: 'جاهز', statusColor: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+                { name: 'هويات أطراف النزاع', source: 'مصلحة الأحوال المدنية', alt: 'جواز سفر ساري المفعول', status: 'جاهز', statusColor: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+                { name: 'قرار هيئة الإصلاح الزراعي', source: 'الهيئة العامة للإصلاح الزراعي', alt: 'خطاب رسمي من المحافظة المختصة', status: 'مطلوب', statusColor: 'bg-red-500/10 text-red-400 border-red-500/20' }
+              ].map((doc, idx) => (
+                <div key={idx} className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-850 hover:border-slate-700 transition-all text-right space-y-2">
+                  <div className="flex items-start justify-between gap-1.5">
+                    <span className="text-white text-xs font-black leading-tight truncate">{doc.name}</span>
+                    <span className={`text-[8.5px] px-2 py-0.5 rounded-full font-black shrink-0 border ${doc.statusColor}`}>
+                      {doc.status}
+                    </span>
+                  </div>
+                  <div className="text-[9.5px] text-slate-400 leading-tight space-y-0.5">
+                    <p>🏢 الجهة: <span className="text-slate-200">{doc.source}</span></p>
+                    <p className="text-amber-400/90 font-bold">💡 البديل: <span className="italic">{doc.alt}</span></p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-amber-500/5 border border-amber-500/10 p-3 rounded-xl text-[10px] sm:text-xs text-slate-400 font-semibold leading-relaxed">
+              <span className="text-amber-400 font-black">💡 تلميح للمحامين والمستفيدين:</span> في حال فقدان المستندات المطلوبة، يوصي نظام المحاكاة بتقديم الإقرارات والمستندات البديلة (مذكورة باللون الذهبي) لضمان عدم رد القضية وتسيير إجراءات فحص النزاع بسلاسة.
+            </div>
+          </div>
+
+          {/* ===== 🏗️ TWO EQUAL COLUMNS: SIMULATOR (RIGHT) & OFFICIAL JUDICIAL PAPER (LEFT) ===== */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full">
+            
+            {/* Right Column: Digital Case File Builder (5 cols) */}
+            <div className="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-5 text-right flex flex-col justify-between">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Sliders className="w-5 h-5 text-amber-500" />
+                    <h3 className="text-white text-sm font-black">🏗️ محاكي بناء القضية وملف الدعوى</h3>
+                  </div>
+                  <span className="text-[9px] bg-slate-950 border border-slate-800 px-3 py-1 rounded-full font-mono text-slate-400">
+                    DIGITAL CASE FILE
+                  </span>
+                </div>
+                <p className="text-slate-400 text-xs font-semibold leading-relaxed">
+                  استخدم علامات التبويب الخمس لبناء وتعبئة محاور الدعوى وأطرافها، ورفع الأدلة المادية وتوكيل الخبراء.
+                </p>
+              </div>
+
+              {/* 5 Builder Tabs Switched by State */}
+              <div className="grid grid-cols-5 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                <button
+                  onClick={() => setCaseFileTab('subject')}
+                  className={`py-2 px-1 rounded-lg text-[9px] md:text-[10px] lg:text-xs font-black transition-all flex flex-col items-center gap-1 cursor-pointer ${
+                    caseFileTab === 'subject' 
+                      ? 'bg-amber-50 text-slate-950 font-black' 
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                  }`}
+                >
+                  <span className="text-xs">📄</span>
+                  <span className="truncate max-w-full font-black">الموضوع</span>
+                </button>
+                
+                <button
+                  onClick={() => setCaseFileTab('parties')}
+                  className={`py-2 px-1 rounded-lg text-[9px] md:text-[10px] lg:text-xs font-black transition-all flex flex-col items-center gap-1 cursor-pointer ${
+                    caseFileTab === 'parties' 
+                      ? 'bg-amber-50 text-slate-950 font-black' 
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                  }`}
+                >
+                  <span className="text-xs">👥</span>
+                  <span className="truncate max-w-full font-black">الأطراف</span>
+                </button>
+
+                <button
+                  onClick={() => setCaseFileTab('evidence')}
+                  className={`py-2 px-1 rounded-lg text-[9px] md:text-[10px] lg:text-xs font-black transition-all flex flex-col items-center gap-1 cursor-pointer ${
+                    caseFileTab === 'evidence' 
+                      ? 'bg-amber-50 text-slate-950 font-black' 
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                  }`}
+                >
+                  <span className="text-xs">🔍</span>
+                  <span className="truncate max-w-full font-black">الدليل</span>
+                </button>
+
+                <button
+                  onClick={() => setCaseFileTab('procedure')}
+                  className={`py-2 px-1 rounded-lg text-[9px] md:text-[10px] lg:text-xs font-black transition-all flex flex-col items-center gap-1 cursor-pointer ${
+                    caseFileTab === 'procedure' 
+                      ? 'bg-amber-50 text-slate-950 font-black' 
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                  }`}
+                >
+                  <span className="text-xs">⚖️</span>
+                  <span className="truncate max-w-full font-black">الإجراءات</span>
+                </button>
+
+                <button
+                  onClick={() => setCaseFileTab('authorities')}
+                  className={`py-2 px-1 rounded-lg text-[9px] md:text-[10px] lg:text-xs font-black transition-all flex flex-col items-center gap-1 cursor-pointer ${
+                    caseFileTab === 'authorities' 
+                      ? 'bg-amber-50 text-slate-950 font-black' 
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                  }`}
+                >
+                  <span className="text-xs">🏛️</span>
+                  <span className="truncate max-w-full font-black">الجهات</span>
+                </button>
+              </div>
+
+              {/* TAB 1: SUBJECT */}
+              {caseFileTab === 'subject' && (
+                <div className="space-y-4 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2 border-b border-slate-800 pb-2 text-right justify-start">
+                    <span className="text-amber-500 text-sm">📄</span>
+                    <h4 className="text-white text-xs font-black">الموضوع الرقمي للدعوى والمستند العقدى</h4>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5 text-right">
+                      <label className="text-[10px] text-slate-400 font-extrabold block">نوع المعاملة / العقد</label>
+                      <select
+                        value={subjectType}
+                        onChange={(e) => setSubjectType(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                      >
+                        <option value="contract">عقد إلكتروني موثق</option>
+                        <option value="messages">مراسلات واتساب / بريد معتمد</option>
+                        <option value="transfers">سجلات حوالات بنكية ومصرفية</option>
+                        <option value="ads">إعلانات بيع وتسويق عقاري</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5 text-right">
+                      <label className="text-[10px] text-slate-400 font-extrabold block">رابط أو مرجع إلكتروني (اختياري)</label>
+                      <input
+                        type="text"
+                        placeholder="https://example.com/contract/id"
+                        value={subjectLink}
+                        onChange={(e) => setSubjectLink(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5 text-right">
+                    <label className="text-[10px] text-slate-400 font-extrabold block">تفاصيل وتوصيف المعاملة العقارية</label>
+                    <textarea
+                      rows={3}
+                      placeholder="اكتب التوصيف الدقيق للعقد والاتفاق أو المراسلات المتبادلة..."
+                      value={subjectDesc}
+                      onChange={(e) => setSubjectDesc(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: PARTIES */}
+              {caseFileTab === 'parties' && (
+                <div className="space-y-4 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2 border-b border-slate-800 pb-2 text-right justify-start">
+                    <span className="text-amber-500 text-sm">👥</span>
+                    <h4 className="text-white text-xs font-black">أطراف الدعوى العقارية والوسطاء الرقميين</h4>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5 text-right">
+                      <label className="text-[10px] text-slate-400 font-extrabold block">الطرف الأول (البائع / صاحب الحق المشهر)</label>
+                      <input
+                        type="text"
+                        placeholder="الاسم الكامل للبائع أو المدعي"
+                        value={partyFirst}
+                        onChange={(e) => setPartyFirst(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 text-right">
+                      <label className="text-[10px] text-slate-400 font-extrabold block">الطرف الثاني (المشتري / الحائز المتعدي)</label>
+                      <input
+                        type="text"
+                        placeholder="الاسم الكامل للمشتري أو المدعى عليه"
+                        value={partySecond}
+                        onChange={(e) => setPartySecond(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5 text-right">
+                      <label className="text-[10px] text-slate-400 font-extrabold block">اسم الوسيط أو المنصة العقارية الرقمية</label>
+                      <input
+                        type="text"
+                        placeholder="مثال: منصة سوق عقار مصر / وسيط هندسي"
+                        value={partyBroker}
+                        onChange={(e) => setPartyBroker(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 text-right">
+                      <label className="text-[10px] text-slate-400 font-extrabold block">عناوين وبيانات الاتصال والبريد</label>
+                      <input
+                        type="text"
+                        placeholder="مثال: هاتف البائع وعناوين سكن الأطراف الفعلي"
+                        value={partiesContact}
+                        onChange={(e) => setPartiesContact(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: EVIDENCE */}
+              {caseFileTab === 'evidence' && (
+                <div className="space-y-4 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2 border-b border-slate-800 pb-2 text-right justify-start">
+                    <span className="text-amber-500 text-sm">🔍</span>
+                    <h4 className="text-white text-xs font-black">مستندات الدليل الجغرافي والتحليلات الفنية</h4>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5 text-right">
+                      <label className="text-[10px] text-slate-400 font-extrabold block">نوع الدليل الفني الأساسي</label>
+                      <select
+                        value={evidenceType}
+                        onChange={(e) => setEvidenceType(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                      >
+                        <option value="email">بريد إلكتروني رسمي وموثق</option>
+                        <option value="whatsapp">مراسلات وسجل دردشة واتساب</option>
+                        <option value="signature">بصمة التوقيع الرقمي والتشفير</option>
+                        <option value="server">سجلات الخادم وسرعة الرفع</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5 text-right">
+                      <label className="text-[10px] text-slate-400 font-extrabold block">تاريخ وساعة نشوء الدليل</label>
+                      <input
+                        type="datetime-local"
+                        value={evidenceDate}
+                        onChange={(e) => setEvidenceDate(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5 text-right">
+                    <label className="text-[10px] text-slate-400 font-extrabold block">مضمون ومحتوى الدليل الفني</label>
+                    <textarea
+                      rows={3}
+                      placeholder="أدخل النص الحرفي أو السجلات الرقمية للدليل لتسهيل فحص وتثبيت الملكية للمحكمة..."
+                      value={evidenceContent}
+                      onChange={(e) => setEvidenceContent(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 4: PROCEDURE */}
+              {caseFileTab === 'procedure' && (
+                <div className="space-y-4 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2 border-b border-slate-800 pb-2 text-right justify-start">
+                    <span className="text-amber-500 text-sm">⚖️</span>
+                    <h4 className="text-white text-xs font-black">الإجراءات القانونية والمستهدف القضائي</h4>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5 text-right">
+                      <label className="text-[10px] text-slate-400 font-extrabold block">مسار الدعوى وتصنيفها</label>
+                      <select
+                        value={procedureType}
+                        onChange={(e) => setProcedureType(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                      >
+                        <option value="civil">دعوى تثبيت ملكية مدنية فرعية</option>
+                        <option value="criminal">دعوى طعن بالتزوير (جنايات)</option>
+                        <option value="administrative">دعوى وقف تراخيص إدارية (مجلس الدولة)</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5 text-right">
+                      <label className="text-[10px] text-slate-400 font-extrabold block">الجهة القضائية المختصة بالتثبيت</label>
+                      <input
+                        type="text"
+                        placeholder="مثال: محكمة دمنهور الكلية / دائرة الاستئناف"
+                        value={procedureCourt}
+                        onChange={(e) => setProcedureCourt(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5 text-right">
+                    <label className="text-[10px] text-slate-400 font-extrabold block">بيان بالإجراءات المطلوبة والتسلسل الزمني</label>
+                    <textarea
+                      rows={3}
+                      placeholder="مثال: طلب ندب خبير لمعاينة العقار، إحالة السند للطب الشرعي، الإفادة بقرار المساحة..."
+                      value={procedureDesc}
+                      onChange={(e) => setProcedureDesc(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 5: AUTHORITIES */}
+              {caseFileTab === 'authorities' && (
+                <div className="space-y-4 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2 border-b border-slate-800 pb-2 text-right justify-start">
+                    <span className="text-amber-500 text-sm">🏛️</span>
+                    <h4 className="text-white text-xs font-black">الجهات الرسمية المعنية وخطابات المراسلة</h4>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5 text-right">
+                      <label className="text-[10px] text-slate-400 font-extrabold block">المحكمة والهيئة المباشرة للدعوى</label>
+                      <input
+                        type="text"
+                        placeholder="مثال: الدائرة الرابعة بمحكمة الجيزة"
+                        value={authorityCourt}
+                        onChange={(e) => setAuthorityCourt(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 text-right">
+                      <label className="text-[10px] text-slate-400 font-extrabold block">النيابة العامة والمجلس الإشرافي</label>
+                      <input
+                        type="text"
+                        placeholder="مثال: نيابة الهرم الجزئية"
+                        value={authorityProsecution}
+                        onChange={(e) => setAuthorityProsecution(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5 text-right">
+                      <label className="text-[10px] text-slate-400 font-extrabold block">الخبير الفني الهندسي المكلف بالمعاينة</label>
+                      <input
+                        type="text"
+                        placeholder="مثال: م. أحمد الشافعي / وزارة العدل"
+                        value={authorityExpert}
+                        onChange={(e) => setAuthorityExpert(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 text-right">
+                      <label className="text-[10px] text-slate-400 font-extrabold block">عناوين مراسلة الجهات الفنية والضبطية</label>
+                      <input
+                        type="text"
+                        placeholder="مثال: تليفون وعنوان مكتب خبراء الجيزة الكائن بالهرم"
+                        value={authorityContact}
+                        onChange={(e) => setAuthorityContact(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* DRAG-AND-DROP FILE UPLOAD ZONE */}
+              <div className="border-2 border-dashed border-slate-850 hover:border-amber-500/30 bg-slate-950/40 rounded-2xl p-4 text-center cursor-pointer relative group transition-all duration-300">
+                <span className="text-3xl block mb-1">📤</span>
+                <span className="text-xs font-black text-white block">سحب وإفلات المستندات والوثائق الملحقة</span>
+                <span className="text-[9.5px] text-slate-500 font-semibold mt-1 block">
+                  يدعم صيغ PDF, JPEG, PNG, DOCX لتدعيم ملف النزاع القضائي الرقمي
+                </span>
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,.jpg,.jpeg,.png,.docx"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      triggerToast(`📎 تم تحميل ${e.target.files.length} مستند وتخزينه في الملف القضائي للدائرة الرابعة!`, 'success');
+                    }
+                  }}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                />
+              </div>
+
+              {/* REAL MICROPHONE / CAMERA ACTION PANEL */}
+              <div className="flex flex-wrap items-center gap-1.5 justify-start bg-slate-950 p-2 rounded-xl border border-slate-850">
+                <button
+                  onClick={() => triggerToast('📸 تم فتح الكاميرا لالتقاط صورة لسند الملكية العرفي أو العقد الإلكتروني المطبوع!', 'info')}
+                  className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-[9.5px] font-black transition-all border border-slate-800 cursor-pointer"
+                >
+                  <Camera className="w-3.5 h-3.5 text-amber-500" />
+                  <span>التقاط مستند</span>
+                </button>
+
+                <button
+                  onClick={() => triggerToast('🎤 تم بدء التسجيل الصوتي لمذكرة شرح النزاع وتفنيد حجج الخصم!', 'info')}
+                  className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-[9.5px] font-black transition-all border border-slate-800 cursor-pointer"
+                >
+                  <Mic className="w-3.5 h-3.5 text-amber-500" />
+                  <span>مرافعة صوتية</span>
+                </button>
+
+                <button
+                  onClick={() => triggerToast('📹 تم تشغيل الكاميرا لتسجيل شرح مصور لمكان النزاع والحدود المغتصبة!', 'info')}
+                  className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-[9.5px] font-black transition-all border border-slate-800 cursor-pointer"
+                >
+                  <Video className="w-3.5 h-3.5 text-amber-500" />
+                  <span>فيديو ميداني</span>
+                </button>
+              </div>
+
+              {/* TAB-SPECIFIC CHECKLIST & PROPOSED ALTERNATIVES (HORIZONTAL GRID LAYOUT TO REMOVE VERTICAL LIST) */}
+              <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-850 space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-850 pb-1.5">
+                  <span className="text-[10.5px] text-white font-black flex items-center gap-1">
+                    📋 مصفوفة التدقيق والبدائل النشطة ({caseFileTab === 'subject' ? 'الموضوع' :
+                                                      caseFileTab === 'parties' ? 'الأطراف' :
+                                                      caseFileTab === 'evidence' ? 'الدليل' :
+                                                      caseFileTab === 'procedure' ? 'الإجراءات' : 'الجهات'})
+                  </span>
+                  <span className="text-[9px] text-slate-500 font-bold font-mono">TAB CHECKLIST</span>
+                </div>
+
+                {/* Horizontal Grid instead of a vertical list stack */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[140px] overflow-y-auto scrollbar-thin text-right" style={{ direction: 'rtl' }}>
+                  {checklistItems
+                    .filter(item => item.tab === caseFileTab)
+                    .map(item => (
+                      <button
+                        key={item.id}
+                        onClick={() => handleToggleCaseFileChecklist(item.id)}
+                        className="text-right flex items-start gap-2 p-2 rounded-lg bg-slate-900/60 border border-slate-850/80 hover:border-slate-850 transition-all cursor-pointer group"
+                      >
+                        <div className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
+                          item.checked 
+                            ? 'bg-amber-500 border-amber-500 text-slate-950' 
+                            : 'border-slate-700 group-hover:border-amber-500/40 text-transparent'
+                        }`}>
+                          <CheckSquare className="w-3 h-3 stroke-[3]" />
+                        </div>
+                        
+                        <div className="flex-1 flex flex-col min-w-0">
+                          <span className={`text-[10px] font-extrabold leading-tight ${
+                            item.checked ? 'text-slate-500 line-through' : 'text-slate-200'
+                          }`}>
+                            {item.label}
+                          </span>
+                          <span className="text-[8px] text-amber-400 font-bold mt-1 bg-amber-500/5 px-2 py-0.5 rounded border border-amber-500/10 self-start">
+                            💡 {item.alt}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                </div>
+              </div>
+
+              {/* ACTION FOOTER BUTTONS BLOCK */}
+              <div className="pt-3 border-t border-slate-850 flex flex-col sm:flex-row gap-2 text-xs">
+                <button
+                  onClick={() => {
+                    triggerToast('✅ تم حفظ كافة مدخلات ومستندات الملف القضائي الرقمي الموحد بنجاح!', 'success');
+                    onUpdateCaseData({
+                      title: partyFirst,
+                      defendant: partySecond,
+                      court: authorityCourt,
+                      expertName: authorityExpert
+                    });
+                  }}
+                  className="flex-1 py-3 px-4 bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-400 hover:to-yellow-500 text-slate-950 font-black rounded-xl transition-all shadow-[0_0_15px_rgba(245,158,11,0.15)] hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <span>💾 حفظ وتعديل ملف القضية</span>
+                </button>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => triggerToast('📤 جاري تجميع الوثائق وتصدير ملف القضية كاملاً في صيغة مستند PDF معتمد للدائرة الرابعة...', 'info')}
+                    className="py-3 px-2.5 bg-slate-950 hover:bg-slate-900 border border-slate-800 text-slate-300 hover:text-white font-bold rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer text-[10px]"
+                  >
+                    <Download className="w-3 h-3" />
+                    <span>تصدير (PDF)</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`ملف القضية الرقمي رقم: ${caseData.caseNumber}\nالدائرة: الدائرة الرابعة بمحكمة الجيزة\nموضوع الدعوى: ${subjectDesc}\nالطرف الأول: ${partyFirst}\nالطرف الثاني: ${partySecond}\nالخبير الفني: ${authorityExpert}`);
+                      triggerToast('📋 تم نسخ ملخص وهيكل القضية الرقمية إلى الحافظة بنجاح لتسهيل مشاركتها!', 'success');
+                    }}
+                    className="py-3 px-2.5 bg-slate-950 hover:bg-slate-900 border border-slate-800 text-slate-300 hover:text-white font-bold rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer text-[10px]"
+                  >
+                    <Copy className="w-3 h-3" />
+                    <span>نسخ ملخص</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* LIVE SYSTEM ACCUMULATED PROGRESS BAR */}
+              <div className="pt-2 flex items-center gap-3">
+                <span className="text-[10px] text-slate-500 font-black uppercase tracking-wider font-mono">
+                  اكتمال البناء القضائي
+                </span>
+                <div className="flex-1 bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-850">
+                  <div 
+                    className="bg-gradient-to-r from-amber-600 to-amber-400 h-full rounded-full transition-all duration-500" 
+                    style={{ width: `${caseFilePercent}%` }}
+                  ></div>
+                </div>
+                <span className="text-xs font-black font-mono text-amber-400">{caseFilePercent}%</span>
+              </div>
+            </div>
+
+            {/* Left Column: Official Court Document (7 cols) - THE FORMAL JUDICIAL CONTEXT */}
+            <div className="lg:col-span-7 bg-amber-50 border-4 border-amber-800/20 text-slate-900 rounded-2xl p-6 shadow-2xl relative overflow-hidden flex flex-col justify-between" id="formal-judicial-file-view">
+              
+              {/* Golden classic corners simulating luxury official paper */}
+              <div className="absolute top-2 right-2 w-10 h-10 border-t-2 border-r-2 border-amber-800/40 pointer-events-none"></div>
+              <div className="absolute top-2 left-2 w-10 h-10 border-t-2 border-l-2 border-amber-800/40 pointer-events-none"></div>
+              <div className="absolute bottom-2 right-2 w-10 h-10 border-b-2 border-r-2 border-amber-800/40 pointer-events-none"></div>
+              <div className="absolute bottom-2 left-2 w-10 h-10 border-b-2 border-l-2 border-amber-800/40 pointer-events-none"></div>
+
+              {/* Seal watermark */}
+              <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none z-0">
+                <Scale className="w-80 h-80 text-amber-900" />
+              </div>
+
+              <div className="relative z-10 space-y-4">
+                {/* Official Crest Header */}
+                <div className="text-center border-b border-amber-800/20 pb-3 space-y-1">
+                  <span className="text-[10px] font-black tracking-widest text-amber-800 block">باسم الشعب</span>
+                  <h3 className="text-sm font-black text-amber-900">وزارة العدل المصرية</h3>
+                  <h2 className="text-base font-black text-slate-950">محكمة {authorityCourt || 'الجيزة الكلية'}</h2>
+                  <p className="text-[11px] font-bold text-amber-800">مكتب الخبراء - الدائرة الرابعة مدني مستعجل وعقاري</p>
+                  <p className="text-[10px] text-slate-500 font-mono">ملف دعوى رقم: {caseData.caseNumber} / ٢٠٢٦</p>
+                </div>
+
+                {/* Main Case Sheet details */}
+                <div className="space-y-3.5 text-xs text-right leading-relaxed" style={{ fontFamily: 'Georgia, serif' }}>
+                  
+                  {/* Case Category Header banner */}
+                  <div className="flex justify-between items-center bg-amber-100/60 px-3 py-2 rounded-lg border border-amber-800/10">
+                    <span className="font-bold text-slate-800">
+                      ⚖️ تصنيف الدعوى: <span className="text-amber-900">{procedureType === 'civil' ? 'تثبيت ملكية وفض شيوع' : procedureType === 'criminal' ? 'جنحة تزوير وتزييف متبادلة' : 'وقف قرار نزع ملكية إداري'}</span>
+                    </span>
+                    <span className="font-mono text-[10px] text-slate-500 font-bold">تاريخ القيد: {caseData.date}</span>
+                  </div>
+
+                  {/* Parties Details */}
+                  <div className="space-y-1.5 border-r-2 border-amber-800/30 pr-3">
+                    <p>
+                      <strong>بناءً على طلب السيد:</strong> <span className="text-amber-950 font-black underline">{partyFirst || caseData.title || 'صاحب الحق المشهر'}</span>، المقيم بالدائرة الفيدرالية والموقع على سند الدعوى الموحد ومحله المختار مكتب محاماة هيئة الخبراء المتكاملة.
+                    </p>
+                    <p>
+                      <strong>ضد المدعى عليه السيد:</strong> <span className="text-amber-950 font-black underline">{partySecond || caseData.defendant || 'الطرف الثاني المشتري / الحائز المتعدي'}</span>، المقيم بالمنطقة العقارية الكلية وموضوع المعاينة الميدانية.
+                    </p>
+                    {partyBroker && (
+                      <p>
+                        <strong>وبمشاركة الوسيط الرقمي:</strong> <span className="text-slate-800 font-semibold underline">{partyBroker}</span>.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Dispute Details (الوقائع وتفاصيل النزاع القانوني) */}
+                  <div className="space-y-1.5 pt-1">
+                    <h4 className="text-amber-900 font-black flex items-center gap-1.5 text-xs">
+                      <Scale className="w-3.5 h-3.5" />
+                      <span>١. وقائع النزاع وتوصيف العين الميدانية:</span>
+                    </h4>
+                    <div className="bg-amber-100/35 p-3 rounded-xl border border-amber-800/10 text-slate-800 italic leading-relaxed text-[11px] whitespace-pre-line shadow-inner">
+                      {subjectDesc || 'بموجب العقد والسجلات المقدمة يطعن المدعي في حيازة الخصم للعين، مطالباً بمسح الحدود والرفع المساحي والفرز والتجنيب لحماية الملكية على الشيوع وحظر التعدي.'}
+                    </div>
+                  </div>
+
+                  {/* Technical Evidences */}
+                  <div className="space-y-1.5 pt-1">
+                    <h4 className="text-amber-900 font-black flex items-center gap-1.5 text-xs">
+                      <FileCheck className="w-3.5 h-3.5" />
+                      <span>٢. الأدلة التقنية والبصمات الرقمية الملحقة:</span>
+                    </h4>
+                    <p className="text-[11px] text-slate-700">
+                      تم فحص ومطابقة الأدلة من نوع <span className="font-black text-amber-900 underline">{evidenceType === 'email' ? 'بريد إلكتروني رسمي' : evidenceType === 'whatsapp' ? 'محادثات سجل واتساب الرقمي' : evidenceType === 'signature' ? 'بصمة التوقيع الإلكتروني المشفر' : 'سجلات الخادم وتفاصيل استضافة المعاملة'}</span>.
+                    </p>
+                    {evidenceContent ? (
+                      <div className="bg-slate-900/5 p-2 rounded border border-amber-800/10 text-[10px] text-slate-700 whitespace-pre-line font-mono">
+                        {evidenceContent}
+                      </div>
+                    ) : (
+                      <p className="text-[10px] text-slate-500 italic">⏳ بانتظار رفع وسحب لقطات الشاشة أو سجل التواقيع التفصيلي في حقل الأدلة.</p>
+                    )}
+                  </div>
+
+                  {/* Formal Requests */}
+                  <div className="space-y-1.5 pt-1">
+                    <h4 className="text-amber-900 font-black flex items-center gap-1.5 text-xs">
+                      <Gavel className="w-3.5 h-3.5" />
+                      <span>٣. الطلبات القضائية والقرارات التمهيدية المستهدفة:</span>
+                    </h4>
+                    <div className="bg-amber-100/30 p-3 rounded-xl border border-amber-800/5 text-slate-800 leading-relaxed text-[11px] whitespace-pre-line">
+                      {procedureDesc || 'يطالب المدعي بندب لجنة ثلاثية هندسية من مصلحة الخبراء للانتقال وتحديد معالم الأرض، الرفع المساحي للحدود، وإيقاف كافة المخالفات الإنشائية لحين الفصل النهائي.'}
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Footer Signatures and Seals */}
+              <div className="border-t border-amber-800/20 pt-4 mt-4 flex items-center justify-between relative z-10">
+                <div className="text-center space-y-0.5 shrink-0">
+                  <span className="text-[9.5px] text-slate-500 font-bold block">الخبير المكلف بالمعاينة</span>
+                  <span className="text-xs font-black text-slate-950">{authorityExpert || 'م. أحمد الشافعي'}</span>
+                  <span className="text-[8px] text-emerald-700 font-mono font-black block">✓ موثق رقمياً</span>
+                </div>
+
+                {/* Official Stamp simulating traditional Red/Gold Wax Seal */}
+                <div className="relative w-16 h-16 flex items-center justify-center rounded-full bg-red-700/10 border-2 border-red-700 text-red-700 text-center select-none rotate-3 shrink-0 shadow-md">
+                  <div className="absolute inset-0.5 rounded-full border border-dashed border-red-700/60 animate-spin" style={{ animationDuration: '40s' }}></div>
+                  <div className="flex flex-col items-center justify-center">
+                    <span className="text-[7.5px] font-black leading-none">مكتب الخبراء</span>
+                    <Scale className="w-3.5 h-3.5 my-0.5 text-red-700" />
+                    <span className="text-[6.5px] font-mono leading-none font-bold">MINISTRY SEAL</span>
+                  </div>
+                </div>
+
+                <div className="text-center space-y-0.5 shrink-0">
+                  <span className="text-[9.5px] text-slate-500 font-bold block">أمين سر المحكمة</span>
+                  <span className="text-xs font-black text-slate-950">قلم كُتاب المدني</span>
+                  <span className="text-[8px] text-amber-800 font-bold block">اعتماد فوري</span>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
       ) : (
-        /* 📜 Bailiffs & Execution System Tab (نظام المحضرين والتنفيذ) */
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        /* 📜 Bailiffs & Execution System Tab (نظام المحضرين والتنفيذ) - تم نقله إلى صفحة ملف القضية المتكامل */
+        <div className="hidden">
           
           {/* Column 1: Execution Checklist & Tree (8 cols) */}
           <div className="lg:col-span-8 space-y-6">
@@ -813,6 +1602,158 @@ export default function CourtTab({ caseData, results, onUpdateCaseData }: CourtT
 
         </div>
       )}
+
+      {/* مجلس حسم المخالفات الفورية وقرارات طرد الممتنعين (انتقلت هنا بناء على طلب المستخدم) */}
+      <div id="violation-decision-dashboard" className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+        <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+          <Gavel className="w-5 h-5 text-amber-500 animate-pulse" />
+          <div className="flex flex-col text-right">
+            <h3 className="text-white text-sm font-black">مجلس حسم المخالفات الفورية وقرارات طرد الممتنعين</h3>
+            <span className="text-[10px] text-slate-500 font-bold mt-0.5">
+              تفعيل بنود الرادع القضائي والشرطى المباشر ضد شاغلي العين المخالفين لقانون الحفاظ على الثروة العقارية
+            </span>
+          </div>
+        </div>
+
+        {/* Control row */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            onClick={() => {
+              setSelectedViolationType('unpaid_rent');
+              triggerToast('تم فحص تدابير الامتناع عن سداد الأجرة', 'warning');
+            }}
+            className={`px-3.5 py-2 rounded-xl border text-xs font-black transition-all cursor-pointer ${
+              selectedViolationType === 'unpaid_rent'
+                ? 'bg-amber-500 text-slate-950 border-amber-400 font-black'
+                : 'bg-slate-950 text-slate-400 border-slate-850 hover:text-white'
+            }`}
+          >
+            ❌ التخلف عن الأجرة
+          </button>
+
+          <button
+            onClick={() => {
+              setSelectedViolationType('unauthorized_change');
+              triggerToast('تم فحص قرارات تغيير نشاط العين الإيجارية', 'warning');
+            }}
+            className={`px-3.5 py-2 rounded-xl border text-xs font-black transition-all cursor-pointer ${
+              selectedViolationType === 'unauthorized_change'
+                ? 'bg-amber-500 text-slate-950 border-amber-400 font-black'
+                : 'bg-slate-950 text-slate-400 border-slate-850 hover:text-white'
+            }`}
+          >
+            🏭 تغيير نشاط العين
+          </button>
+
+          <button
+            onClick={() => {
+              setSelectedViolationType('structural_damage');
+              triggerToast('تم فحص إجراءات الإضرار بسلامة المبنى الإنشائية', 'warning');
+            }}
+            className={`px-3.5 py-2 rounded-xl border text-xs font-black transition-all cursor-pointer ${
+              selectedViolationType === 'structural_damage'
+                ? 'bg-amber-500 text-slate-950 border-amber-400 font-black'
+                : 'bg-slate-950 text-slate-400 border-slate-850 hover:text-white'
+            }`}
+          >
+            🏗️ إتلاف الهيكل الإنشائي
+          </button>
+        </div>
+
+        {/* Detailed Order Output Box */}
+        <div className="bg-slate-950 p-4 rounded-xl border border-red-950/40 space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-2 flex-wrap gap-2">
+            <span className="text-red-400 font-black text-xs flex items-center gap-1.5">
+              <Zap className="w-4 h-4 animate-bounce" />
+              <span>{currentDecision.title}</span>
+            </span>
+            <div className="flex items-center gap-1.5 text-[10px]">
+              <span className="text-slate-500 font-bold">مستوى الخطورة:</span>
+              <span className="bg-red-950 text-red-300 font-black px-2 py-0.5 rounded border border-red-900/40">
+                {currentDecision.severity}
+              </span>
+            </div>
+          </div>
+
+          <div className="text-xs text-slate-400 leading-relaxed font-semibold text-right">
+            <span className="text-slate-500">المرجعية الدستورية والقانونية:</span> {currentDecision.lawReference}
+          </div>
+
+          <div className="space-y-2 text-right">
+            <span className="text-slate-300 text-xs font-black block">⚙️ الإجراءات الرادعة الفورية المتخذة:</span>
+            <ul className="space-y-1.5">
+              {currentDecision.actions.map((act, index) => (
+                <li key={index} className="flex items-start gap-2 text-xs text-slate-300 leading-relaxed">
+                  <span className="text-amber-500 font-mono mt-0.5">{index + 1}.</span>
+                  <span>{act}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Prompt Executor */}
+          <div className="flex justify-end pt-2 border-t border-slate-800/40">
+            <button
+              onClick={() => {
+                triggerToast('⚖️ تم إرسال الأمر القضائي المباشر للجهات الإدارية لتنفيذ الإجراءات الرادعة فوراً.', 'success');
+              }}
+              className="bg-red-500 hover:bg-red-600 text-white font-black text-[10px] px-4 py-2 rounded-lg transition-all shadow-md shadow-red-500/10 cursor-pointer"
+            >
+              ⚖️ تفعيل الأمر التنفيذي الفوري وقوة الجبر الإدارية
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* موجز مذكرات الخصومة القضائية والنزاع (انتقلت هنا بناء على طلب المستخدم) */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+        <h3 className="text-white text-sm font-black flex items-center gap-2 border-b border-slate-800 pb-3">
+          <Scale className="w-4.5 h-4.5 text-amber-500" />
+          <span>موجز مذكرات الخصومة القضائية والنزاع</span>
+        </h3>
+        
+        <div className="space-y-3.5 leading-relaxed text-slate-300 text-xs font-semibold">
+          <div className="flex items-start gap-3 bg-slate-950/60 p-4 rounded-xl border border-slate-850">
+            <span className="text-amber-500 text-sm mt-0.5">⚖️</span>
+            <div className="space-y-1">
+              <span className="text-white font-extrabold text-xs block">ملاحظات وقرارات المحكمة التوجيهية للخبرة:</span>
+              <p className="text-slate-400 leading-relaxed font-semibold text-right">
+                {caseData.dispute.hasDispute ? caseData.dispute.details : 'العقار خالي من النزاعات والحدود الجغرافية سليمة تماماً وموثقة في السجلات.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+            <div className="bg-slate-950/40 p-4 rounded-xl border border-slate-850/80 space-y-2">
+              <span className="text-amber-500 text-xs font-black block">تشخيصات القيمة الأرضية:</span>
+              <ul className="space-y-1.5 text-slate-400 text-[11px] font-semibold text-right">
+                <li className="flex justify-between">
+                  <span>قيمة الأرض الفردية:</span>
+                  <span className="text-white font-mono">{results.landValue.toLocaleString('ar-EG')} ج</span>
+                </li>
+                <li className="flex justify-between">
+                  <span>نصيب فدان/قيراط/سهم:</span>
+                  <span className="text-white font-mono">{results.faddan}ف / {results.qirat}ق / {results.sahm}س</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="bg-slate-950/40 p-4 rounded-xl border border-slate-850/80 space-y-2">
+              <span className="text-amber-500 text-xs font-black block">تشخيصات المنشأ والمباني:</span>
+              <ul className="space-y-1.5 text-slate-400 text-[11px] font-semibold text-right">
+                <li className="flex justify-between">
+                  <span>تكلفة التأسيس والتشطيب:</span>
+                  <span className="text-white font-mono">{results.constructionCost.toLocaleString('ar-EG')} ج</span>
+                </li>
+                <li className="flex justify-between">
+                  <span>بعد الاستهلاك والتقادم:</span>
+                  <span className="text-white font-mono">{results.depreciatedBuildingValue.toLocaleString('ar-EG')} ج</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
 
     </div>
   );

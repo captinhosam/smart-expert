@@ -51,6 +51,81 @@ export default function MindMapTab() {
   const [activeBranchId, setActiveBranchId] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'visual' | 'cards'>('visual');
 
+  const landLocations = [
+    {
+      id: 'giza_agricultural',
+      name: '🌾 أطيان العمرانية الزراعية (الجيزة)',
+      coordinates: 'Lat: 30.0130, Lng: 31.2088',
+      authority: 'الإدارة الزراعية المحلية بالجيزة، الهيئة العامة للإصلاح الزراعي',
+      laws: 'قانون الإصلاح الزراعي رقم ١٧٨ لسنة ١٩٥٢ وقواعد حظر البناء على الرقعة الزراعية المباشرة.',
+      documents: [
+        { name: 'بطاقة الحيازة الزراعية المعتمدة وسارية الصلاحية لبيان المحصول والواضع لليد', required: true },
+        { name: 'كشف رسمي من مأمورية الضرائب العقارية لبيان مكلفة الأطيان وتاريخ ربطها المالي', required: true },
+        { name: 'إفادة رسمية من مجلس مدينة الجيزة تفيد بوقوع القطعة داخل أو خارج الحيز الزراعي المباشر', required: true },
+        { name: 'عقد التنازل أو البيع المسلسل للتاريخ والتكليف الموثق', required: false }
+      ],
+      conditions: 'يُحظر تماماً إقامة أي منشآت خرسانية سكنية دون موافقة كتابية صريحة من وزير الزراعة وهيئة التعمير لضمان عدم تبوير الأراضي الطينية.'
+    },
+    {
+      id: 'fayoum_desert',
+      name: '🏜️ أراضي الصحراء الغربية والفيوم (خارج الزمام)',
+      coordinates: 'Lat: 29.3084, Lng: 30.8428',
+      authority: 'الهيئة العامة لمشروعات التعمير والتنمية الزراعية ولجنة استرداد الأراضي',
+      laws: 'قانون الأراضي الصحراوية رقم ١٤٣ لسنة ١٩٨١ وإجراءات تقنين واضعي اليد رقم ١٤٤ لسنة ٢٠١٧.',
+      documents: [
+        { name: 'طلب تقنين وضع اليد الفعلي وموافقة اللجنة العليا لاسترداد أراضي الدولة', required: true },
+        { name: 'رسم كروكي جيو-مساحي معتمد من مهندس عسكري مرخص ومسجل بالـ GPS لبيان عدم التداخل', required: true },
+        { name: 'موافقة مكتوبة من عمليات القوات المسلحة وهيئة الآثار للتصريح بالنشاط والاستصلاح', required: true },
+        { name: 'شهادة من وزارة الري تفيد توافر مقننات المياه الجوفية والآبار المرخصة', required: false }
+      ],
+      conditions: 'يُشترط جدية الاستصلاح بنسبة تزيد عن ٧٥٪ خلال ٣ سنوات من تاريخ استلام الأرض، ويُمنع تملك الأجانب أو مزدوجي الجنسية بشكل مطلق.'
+    },
+    {
+      id: 'cairo_new_town',
+      name: '🏢 أراضي التجمع الخامس والقاهرة الجديدة (مدن جديدة)',
+      coordinates: 'Lat: 30.0102, Lng: 31.6112',
+      authority: 'هيئة المجتمعات العمرانية الجديدة وجهاز مدينة القاهرة الجديدة',
+      laws: 'قانون البناء الموحد رقم ١١٩ لسنة ٢٠٠٨ وتعديلاته الخاصة بالمدن والمجتمعات الحديثة.',
+      documents: [
+        { name: 'خطاب تخصيص قطعة الأرض المعتمد الصادر من هيئة المجتمعات العمرانية الجديدة', required: true },
+        { name: 'محضر استلام قطعة الأرض الرسمي والحدود الموقعة من الإدارة الهندسية بالجهاز', required: true },
+        { name: 'رخصة البناء الموحدة الصادرة والرسومات الهندسية المعتمدة من المهندس الاستشاري النقابي', required: true },
+        { name: 'إيصالات سداد الأقساط والمصاريف الإدارية والخدمات المودعة ببنك التعمير والإسكان', required: false }
+      ],
+      conditions: 'الالتزام الكامل بالارتفاعات المقررة من جهاز المدينة (بدروم + أرضي + ٣ أدوار مكررة) والالتزام بنسبة البناء والواجهات الخارجية الموحدة.'
+    },
+    {
+      id: 'sinai_border',
+      name: '🛡️ أراضي المناطق الحدودية وشمال سيناء',
+      coordinates: 'Lat: 31.1245, Lng: 33.8012',
+      authority: 'وزارة الدفاع (هيئة العمليات)، جهاز تنمية شبه جزيرة سيناء والمحافظة المختصة',
+      laws: 'المرسوم بقانون رقم ١٤ لسنة ٢٠١٢ بشأن التنمية المتكاملة في شبه جزيرة سيناء والحدود.',
+      documents: [
+        { name: 'موافقة كتابية معتمدة من هيئة عمليات القوات المسلحة الصادرة بالاسم وتاريخ الميلاد الفعلي للخصوم', required: true },
+        { name: 'شهادة رسمية موثقة تثبت الجنسية المصرية المنفردة للمالك وأسلافه وللأبوين دون أي تداخل أجنبي', required: true },
+        { name: 'عقد تداول حق الانتفاع المشهر بدفاتر السجل المطور بفرع الشهر العقاري بسيناء', required: true },
+        { name: 'محضر المعاينة العسكرية والمساحة التفصيلية لحدود الطور والشيخ زويد', required: false }
+      ],
+      conditions: 'يُحظر تملك الأجانب مطلقاً في سيناء، ويقتصر التصرف على حق الانتفاع لمدد محددة قابلة للتجديد بموافقة القوات المسلحة وجهاز التنمية.'
+    },
+    {
+      id: 'coast_resort',
+      name: '🏖️ أراضي الساحل الشمالي والعلمين (سياحية ساحلية)',
+      coordinates: 'Lat: 30.8256, Lng: 28.9512',
+      authority: 'الهيئة العامة للتنمية السياحية، وزارة الإسكان، الإدارة الهندسية بمطروح الساحلية',
+      laws: 'قوانين تملك الأراضي السياحية وحماية الشواطئ وحرم البحار والمجاري المائية.',
+      documents: [
+        { name: 'قرار التخصيص السياحي والترخيص الفني للتطوير الصادر من مجلس الوزراء أو التنمية السياحية', required: true },
+        { name: 'شهادة مطابقة حرم البحر (موافقة هيئة حماية الشواطئ المصرية ووزارة البيئة)', required: true },
+        { name: 'رفع مساحي طيفي معتمد من الهيئة العامة للمساحة المصرية لبيان محيط خط الماص', required: true },
+        { name: 'ترخيص تصريف ومعالجة المياه الجوفية ذاتياً داخل الموقع لخدمة المجمع', required: false }
+      ],
+      conditions: 'الالتزام بحرم خط البحر الصافي (عادة ١٥٠ متراً) وعدم القيام بأعمال ردم للمياه أو إقامة لسان بحري دون موافقة مسبقة من مجلس الوزراء.'
+    }
+  ];
+
+  const [selectedLocation, setSelectedLocation] = useState(landLocations[0]);
+
   const branches: MindMapBranch[] = [
     {
       id: 'b1',
@@ -424,10 +499,10 @@ export default function MindMapTab() {
         <div className="space-y-1">
           <h2 className="text-white text-lg font-black flex items-center gap-2">
             <Compass className="w-5.5 h-5.5 text-amber-500 animate-spin-slow" />
-            <span>الخريطة الذهنية لقطاع الأراضي في مصر 🗺️</span>
+            <span>نظم الخرائط والمسح الجغرافي والخريطة الذهنية للأراضي 🗺️</span>
           </h2>
           <p className="text-slate-400 text-xs font-semibold leading-relaxed">
-            مستند تفاعلي شامل لإيضاح المستويات الجغرافية، والجهات المنفذة، والتشريعات العينية، وتحديات التملك لتوجيه كرو المساعدين.
+            منظومة الاستقصاء الميداني وتحديد الإحداثيات الجغرافية (GPS)، وربطها بالمستندات الإلزامية والتشريعات العينية للأراضي.
           </p>
         </div>
 
@@ -440,6 +515,106 @@ export default function MindMapTab() {
             <Layers className="w-3.5 h-3.5 text-cyan-400" />
             <span>عرض {viewMode === 'visual' ? 'بطاقات السندات' : 'المخطط التفاعلي'}</span>
           </button>
+        </div>
+      </div>
+
+      {/* 📍 دليل مستندات الأراضي والرفع المساحي والـ GPS حسب الموقع الجغرافي */}
+      <div className="bg-slate-950/75 border border-slate-850 p-5 rounded-2xl space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-900 pb-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/25">
+              <MapPin className="w-5 h-5 animate-bounce text-amber-400" />
+            </div>
+            <div className="flex flex-col text-right">
+              <span className="text-white text-xs font-black">المستندات المطلوبة والشروط التفصيلية لكل قطعة أرض (GPS)</span>
+              <span className="text-[10px] text-slate-500 font-extrabold mt-0.5">اختر النطاق الجغرافي لعرض المستندات والجهات والضوابط المنفردة بكل موقع</span>
+            </div>
+          </div>
+          
+          {/* Dropdown / Location Tabs */}
+          <div className="flex bg-slate-900/60 p-1 rounded-xl border border-slate-800 self-stretch md:self-auto overflow-x-auto gap-1">
+            {landLocations.map((loc) => (
+              <button
+                key={loc.id}
+                onClick={() => {
+                  setSelectedLocation(loc);
+                  triggerToast(`تم تحميل مستندات وشروط: ${loc.name}`, 'success');
+                }}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all shrink-0 cursor-pointer ${
+                  selectedLocation.id === loc.id
+                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/10'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {loc.name.split(' ')[0]} {loc.name.split(' ')[1]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Selected Location Card */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 text-xs">
+          {/* Info Side */}
+          <div className="lg:col-span-1 bg-slate-900/40 p-3.5 rounded-xl border border-slate-850 space-y-3">
+            <div>
+              <span className="text-slate-500 text-[9px] font-black block">📍 الاسم الجغرافي المحدد:</span>
+              <span className="text-amber-400 font-black text-xs block mt-0.5">{selectedLocation.name}</span>
+            </div>
+            <div className="flex items-center justify-between border-t border-slate-900 pt-2.5">
+              <div>
+                <span className="text-slate-500 text-[9px] font-black block">🌐 إحداثيات GPS المعتمدة:</span>
+                <span className="text-slate-300 font-mono text-[10px] block mt-0.5">{selectedLocation.coordinates}</span>
+              </div>
+              <div className="bg-slate-900 px-2 py-1 rounded text-[9px] text-emerald-400 font-bold border border-emerald-500/10">
+                LOCKED ✓
+              </div>
+            </div>
+            <div className="border-t border-slate-900 pt-2.5">
+              <span className="text-slate-500 text-[9px] font-black block">🏛️ جهة الولاية والاعتماد الفني:</span>
+              <span className="text-slate-300 font-bold text-[10px] block mt-0.5 leading-relaxed">{selectedLocation.authority}</span>
+            </div>
+            <div className="border-t border-slate-900 pt-2.5">
+              <span className="text-slate-500 text-[9px] font-black block">⚖️ القانون الحاكم المباشر:</span>
+              <span className="text-amber-300/90 font-bold text-[10px] block mt-0.5 leading-relaxed">{selectedLocation.laws}</span>
+            </div>
+          </div>
+
+          {/* Documents Checklist */}
+          <div className="lg:col-span-2 bg-[#1b1b1f]/40 p-4 rounded-xl border border-slate-850 space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-900 pb-2">
+              <span className="text-white text-xs font-black">📋 قائمة المستندات المطلوبة (مستند بمستند):</span>
+              <span className="text-[9px] text-amber-500 font-bold">تتغير تلقائياً حسب طبيعة وموقع الأرض</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {selectedLocation.documents.map((doc, index) => (
+                <div key={index} className="bg-slate-900/60 p-2.5 rounded-xl border border-slate-850 flex items-start justify-between gap-2.5">
+                  <div className="flex items-start gap-2">
+                    <span className="text-xs text-amber-400 mt-0.5">📄</span>
+                    <div className="space-y-0.5 text-right">
+                      <span className="text-slate-200 text-[10px] font-black block leading-snug">{doc.name}</span>
+                      <span className="text-[8px] text-slate-500 font-extrabold block">تنسيق ممسوح رقمياً مسبقاً (PDF)</span>
+                    </div>
+                  </div>
+                  <span className={`text-[8px] px-1.5 py-0.5 rounded font-black shrink-0 ${
+                    doc.required 
+                      ? 'bg-red-500/10 text-red-400 border border-red-500/20' 
+                      : 'bg-slate-800 text-slate-400'
+                  }`}>
+                    {doc.required ? 'إلزامي قطعي' : 'اختياري مكمل'}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="border-t border-slate-900 pt-2.5 mt-2.5 bg-amber-500/5 p-3 rounded-lg border border-amber-500/10">
+              <span className="text-amber-400 text-[10px] font-black block flex items-center gap-1.5">
+                <span className="animate-ping w-1.5 h-1.5 rounded-full bg-amber-500 inline-block"></span>
+                <span>⚠️ الشروط الخاصة وضوابط البناء العقارية بالموقع:</span>
+              </span>
+              <p className="text-slate-300 text-[10px] leading-relaxed font-bold mt-1">{selectedLocation.conditions}</p>
+            </div>
+          </div>
         </div>
       </div>
 

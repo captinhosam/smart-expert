@@ -18,7 +18,10 @@ import {
   Scale,
   Maximize2,
   User,
-  UserCheck
+  UserCheck,
+  Camera,
+  RefreshCw,
+  Loader2
 } from 'lucide-react';
 import { triggerToast } from '../lib/toast';
 
@@ -196,6 +199,18 @@ export default function DigitalAttachmentsRegister({ caseNumber }: DigitalAttach
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // --- 📸 CAMERA & OCR STATES ---
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [isProcessingOcr, setIsProcessingOcr] = useState(false);
+  const [ocrResultText, setOcrResultText] = useState<string>('');
+  const [scannedDocName, setScannedDocName] = useState<string>('مستند_قضائي_ممسوح_رقمي_1.pdf');
+  const [activeCameraId, setActiveCameraId] = useState<string>('');
+  const [availableCameras, setAvailableCameras] = useState<MediaDeviceInfo[]>([]);
+  
+  const videoRef = useRef<HTMLVideoElement>(null);
+
   useEffect(() => {
     localStorage.setItem(`smart_expert_attachments_${caseNumber}`, JSON.stringify(attachments));
   }, [attachments, caseNumber]);
@@ -271,6 +286,137 @@ export default function DigitalAttachmentsRegister({ caseNumber }: DigitalAttach
 
   const sellerPercentage = sellerDocs.length > 0 ? Math.round((sellerUploaded / sellerDocs.length) * 100) : 0;
   const buyerPercentage = buyerDocs.length > 0 ? Math.round((buyerUploaded / buyerDocs.length) * 100) : 0;
+
+  // Clean up camera stream on unmount
+  useEffect(() => {
+    return () => {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [cameraStream]);
+
+  // --- 📸 CAMERA & OCR HANDLERS ---
+  const startCamera = async (deviceId?: string) => {
+    try {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+      
+      const constraints: MediaStreamConstraints = {
+        video: deviceId ? { deviceId: { exact: deviceId } } : { facingMode: "environment" }
+      };
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      setCameraStream(stream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      
+      // Enumerate devices to get available cameras
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
+      setAvailableCameras(videoDevices);
+      if (!deviceId && videoDevices.length > 0) {
+        setActiveCameraId(videoDevices[0].deviceId);
+      }
+    } catch (err: any) {
+      console.error("Camera access error:", err);
+      triggerToast("عذراً، فشل الوصول إلى الكاميرا. يرجى التحقق من الأذونات وتوفير الكاميرا.", "error");
+    }
+  };
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setIsCameraOpen(false);
+    setCapturedImage(null);
+    setOcrResultText('');
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current) {
+      const video = videoRef.current;
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg');
+        setCapturedImage(dataUrl);
+        // We can stop the camera stream now so we don't drain resources while doing OCR
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(track => track.stop());
+          setCameraStream(null);
+        }
+      }
+    }
+  };
+
+  const runOcr = async () => {
+    if (!capturedImage) return;
+    setIsProcessingOcr(true);
+    triggerToast("جاري معالجة وتحويل مستندك القضائي عبر المستشار الذكي...", "info");
+    
+    try {
+      const response = await fetch("/api/gemini/ocr", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          image: capturedImage,
+          mimeType: "image/jpeg"
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error("فشلت عملية التحويل الرقمي للمستند.");
+      }
+      
+      const data = await response.json();
+      setOcrResultText(data.text || "لم يتم رصد أي نصوص واضحة في المستند.");
+      triggerToast("تم تحويل المستند القضائي إلى نص رقمي بنجاح!", "success");
+    } catch (error: any) {
+      console.error("OCR API error:", error);
+      triggerToast("فشل في تحويل المستند القضائي. يرجى المحاولة لاحقاً.", "error");
+    } finally {
+      setIsProcessingOcr(false);
+    }
+  };
+
+  const saveScannedDocument = () => {
+    if (!ocrResultText) return;
+    
+    const fileId = `att-${Date.now()}`;
+    const newAtt: Attachment = {
+      id: fileId,
+      name: scannedDocName.endsWith('.pdf') ? scannedDocName : `${scannedDocName}.pdf`,
+      size: `${(ocrResultText.length * 2 / 1024).toFixed(1)} KB`,
+      type: 'document',
+      fileType: 'pdf',
+      date: new Date().toISOString().split('T')[0],
+      description: "مستند قضائي ورقي تم مسحه ضوئياً وتحويله بالكامل إلى نص رقمي باستخدام كاميرا النظام وتقنية OCR.",
+      contentPreview: ocrResultText,
+      metadata: {
+        'المصدر': 'مسح ضوئي بالكاميرا المباشرة',
+        'تقنية المعالجة': 'Gemini 3.5 OCR Engine',
+        'المستخدم المنفذ': 'كابتن حسام (الخبير العقاري)',
+        'تاريخ المسح': new Date().toLocaleDateString('ar-EG'),
+        'حالة التدقيق': 'مكتمل ومفهرس'
+      }
+    };
+    
+    setAttachments(prev => [newAtt, ...prev]);
+    setSelectedAttachment(newAtt);
+    
+    // Close camera scanner and clean up
+    stopCamera();
+    triggerToast("تمت إضافة المستند الرقمي بنجاح إلى سجل المرفقات المعتمد!", "success");
+  };
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -435,7 +581,7 @@ export default function DigitalAttachmentsRegister({ caseNumber }: DigitalAttach
       <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
         
         {/* Attachment Upload Controls */}
-        <div className="md:col-span-12 space-y-3">
+        <div className="md:col-span-8 space-y-3">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-950 p-3 rounded-2xl border border-slate-850">
             <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
               <button 
@@ -467,7 +613,7 @@ export default function DigitalAttachmentsRegister({ caseNumber }: DigitalAttach
               </button>
             </div>
             <span className="text-slate-400 text-xs font-black text-center sm:text-right">
-              حدد تصنيف الملف المرفوع قبل السحب أو النقر للرفع:
+              تصنيف الملف:
             </span>
           </div>
 
@@ -499,6 +645,34 @@ export default function DigitalAttachmentsRegister({ caseNumber }: DigitalAttach
               </div>
             </div>
           </div>
+        </div>
+
+        {/* 📷 Live Camera scanning & OCR card */}
+        <div className="md:col-span-4 bg-gradient-to-br from-slate-950 to-slate-900/40 p-5 rounded-3xl border border-slate-850/80 flex flex-col justify-between text-right min-h-[170px] shadow-lg">
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5 justify-end">
+              <span className="text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded-full shadow-[0_0_8px_rgba(6,182,212,0.1)]">تكنولوجيا OCR ذكية</span>
+              <h4 className="text-white text-xs font-black flex items-center gap-1.5">
+                <Camera className="w-4 h-4 text-cyan-400" />
+                <span>المسح الضوئي بالكاميرا المباشرة</span>
+              </h4>
+            </div>
+            <p className="text-slate-400 text-[10px] font-semibold leading-relaxed">
+              التقط صوراً فورية للمستندات القضائية والتقارير الورقية الميدانية ليقوم النظام بتحويلها تلقائياً بالذكاء الاصطناعي إلى نصوص رقمية قابلة للمراجعة والتضمين.
+            </p>
+          </div>
+          
+          <button
+            type="button"
+            onClick={() => {
+              setIsCameraOpen(true);
+              startCamera();
+            }}
+            className="w-full mt-4 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 font-black text-xs py-3 px-4 rounded-xl transition-all shadow-[0_0_12px_rgba(6,182,212,0.2)] hover:shadow-[0_0_15px_rgba(6,182,212,0.35)] flex items-center justify-center gap-2 cursor-pointer active:scale-95 animate-pulse"
+          >
+            <Camera className="w-4 h-4" />
+            <span>تشغيل الكاميرا ومسح مستند قضائي ورقي</span>
+          </button>
         </div>
 
       </div>
@@ -655,7 +829,13 @@ export default function DigitalAttachmentsRegister({ caseNumber }: DigitalAttach
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2 text-right">
+                  <div className="flex items-center gap-2.5 text-right">
+                    <input
+                      type="checkbox"
+                      checked={item.status === 'uploaded'}
+                      onChange={() => handleToggleStatus(item.id)}
+                      className="w-4 h-4 rounded border-slate-800 text-cyan-500 focus:ring-cyan-500 bg-slate-950 shrink-0 cursor-pointer"
+                    />
                     <span className="text-slate-300 text-xs font-semibold group-hover:text-white transition-colors">
                       {item.title}
                     </span>
@@ -736,7 +916,13 @@ export default function DigitalAttachmentsRegister({ caseNumber }: DigitalAttach
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2 text-right">
+                  <div className="flex items-center gap-2.5 text-right">
+                    <input
+                      type="checkbox"
+                      checked={item.status === 'uploaded'}
+                      onChange={() => handleToggleStatus(item.id)}
+                      className="w-4 h-4 rounded border-slate-800 text-cyan-500 focus:ring-cyan-500 bg-slate-950 shrink-0 cursor-pointer"
+                    />
                     <span className="text-slate-300 text-xs font-semibold group-hover:text-white transition-colors">
                       {item.title}
                     </span>
@@ -872,6 +1058,17 @@ export default function DigitalAttachmentsRegister({ caseNumber }: DigitalAttach
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-2.5 max-w-[85%]">
+                        <input
+                          type="checkbox"
+                          checked={att.selected !== false}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            const nextState = att.selected === false ? true : false;
+                            setAttachments(prev => prev.map(item => item.id === att.id ? { ...item, selected: nextState } : item));
+                            triggerToast(nextState ? `✓ تم تمكين المستند وتضمينه في ملف القضية` : `⏳ تم استبعاد المستند مؤقتاً`, nextState ? 'success' : 'warning');
+                          }}
+                          className="w-4 h-4 rounded border-slate-800 text-cyan-500 focus:ring-cyan-500 bg-slate-950 mt-2 shrink-0 cursor-pointer"
+                        />
                         <div className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center border ${
                           att.type === 'document' ? 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400' :
                           att.type === 'image' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' :
@@ -1130,6 +1327,230 @@ export default function DigitalAttachmentsRegister({ caseNumber }: DigitalAttach
           يتم ربط ومزامنة كافة الخرائط الرقمية وصور المعاينات الإنشائية تلقائياً بالملف الاستدلالي الموحد والمقدم للنيابة العامة ووزارة العدل. يرجى توخي الدقة في البيانات المرفوعة من قبل الخبير المعين كابتن حسام.
         </p>
       </div>
+
+      {/* 📸 CAMERA SCANNER & INTELLIGENT OCR MODAL OVERLAY */}
+      {isCameraOpen && (
+        <div className="fixed inset-0 z-[9999] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl overflow-hidden flex flex-col shadow-2xl relative text-right animate-in fade-in zoom-in-95 duration-200">
+            
+            {/* Modal Header */}
+            <div className="p-5 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
+              <button 
+                onClick={stopCamera}
+                className="text-slate-400 hover:text-white font-bold text-xl px-2 py-1 rounded-lg hover:bg-slate-800 transition-colors"
+              >
+                ×
+              </button>
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+                  <Camera className="w-4 h-4 animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="text-white text-sm font-black">المسح الضوئي المباشر والتحويل الذكي (OCR)</h3>
+                  <p className="text-[10px] text-slate-400 font-bold mt-0.5">مدعوم بنظام الذكاء الاصطناعي لاستخلاص النصوص العقارية والعدلية</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-5 flex-1 max-h-[70vh] overflow-y-auto">
+              
+              {/* Step 1: Camera Feed or Preview */}
+              {!capturedImage ? (
+                <div className="space-y-4">
+                  {/* Camera device selection (only if multiple exist) */}
+                  {availableCameras.length > 1 && (
+                    <div className="space-y-1">
+                      <label className="text-slate-400 text-xs font-black block">اختر الكاميرا النشطة:</label>
+                      <select 
+                        value={activeCameraId}
+                        onChange={(e) => {
+                          setActiveCameraId(e.target.value);
+                          startCamera(e.target.value);
+                        }}
+                        className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-cyan-500"
+                      >
+                        {availableCameras.map(device => (
+                          <option key={device.deviceId} value={device.deviceId}>
+                            {device.label || `كاميرا ${availableCameras.indexOf(device) + 1}`}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Realtime Video Stream Frame */}
+                  <div className="relative rounded-2xl overflow-hidden border border-slate-800 aspect-video max-h-[350px] bg-black group flex items-center justify-center">
+                    <video 
+                      ref={videoRef} 
+                      autoPlay 
+                      playsInline 
+                      className="w-full h-full object-cover scale-x-[-1]" 
+                    />
+                    
+                    {/* Visual Overlay Scanning Frame Target */}
+                    <div className="absolute inset-0 border-2 border-dashed border-cyan-500/20 flex items-center justify-center pointer-events-none">
+                      <div className="w-4/5 h-3/4 border-2 border-cyan-400/50 rounded-lg relative shadow-[0_0_50px_rgba(6,182,212,0.1)]">
+                        {/* Laser line effect */}
+                        <div className="absolute left-0 right-0 h-0.5 bg-cyan-400 shadow-[0_0_12px_#00f0ff] animate-pulse animate-bounce" style={{ top: '50%' }}></div>
+                        {/* Corner markers */}
+                        <div className="absolute -top-1 -left-1 w-4 h-4 border-t-4 border-l-4 border-cyan-400 rounded-tl"></div>
+                        <div className="absolute -top-1 -right-1 w-4 h-4 border-t-4 border-r-4 border-cyan-400 rounded-tr"></div>
+                        <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b-4 border-l-4 border-cyan-400 rounded-bl"></div>
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-4 border-r-4 border-cyan-400 rounded-br"></div>
+                      </div>
+                    </div>
+
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-slate-950/80 px-3 py-1.5 rounded-full border border-slate-800 text-[10px] text-slate-300 font-bold">
+                      ضع المستند الورقي داخل الإطار الأخضر بوضوح
+                    </div>
+                  </div>
+
+                  {/* Trigger Action */}
+                  <button
+                    type="button"
+                    onClick={capturePhoto}
+                    className="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs py-3.5 px-4 rounded-xl transition-all shadow-[0_0_15px_rgba(6,182,212,0.25)] flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                  >
+                    <Camera className="w-4 h-4" />
+                    <span>التقاط لقطة للمستند الورقي</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Captured image preview frame */}
+                  {!ocrResultText && !isProcessingOcr && (
+                    <div className="space-y-4">
+                      <div className="relative rounded-2xl overflow-hidden border border-slate-800 max-h-[250px] bg-slate-950 flex items-center justify-center">
+                        <img 
+                          src={capturedImage} 
+                          alt="Captured judicial doc" 
+                          className="max-h-full max-w-full object-contain" 
+                        />
+                        <div className="absolute top-3 right-3 bg-slate-950/80 border border-slate-800 text-[10px] text-cyan-400 font-bold px-2.5 py-1 rounded-lg">
+                          تم التقاط المستند القضائي بنجاح ✓
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCapturedImage(null);
+                            startCamera(activeCameraId);
+                          }}
+                          className="bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 rounded-xl py-3 text-xs font-bold transition-all cursor-pointer text-center"
+                        >
+                          إعادة التقاط الصورة
+                        </button>
+                        <button
+                          type="button"
+                          onClick={runOcr}
+                          className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs py-3 rounded-xl transition-all shadow-[0_0_12px_rgba(6,182,212,0.2)] flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          <span>بدء المعالجة واستخراج النصوص (OCR)</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Processing / Loading Screen */}
+                  {isProcessingOcr && (
+                    <div className="py-12 flex flex-col items-center justify-center space-y-4 text-center">
+                      <div className="relative">
+                        <div className="w-16 h-16 rounded-full border-4 border-cyan-500/10 border-t-cyan-500 animate-spin"></div>
+                        <Camera className="w-6 h-6 text-cyan-400 absolute inset-0 m-auto animate-pulse" />
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="text-white text-xs font-black animate-pulse">جاري قراءة وتحليل المستند القضائي عبر الذكاء الاصطناعي...</h4>
+                        <p className="text-[10px] text-slate-500 font-bold">نقوم بفهرسة السطور واستخلاص الكلمات العربية بدقة متناهية</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 3: OCR Results and Save */}
+                  {ocrResultText && !isProcessingOcr && (
+                    <div className="space-y-4 animate-in fade-in duration-300">
+                      
+                      <div className="space-y-1 text-right">
+                        <label className="text-slate-400 text-xs font-black block">تعديل/تأكيد النص الرقمي المستخرج:</label>
+                        <textarea
+                          value={ocrResultText}
+                          onChange={(e) => setOcrResultText(e.target.value)}
+                          rows={8}
+                          dir="rtl"
+                          className="w-full bg-slate-950 border border-slate-850 rounded-2xl p-4 text-xs font-semibold leading-relaxed text-slate-200 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        ></textarea>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1 text-right">
+                          <label className="text-slate-400 text-xs font-black block">نوع المستند:</label>
+                          <input
+                            type="text"
+                            disabled
+                            value="📄 مستند قانوني (مسح ضوئي)"
+                            className="w-full bg-slate-900 border border-slate-850/60 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-400 cursor-not-allowed"
+                          />
+                        </div>
+                        <div className="space-y-1 text-right">
+                          <label className="text-slate-400 text-xs font-black block">تسمية الملف:</label>
+                          <input
+                            type="text"
+                            value={scannedDocName}
+                            onChange={(e) => setScannedDocName(e.target.value)}
+                            placeholder="مستند_قضائي_ممسوح_رقمي_1.pdf"
+                            className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs font-bold text-white focus:outline-none focus:border-cyan-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOcrResultText('');
+                            setCapturedImage(null);
+                            startCamera(activeCameraId);
+                          }}
+                          className="bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 rounded-xl py-3.5 text-xs font-bold transition-all cursor-pointer text-center"
+                        >
+                          إعادة المسح الضوئي
+                        </button>
+                        <button
+                          type="button"
+                          onClick={saveScannedDocument}
+                          className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs py-3.5 rounded-xl transition-all shadow-[0_0_12px_rgba(6,182,212,0.2)] flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <Check className="w-4 h-4" />
+                          <span>إدراج المستند في سجل المرفقات</span>
+                        </button>
+                      </div>
+
+                    </div>
+                  )}
+
+                </div>
+              )}
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-slate-950 border-t border-slate-850 flex items-center justify-between">
+              <span className="text-[9px] text-slate-500 font-mono font-bold">SECURE ON-DEVICE SANDBOX SCANNER</span>
+              <button
+                type="button"
+                onClick={stopCamera}
+                className="bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-850 rounded-xl px-4 py-2 text-xs font-bold transition-all cursor-pointer"
+              >
+                إلغاء وإغلاق
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

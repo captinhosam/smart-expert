@@ -63,16 +63,16 @@ export default function StartPage({ onEnterWorkspace, onLoadSampleAndEnter }: St
   // Entrance animation trigger
   const [isEntering, setIsEntering] = useState(false);
 
-  // Responsive layout radius for the semicircle buttons
-  const [radius, setRadius] = useState(150);
+  // Responsive layout radius for the semicircle buttons (Scaled up by 30%)
+  const [radius, setRadius] = useState(195);
   useEffect(() => {
     const updateRadius = () => {
       if (window.innerWidth >= 1024) {
-        setRadius(230); // Desktop size: 230px
+        setRadius(299); // Desktop size: 230px * 1.30 = 299px
       } else if (window.innerWidth >= 768) {
-        setRadius(190); // Tablet size: 190px
+        setRadius(247); // Tablet size: 190px * 1.30 = 247px
       } else {
-        setRadius(135); // Mobile size: 135px
+        setRadius(175); // Mobile size: 135px * 1.30 = 175px
       }
     };
     updateRadius();
@@ -295,18 +295,36 @@ export default function StartPage({ onEnterWorkspace, onLoadSampleAndEnter }: St
         isEntering ? 'scale-110 opacity-0 blur-md pointer-events-none' : 'scale-100 opacity-100'
       }`}
       style={{
-        background: 'linear-gradient(135deg, #1b1411 0%, #0d121c 30%, #161b22 70%, #221d10 100%)',
+        background: 'linear-gradient(135deg, #1f140e 0%, #0c1524 30%, #1c222d 70%, #f1f5f9 100%)',
         backgroundImage: `
-          radial-gradient(circle at 10% 20%, rgba(139, 92, 26, 0.18) 0%, transparent 45%),
-          radial-gradient(circle at 90% 15%, rgba(234, 179, 8, 0.15) 0%, transparent 40%),
-          radial-gradient(circle at 50% 10%, rgba(56, 189, 248, 0.18) 0%, transparent 50%),
-          radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.08) 0%, transparent 35%),
-          radial-gradient(circle at 30% 70%, rgba(100, 110, 120, 0.12) 0%, transparent 40%),
-          linear-gradient(135deg, #1a1512 0%, #0d121c 35%, #181d24 70%, #221c11 100%)
+          radial-gradient(circle at 10% 20%, rgba(120, 75, 40, 0.45) 0%, transparent 50%),
+          radial-gradient(circle at 90% 15%, rgba(234, 179, 8, 0.3) 0%, transparent 45%),
+          radial-gradient(circle at 50% 10%, rgba(14, 165, 233, 0.35) 0%, transparent 50%),
+          radial-gradient(circle at 85% 85%, rgba(255, 255, 255, 0.5) 0%, transparent 40%),
+          radial-gradient(circle at 30% 70%, rgba(148, 163, 184, 0.4) 0%, transparent 50%),
+          linear-gradient(135deg, #1c140e 0%, #0c1524 35%, #1b222d 70%, #242930 100%)
         `
       }}
     >
       
+      {/* Real Fullscreen HUD Frame in Neon Blue Highlight */}
+      <div className="absolute inset-4 border border-cyan-500/15 rounded-2xl pointer-events-none z-30">
+        {/* Top Left Bracket */}
+        <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-cyan-400/70"></div>
+        {/* Top Right Bracket */}
+        <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-cyan-400/70"></div>
+        {/* Bottom Left Bracket */}
+        <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-cyan-400/70"></div>
+        {/* Bottom Right Bracket */}
+        <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-cyan-400/70"></div>
+        
+        {/* Telemetry labels */}
+        <div className="absolute top-3 left-10 text-[9px] font-mono text-cyan-400/50 uppercase tracking-widest">SYSTEM STATE: ACTIVE</div>
+        <div className="absolute top-3 right-10 text-[9px] font-mono text-cyan-400/50 uppercase tracking-widest">HUD MODE: ONLINE</div>
+        <div className="absolute bottom-3 left-10 text-[9px] font-mono text-cyan-400/50 uppercase tracking-widest">SMART_EXPERT_PROT_10</div>
+        <div className="absolute bottom-3 right-10 text-[9px] font-mono text-cyan-400/50 uppercase tracking-widest">SECURE PORTAL 3000</div>
+      </div>
+
       {/* 3D Grid Holographic Layer */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#111116_1px,transparent_1px),linear-gradient(to_bottom,#111116_1px,transparent_1px)] bg-[size:5rem_5rem] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none"></div>
 
@@ -347,7 +365,7 @@ export default function StartPage({ onEnterWorkspace, onLoadSampleAndEnter }: St
       </div>
 
       {/* 1. Header Area - Extremely Clean, Elegant, No sentences clutter */}
-      <header className="w-full max-w-7xl flex flex-col items-center justify-center text-center mt-4 relative z-10">
+      <header className="w-full max-w-7xl flex flex-col items-center justify-center text-center mt-14 relative z-10">
         <div className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-cyan-500/25 bg-cyan-950/20 shadow-[0_0_15px_rgba(6,182,212,0.1)] mb-4">
           <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
           <span className="text-[10px] text-cyan-400 font-mono font-black tracking-widest uppercase">
@@ -364,7 +382,7 @@ export default function StartPage({ onEnterWorkspace, onLoadSampleAndEnter }: St
       </header>
 
       {/* 2. Central Interactive Area */}
-      <div className="w-full max-w-5xl flex-1 flex flex-col items-center justify-center py-8 relative z-10">
+      <div className="w-full max-w-5xl flex-1 flex flex-col items-center justify-center pt-24 pb-8 relative z-10">
         
         {/* Orbit / Rings Decorator Behind Elements */}
         <div className="absolute w-[360px] h-[360px] md:w-[500px] md:h-[500px] rounded-full border border-slate-900/40 pointer-events-none flex items-center justify-center">
@@ -410,13 +428,13 @@ export default function StartPage({ onEnterWorkspace, onLoadSampleAndEnter }: St
               transform: 'translate(-50%, -50%)',
             }}
           >
-            {/* Real 3D-Card Tilt wrapper */}
+            {/* Real 3D-Card Tilt wrapper (Medium Elegant Size) */}
             <div 
               style={{
-                transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`,
+                transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.0)`,
                 transition: 'transform 0.1s ease-out',
               }}
-              className="relative w-64 h-64 md:w-72 md:h-72 rounded-full bg-slate-950/85 border-3 border-cyan-400/40 flex items-center justify-center shadow-[0_0_65px_rgba(6,182,212,0.25)] group-hover:border-cyan-300 group-hover:shadow-[0_0_80px_rgba(6,182,212,0.5)] transition-all duration-300"
+              className="relative w-48 h-48 md:w-56 md:h-56 rounded-full bg-slate-950/85 border-3 border-cyan-400/40 flex items-center justify-center shadow-[0_0_60px_rgba(6,182,212,0.3)] group-hover:border-cyan-300 group-hover:shadow-[0_0_80px_rgba(6,182,212,0.5)] transition-all duration-300"
             >
               {/* Internal Holographic Wave Ripples */}
               <div className="absolute inset-2 rounded-full border border-cyan-500/15 pointer-events-none group-hover:scale-110 group-hover:opacity-0 transition-all duration-1000"></div>
@@ -427,8 +445,8 @@ export default function StartPage({ onEnterWorkspace, onLoadSampleAndEnter }: St
 
               {/* Real Highly Elaborate Hologram Scale Icon */}
               <div className="relative flex flex-col items-center select-none text-cyan-400 group-hover:text-white transition-colors duration-300">
-                <Scale className="w-[104px] h-[104px] md:w-[120px] md:h-[120px] filter drop-shadow-[0_0_15px_#00f0ff] group-hover:scale-110 group-hover:rotate-6 transition-all duration-300" />
-                <span className="text-xs md:text-sm font-black tracking-widest mt-4 bg-gradient-to-r from-cyan-400 to-sky-300 bg-clip-text text-transparent group-hover:from-white group-hover:to-cyan-200">
+                <Scale className="w-[72px] h-[72px] md:w-[84px] md:h-[84px] filter drop-shadow-[0_0_12px_#00f0ff] group-hover:scale-110 group-hover:rotate-6 transition-all duration-300" />
+                <span className="text-[9px] md:text-xs font-black tracking-widest mt-2 bg-gradient-to-r from-cyan-400 to-sky-300 bg-clip-text text-transparent group-hover:from-white group-hover:to-cyan-200">
                   انقر للبدء والدخول الفوري ⚖️
                 </span>
               </div>

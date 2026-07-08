@@ -39,11 +39,15 @@ import {
   MapPin,
   PlayCircle,
   PauseCircle,
-  BarChart4
+  BarChart4,
+  CheckSquare,
+  GitBranch,
+  Shield
 } from 'lucide-react';
 import { CaseData, CalculationResults } from '../types';
 import { triggerToast } from '../lib/toast';
 import DigitalAttachmentsRegister from './DigitalAttachmentsRegister';
+import FieldReferencesPanel from './FieldReferencesPanel';
 
 interface ChatVoiceUploadTabProps {
   caseData: CaseData;
@@ -166,6 +170,40 @@ export default function ChatVoiceUploadTab({ caseData, onUpdateCaseData, results
   const [isTimelinePlaying, setIsTimelinePlaying] = useState(false);
   const [playheadPosition, setPlayheadPosition] = useState(15); // Percentage across the tracks (15% corresponds to June 15)
   const [selectedTimelineEvent, setSelectedTimelineEvent] = useState<Milestone | null>(null);
+
+  // Execution steps checklist state (نظام المحضرين والتنفيذ المنتقل هنا)
+  const [executionChecklist, setExecutionChecklist] = useState([
+    { id: 'exec1', label: 'قيد صحيفة الدعوى بجدول المحكمة', done: true, date: '2026-06-10', notes: 'تم السداد والقيد بالرقم الفيدرالي' },
+    { id: 'exec2', label: 'إعلان الخصم بصحيفة الدعوى (قلم المحضرين)', done: true, date: '2026-06-15', notes: 'تم التسليم لشخص المراد إعلانه' },
+    { id: 'exec3', label: 'ندب مكتب خبراء وزارة العدل المعاين', done: true, date: '2026-06-25', notes: 'قرار المحكمة التمهيدي رقم ٣٠٥' },
+    { id: 'exec4', label: 'سداد أمانة الخبير المعين بخزينة المحكمة', done: true, date: '2026-06-28', notes: 'تم سداد مبلغ الأمانة بالكامل' },
+    { id: 'exec5', label: 'المعاينة الميدانية والرفع المساحي الفعلي', done: false, date: '2026-07-10', notes: 'موعد انتقال لجنة المعاينة الفنية' },
+    { id: 'exec6', label: 'إيداع تقرير الخبراء الثلاثي قلم كتاب المحكمة', done: false, date: '2026-07-22', notes: 'تحت إشراف المستشار رئيس الدائرة' },
+    { id: 'exec7', label: 'حضور جلسة الحكم القطعي النهائي وتلاوة المنطوق', done: false, date: '2026-08-05', notes: 'إصدار صيغة الحكم القابلة للتنفيذ الجبري' },
+    { id: 'exec8', label: 'مأمورية التنفيذ الجبري وتمكين القوة من تسليم العين خالية', done: false, date: '2026-08-20', notes: 'بالتنسيق مع وزارة الداخلية وأمن الجيزة' }
+  ]);
+
+  // Bailiff Notification system state
+  const [bailiffTasks, setBailiffTasks] = useState([
+    { id: 'b1', title: 'إعلان بقرار ندب الخبير الهندسي', recipient: caseData.defendant || 'المدعى عليه', status: 'completed', date: '2026-06-26', officer: 'المحضر / أحمد الشافعي', force: 'لا يتطلب قوة' },
+    { id: 'b2', title: 'مأمورية وضع الصيغة التنفيذية للقرار الإداري', recipient: 'وزارة الإسكان وهيئة المساحة', status: 'in-progress', date: '2026-07-06', officer: 'المحضر / محمود السعدني', force: 'مصحوب بقوة أمنية من أمن الجيزة' },
+    { id: 'b3', title: 'إعلان صحيفة الجنحة الفرعية لتبديد الضمانات', recipient: 'الخصم والشركاء المتضامنين', status: 'pending', date: '2026-07-12', officer: 'المحضر / كمال واصف', force: 'لا يتطلب قوة' }
+  ]);
+
+  // Handle toggle checklist items
+  const handleToggleChecklist = (id: string) => {
+    setExecutionChecklist(prev => prev.map(item => {
+      if (item.id === id) {
+        const nextState = !item.done;
+        triggerToast(nextState ? `✓ تم إنجاز خطوة التنفيذ: ${item.label}` : `⏳ تم إعادة تعليق خطوة التنفيذ: ${item.label}`, nextState ? 'success' : 'warning');
+        return { ...item, done: nextState };
+      }
+      return item;
+    }));
+  };
+
+  const completedCount = executionChecklist.filter(item => item.done).length;
+  const executionPercent = Math.round((completedCount / executionChecklist.length) * 100);
 
   // Refs
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -1856,6 +1894,229 @@ export default function ChatVoiceUploadTab({ caseData, onUpdateCaseData, results
           </div>
         </div>
       )}
+
+      {/* ==========================================
+          SECTION 7: LAW SUIT EXECUTION & BAILIFF SYSTEM (نظام المحضرين والتنفيذ - انتقلت هنا بناءً على طلب المستخدم)
+          ========================================== */}
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-6">
+        <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
+          <Shield className="w-6 h-6 text-cyan-400 animate-pulse" />
+          <div className="flex flex-col text-right">
+            <h3 className="text-white text-base font-black">نظام المحضرين والتنفيذ الجبري الميداني</h3>
+            <span className="text-xs text-slate-400 font-semibold mt-1">تتبع الحيازة الميدانية والمأموريات الجغرافية بالتنسيق مع قلم كتاب محكمة الجيزة</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+          {/* Column 1: Execution Checklist & Tree (8 cols) */}
+          <div className="xl:col-span-8 space-y-6">
+            
+            {/* Summary Progress banner */}
+            <div className="bg-gradient-to-r from-slate-950 via-slate-950 to-cyan-950/20 border border-slate-800/80 rounded-2xl p-5 shadow-inner flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
+              <div className="absolute right-0 top-0 bottom-0 w-32 bg-cyan-500/[0.01] pointer-events-none blur-3xl"></div>
+              
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 relative shrink-0">
+                  <CheckSquare className="w-7 h-7" />
+                  <span className="absolute -top-1.5 -left-1.5 bg-cyan-500 text-slate-950 text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow">
+                    {completedCount}
+                  </span>
+                </div>
+                <div className="flex flex-col text-right">
+                  <h3 className="text-white text-sm font-black">مؤشر التقدم الإجرائي والتنفيذ الجبري</h3>
+                  <p className="text-slate-400 text-xs mt-1 font-semibold leading-relaxed">
+                    نسبة إتمام الخطوات والمستندات القانونية المطلوبة لتمكين المستفيد من العين وحسم الخصومة الميدانية بالكامل.
+                  </p>
+                </div>
+              </div>
+
+              {/* Progress Ring or Bar */}
+              <div className="flex flex-col items-center shrink-0">
+                <div className="text-2xl font-black font-mono text-cyan-400">{executionPercent}%</div>
+                <span className="text-[10px] text-slate-500 font-extrabold mt-1">نسبة الإنجاز الفعلي</span>
+                <div className="w-24 bg-slate-950 h-2 rounded-full mt-2 overflow-hidden border border-slate-800">
+                  <div className="bg-cyan-500 h-full rounded-full transition-all duration-500" style={{ width: `${executionPercent}%` }}></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Tree Grid view of the lawsuit execution stages (هيكل الإجراءات والتنفيذ) */}
+            <div className="bg-slate-950/40 border border-slate-850 rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-800/60 pb-3">
+                <div className="flex items-center gap-2">
+                  <GitBranch className="w-4.5 h-4.5 text-cyan-400" />
+                  <h3 className="text-white text-xs font-black">الهيكل الشجري لمراحل القضية والتنفيذ الميداني</h3>
+                </div>
+                <span className="text-[9px] bg-slate-950 border border-slate-800 px-3 py-1 rounded-full font-mono text-slate-500">
+                  DIRECTORY TREE
+                </span>
+              </div>
+
+              <div className="space-y-3 pt-1">
+                {/* Layer 1: Root */}
+                <div className="border-r-2 border-cyan-500/30 pr-4 relative text-right">
+                  <div className="absolute right-[-5px] top-3.5 w-2 h-2 rounded-full bg-cyan-500 shadow shadow-cyan-500/50"></div>
+                  <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-850 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-5 h-5 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-xs font-black">
+                        ١
+                      </div>
+                      <span className="text-white text-xs font-black">الملف القضائي الرقمي الموحد: {caseData.caseNumber}</span>
+                    </div>
+                    <span className="text-[9px] text-cyan-400 font-black bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-0.5 rounded-full">الدائرة الرابعة</span>
+                  </div>
+
+                  {/* Layer 2: Sub children */}
+                  <div className="mt-3 space-y-3 mr-3 text-right">
+                    {/* Sub branch 1: Initial submission */}
+                    <div className="border-r-2 border-slate-800 pr-4 relative">
+                      <div className="absolute right-[-5px] top-3 w-2 h-2 rounded-full bg-slate-800"></div>
+                      <div className="bg-slate-950/40 p-2.5 rounded-lg border border-slate-850 flex items-center justify-between">
+                        <span className="text-slate-300 text-xs font-bold">📂 مرحلة القيد والتحضير (المستندات الأولية)</span>
+                        <span className="text-[9px] text-emerald-400 font-black bg-emerald-950/30 px-2 py-0.5 rounded border border-emerald-500/20">جاهز ومكتمل</span>
+                      </div>
+                    </div>
+
+                    {/* Sub branch 2: Expert survey and field work */}
+                    <div className="border-r-2 border-slate-800 pr-4 relative">
+                      <div className="absolute right-[-5px] top-3 w-2 h-2 rounded-full bg-slate-800"></div>
+                      <div className="bg-slate-950/40 p-2.5 rounded-lg border border-slate-850 flex items-center justify-between">
+                        <span className="text-slate-300 text-xs font-bold">📐 مرحلة ندب الخبراء والمعاينة المساحية الميدانية</span>
+                        <span className="text-[9px] text-amber-400 font-black bg-amber-950/30 px-2 py-0.5 rounded border border-amber-500/20 animate-pulse">قيد الإجراء والمسح</span>
+                      </div>
+                    </div>
+
+                    {/* Sub branch 3: Sentence execution */}
+                    <div className="border-r-2 border-slate-800 pr-4 relative">
+                      <div className="absolute right-[-5px] top-3 w-2 h-2 rounded-full bg-slate-800"></div>
+                      <div className="bg-slate-950/40 p-2.5 rounded-lg border border-slate-850 flex items-center justify-between">
+                        <span className="text-slate-300 text-xs font-bold">⚔️ مرحلة التنفيذ الجبري والتسليم الجغرافي للحدود</span>
+                        <span className="text-[9px] text-red-400 font-black bg-red-950/30 px-2 py-0.5 rounded border border-red-500/20">معلق لحين الحكم القطعي</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Step-by-Step checklist interactives (قائمة التدقيق القضائية والتنفيذية) */}
+            <div className="bg-slate-950/40 border border-slate-850 rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-850 pb-3">
+                <div className="flex items-center gap-2">
+                  <CheckSquare className="w-4.5 h-4.5 text-cyan-400" />
+                  <h3 className="text-white text-xs font-black">قائمة المتابعة والتحقق الميداني لقلم المحضرين</h3>
+                </div>
+                <span className="text-[10px] text-slate-500 font-semibold font-mono">STEP CHECKLIST</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                {executionChecklist.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => handleToggleChecklist(item.id)}
+                    className={`p-3.5 rounded-xl border text-right transition-all flex items-start gap-3.5 group cursor-pointer ${
+                      item.done 
+                        ? 'bg-slate-950/40 border-slate-800 hover:border-slate-700' 
+                        : 'bg-slate-900 border-slate-850 hover:border-cyan-500/25 shadow-sm shadow-cyan-500/[0.01]'
+                    }`}
+                  >
+                    <div className={`mt-0.5 w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
+                      item.done 
+                        ? 'bg-cyan-500 border-cyan-500 text-slate-950' 
+                        : 'border-slate-700 group-hover:border-cyan-500/50 text-transparent'
+                    }`}>
+                      <CheckSquare className="w-3.5 h-3.5 stroke-[3]" />
+                    </div>
+                    
+                    <div className="flex-1 flex flex-col justify-between h-full space-y-1">
+                      <span className={`text-xs font-bold leading-tight ${
+                        item.done ? 'text-slate-400 line-through' : 'text-slate-200'
+                      }`}>
+                        {item.label}
+                      </span>
+                      <div className="flex items-center justify-between text-[9px] text-slate-500 pt-1 border-t border-slate-900 mt-1">
+                        <span className="font-mono flex items-center gap-1">
+                          <Clock className="w-2.5 h-2.5 text-cyan-400" />
+                          {item.date}
+                        </span>
+                        <span className="truncate max-w-[150px] text-slate-450">{item.notes}</span>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+          </div>
+
+          {/* Column 2: Bailiff Active tasks list (4 cols) */}
+          <div className="xl:col-span-4 space-y-6">
+            
+            {/* Bailiff Active Missions HUD */}
+            <div className="bg-slate-950/40 border border-slate-850 rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-850 pb-3">
+                <div className="flex items-center gap-2">
+                  <Shield className="w-4.5 h-4.5 text-cyan-400 animate-pulse" />
+                  <div className="flex flex-col text-right">
+                    <span className="text-white text-xs font-black">مأموريات قلم المحضرين الميدانية</span>
+                    <span className="text-[8px] text-slate-500 mt-0.5">سجل الإعلانات والتنفيذ الجبري</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-1">
+                {bailiffTasks.map((task) => (
+                  <div 
+                    key={task.id} 
+                    className="bg-slate-950/80 p-3.5 rounded-xl border border-slate-850 space-y-3 hover:border-slate-700 transition-all text-right"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-slate-400 font-black text-left block truncate max-w-[150px]">
+                        {task.officer}
+                      </span>
+                      <span className={`text-[8px] px-2 py-0.5 rounded-full font-black ${
+                        task.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                        task.status === 'in-progress' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse' :
+                        'bg-slate-950 text-slate-500 border border-slate-800'
+                      }`}>
+                        {task.status === 'completed' ? 'تم الإعلان والتنفيذ' : task.status === 'in-progress' ? 'جاري الانتقال حالياً' : 'قيد الانتظار'}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5 text-right">
+                      <h4 className="text-white text-xs font-bold leading-snug">{task.title}</h4>
+                      <p className="text-slate-400 text-[10px] font-semibold leading-relaxed">
+                        👤 المستهدف بالإعلان: <span className="text-slate-200">{task.recipient}</span>
+                      </p>
+                      <p className="text-slate-400 text-[10px] font-semibold leading-relaxed">
+                        👮 القوة المرافقة: <span className="text-cyan-400/80">{task.force}</span>
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2.5 border-t border-slate-900 text-[9px] font-semibold">
+                      <span className="text-slate-500 font-mono flex items-center gap-1">
+                        <Clock className="w-2.5 h-2.5 text-cyan-400" />
+                        {task.date}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      {/* ==========================================
+          SECTION 6: FIELD REFERENCE PANEL & PHOTO GALLERY (انتقلت هنا بناء على طلب المستخدم)
+          ========================================== */}
+      <div className="mt-8 border-t border-slate-800/40 pt-8">
+        <FieldReferencesPanel 
+          caseData={caseData}
+          onUpdateCaseData={(updatedFields) => onUpdateCaseData({ ...caseData, ...updatedFields })}
+        />
+      </div>
 
     </div>
   );

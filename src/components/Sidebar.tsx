@@ -11,27 +11,26 @@ import {
   MessageSquare,
   Compass,
   Users,
-  Scale
+  Scale,
+  Search
 } from 'lucide-react';
 
 interface SidebarProps {
-  activeTab: 'dashboard' | 'details' | 'map' | 'agents' | 'report' | 'files' | 'mindmap' | 'heirs_hub' | 'court';
-  setActiveTab: (tab: 'dashboard' | 'details' | 'map' | 'agents' | 'report' | 'files' | 'mindmap' | 'heirs_hub' | 'court') => void;
+  activeTab: 'dashboard' | 'details' | 'map' | 'agents' | 'report' | 'files' | 'mindmap' | 'heirs_hub' | 'court' | 'inquiries';
+  setActiveTab: (tab: 'dashboard' | 'details' | 'map' | 'agents' | 'report' | 'files' | 'mindmap' | 'heirs_hub' | 'court' | 'inquiries') => void;
   caseTitle: string;
   caseNumber: string;
 }
 
 export default function Sidebar({ activeTab, setActiveTab, caseTitle, caseNumber }: SidebarProps) {
   const menuItems = [
-    { id: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard, desc: 'ملخص المؤشرات ومراحل تقدم الخبرة' },
-    { id: 'details', label: 'بيانات العقار والخصوم', icon: FolderOpen, desc: 'الرفع المساحي، التشطيبات، والورثة' },
-    { id: 'heirs_hub', label: 'بوابة الورثة الموحدة', icon: Users, desc: 'شجرة العائلة والتركات والأنصبة الشرعية' },
-    { id: 'files', label: 'الشات والملفات والصوت', icon: MessageSquare, desc: 'المركز القضائي الموحد للمحادثة والاتصال' },
-    { id: 'mindmap', label: 'الخريطة الذهنية للأراضي', icon: Compass, desc: 'القوانين الحاكمة، والجهات المنفذة' },
-    { id: 'map', label: 'نظم الخرائط و GPS', icon: Map, desc: 'الإحداثيات الجغرافية والمسح الطيفي' },
-    { id: 'agents', label: 'محاكاة 50+ وكيل خبير', icon: Cpu, desc: 'العقل الاستدلالي ومستودع الوكلاء' },
-    { id: 'court', label: 'المحكمة الافتراضية والتنفيذ', icon: Scale, desc: 'قاعة المحكمة ثلاثية الأبعاد ونظام المحضرين' },
-    { id: 'report', label: 'التقرير القضائي المعتمد', icon: FileText, desc: 'التقرير النهائي الجاهز للطباعة والتقديم' }
+    { id: 'dashboard', label: 'مركز التحكم لجميع العمليات', icon: LayoutDashboard, desc: 'القطاعات الهندسية والاستقصاء الاستشاري الموحد' },
+    { id: 'files', label: 'ملف القضية المتكامل', icon: MessageSquare, desc: 'مركز الملفات، الشات التفاعلي والاتصال الصوتي' },
+    { id: 'details', label: 'بيانات العقار والخصوم والورثة', icon: Users, desc: 'مواصفات العقار، الخصوم وشجرة المواريث الموحدة' },
+    { id: 'map', label: 'نظم الخرائط والمسح الجغرافي', icon: Map, desc: 'الإحداثيات الجغرافية، الخريطة الذهنية ومستندات الأراضي' },
+    { id: 'inquiries', label: 'الاستعلامات', icon: Search, desc: 'بوابة الاستعلامات الحكومية والربط الإلكتروني' },
+    { id: 'court', label: 'المحكمة الرقمية التنفيذية', icon: Scale, desc: 'قاعة المحكمة الافتراضية ومحاضر التنفيذ والمحضرين' },
+    { id: 'report', label: 'التقرير القضائي المعتمد', icon: FileText, desc: 'التقرير النهائي الجاهز للطباعة والتقديم بختم النسر' }
   ] as const;
 
   return (

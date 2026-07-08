@@ -3,6 +3,7 @@ import { CaseData, CalculationResults } from '../types';
 import { SAMPLE_LOCATIONS } from '../data/expertSystemData';
 import { triggerToast } from '../lib/toast';
 import VirtualCourt from './VirtualCourt/VirtualCourt';
+import ValuationTrends from './ValuationTrends';
 import { 
   MapPin, 
   Satellite, 
@@ -29,6 +30,7 @@ interface MapTabProps {
   ) => void;
   startWithVirtualCourt?: boolean;
   onClearStartWithVirtualCourt?: () => void;
+  theme?: 'dark' | 'paper';
 }
 
 export default function MapTab({ 
@@ -36,7 +38,8 @@ export default function MapTab({
   results, 
   onUpdateCoordinates,
   startWithVirtualCourt,
-  onClearStartWithVirtualCourt
+  onClearStartWithVirtualCourt,
+  theme
 }: MapTabProps) {
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
@@ -366,43 +369,6 @@ export default function MapTab({
 
         {/* GPS Telemetry & Landmark Data Panels */}
         <div className="space-y-6">
-          
-          {/* Preset Giza/Cairo Locations Selectors */}
-          <div className="bg-slate-900 rounded-2xl border border-slate-800 p-4 shadow-xl">
-            <h3 className="text-white text-sm font-black mb-3 flex items-center gap-2 border-b border-slate-800 pb-2.5">
-              <MapPin className="w-4 h-4 text-amber-500" />
-              <span>تغيير موقع العقار القضائي (قاعدة البيانات)</span>
-            </h3>
-            <div className="space-y-2">
-              {SAMPLE_LOCATIONS.map((loc, idx) => {
-                const isSelected = caseData.location === loc.name;
-                return (
-                  <button
-                    key={idx}
-                    onClick={() => onUpdateCoordinates(loc.lat, loc.lng, loc.name)}
-                    className={`w-full text-right p-3 rounded-xl border transition-all flex flex-col gap-1 ${
-                      isSelected 
-                        ? 'bg-amber-500/10 border-amber-500/50 shadow-md shadow-amber-500/5' 
-                        : 'bg-slate-950/40 border-slate-800/80 hover:bg-slate-800/50 hover:border-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <span className={`text-xs font-black ${isSelected ? 'text-amber-400' : 'text-slate-200'}`}>
-                        {loc.name.split(' - ')[0]}
-                      </span>
-                      <span className="text-[10px] font-mono text-slate-500">
-                        {loc.lat.toFixed(2)}°N, {loc.lng.toFixed(2)}°E
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-400 font-medium truncate leading-relaxed">
-                      {loc.desc}
-                    </p>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
           {/* Spatial Coordinates Bounds Card */}
           <div className="bg-slate-900 rounded-2xl border border-slate-800 p-4 shadow-xl space-y-3">
             <h3 className="text-white text-sm font-black flex items-center gap-2 border-b border-slate-800 pb-2">
@@ -431,69 +397,11 @@ export default function MapTab({
         </div>
       </div>
 
-      {/* Rent, Ownership, and New Law Diagnostics */}
-      <div id="legal-and-financial-metrics" className="bg-slate-900 rounded-2xl border border-slate-800 p-4 shadow-xl space-y-3.5">
-        <h3 className="text-white text-sm font-black flex items-center gap-2 border-b border-slate-800 pb-2.5">
-          <Activity className="w-4 h-4 text-amber-500" />
-          <span>المحددات القانونية والمؤشرات الاستثمارية للعقار</span>
-        </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {/* Rent Box (الإيجار) */}
-          <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex flex-col justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 shrink-0">
-                <Compass className="w-4 h-4" />
-              </div>
-              <span className="text-slate-200 text-xs font-black">العائد ونظام الإيجار</span>
-            </div>
-            <div>
-              <span className="text-white text-sm font-black block font-mono">
-                {caseData.annualRent ? `${caseData.annualRent.toLocaleString('ar-EG')} ج / سنوياً` : 'لا يوجد'}
-              </span>
-              <span className="text-emerald-400 text-[10px] font-bold mt-1 block">
-                {caseData.annualRent > 0 ? '✓ عائد معتمد قانون جديد' : '✓ شاغل بالكامل تمليك'}
-              </span>
-            </div>
-          </div>
-
-          {/* Ownership Box (التمليك) */}
-          <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex flex-col justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 shrink-0">
-                <Layers className="w-4 h-4" />
-              </div>
-              <span className="text-slate-200 text-xs font-black">وضع الملكية والحيازة</span>
-            </div>
-            <div>
-              <span className="text-white text-xs font-black block truncate">
-                {caseData.dispute.type === 'inheritance' ? 'إرث شرعي وحصر تركات' : 'عقد ملكية نهائي مسجل'}
-              </span>
-              <span className="text-blue-400 text-[10px] font-bold mt-1 block">
-                ✓ مسجل مطهّر من الديون
-              </span>
-            </div>
-          </div>
-
-          {/* New Law Box (القانون الجديد) */}
-          <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex flex-col justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 shrink-0">
-                <Sparkles className="w-4 h-4" />
-              </div>
-              <span className="text-slate-200 text-xs font-black">توافق القانون الجديد</span>
-            </div>
-            <div>
-              <span className="text-white text-[11px] font-black block leading-snug">
-                القانون رقم ١٠ لسنة ٢٠٢٢
-              </span>
-              <span className="text-amber-400 text-[9px] font-bold mt-1 block leading-relaxed">
-                ✓ متوافق مع تعديلات إخلاء العين وقواعد زيادة الأجر
-              </span>
-            </div>
-          </div>
-        </div>
+      {/* التطور الزمني والتقدير الجيوديسي لقيمة العقار (انتقلت هنا بناء على طلب المستخدم) */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <ValuationTrends results={results} theme={theme || 'dark'} />
       </div>
+
     </div>
   );
 }
